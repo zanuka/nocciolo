@@ -8,6 +8,8 @@ High-level phased plan. This is a living document — priorities will shift base
 - [x] README + vision
 - [x] Basic project structure and TypeScript CLI skeleton
 - [x] MIT license, contributing guidelines, CODE_OF_CONDUCT
+- [x] CLI installable on PATH / package publish-ready as `@nocciolo-ai/cli` (`publishConfig`, global link / install docs)
+- [ ] First npm publish of `@nocciolo-ai/cli`
 - [ ] GitHub project board / issue templates for public development
 
 **Goal:** Clean starting point that makes the vision obvious and invites early feedback.
@@ -66,6 +68,7 @@ High-level phased plan. This is a living document — priorities will shift base
 
 - [ ] Status / health commands
 - [ ] Better error messages and recovery paths
+- [ ] Bank rename / re-id — when the repo (or desired bank id) changes, keep the same retained knowledge under the new name; update `.nocciolo/` config, bank template, seed manifest, and MCP/agent wiring (`--dry-run`). Do not require a full re-seed into an empty bank
 - [ ] Config schema + validation
 - [ ] Test coverage for core extraction and template logic
 - [ ] Documentation site or expanded examples

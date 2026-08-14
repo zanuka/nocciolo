@@ -23,7 +23,19 @@ pnpm nocciolo --help
 
 Useful scripts: `pnpm build`, `pnpm test`, `pnpm typecheck`, `pnpm nocciolo <command>`.
 
-To use bare `nocciolo` on your PATH while developing: `pnpm link --global` (after `pnpm build`).
+To use bare `nocciolo` on your PATH from **any other local repo** (`cd` there first — `pnpm nocciolo` only works in this clone):
+
+```bash
+pnpm build
+npm link
+cd /path/to/your-project
+nocciolo --help
+nocciolo init
+```
+
+`npm link` needs no one-time setup. If you prefer pnpm, run `pnpm setup` once (creates `PNPM_HOME`), start a new shell, then `pnpm link --global`; otherwise pnpm fails with `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
+
+Unlink when done: `npm unlink -g @nocciolo-ai/cli` (or `pnpm unlink --global @nocciolo-ai/cli`). The global entry points at your clone, so after TypeScript changes `pnpm build` is enough — no re-link needed.
 
 ## How to Contribute
 

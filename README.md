@@ -44,17 +44,44 @@ Later versions will support additional memory backends, event-driven updates, ri
 
 ## Quick Start
 
-```bash
-# Once published
-npx @nocciolo-ai/cli init              # scaffold .nocciolo/ (prompts for bank id + Docker container)
-npx @nocciolo-ai/cli configure         # generate Hindsight bank template
-npx @nocciolo-ai/cli docker print      # local Hindsight docker command
-npx @nocciolo-ai/cli seed --dry-run    # preview candidates (no API calls)
-npx @nocciolo-ai/cli seed              # retain (no auth)
-npx @nocciolo-ai/cli mcp               # print MCP snippets (see mcp options below)
-npx @nocciolo-ai/cli mcp --write --write-agents --write-cursor-rules --include-auth
+### Use from another local project
 
-# Developing this repo
+The CLI is not published yet. From a Nocciolo clone, put `nocciolo` on your PATH, then `cd` into the other repo and run it there (it uses the current working directory):
+
+```bash
+# once, in the Nocciolo clone
+pnpm install && pnpm build
+npm link                               # symlinks `nocciolo` into your Node bin dir
+
+# then, in any other project (e.g. Strumentario)
+cd /path/to/your-project
+nocciolo --help
+nocciolo init                          # scaffold .nocciolo/ (prompts for bank id + Docker container)
+nocciolo configure                     # generate Hindsight bank template
+nocciolo seed --dry-run                # preview candidates (no API calls)
+nocciolo seed                          # retain
+nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+```
+
+`pnpm nocciolo …` only works **inside this repo**. Other projects need the linked `nocciolo` binary (or the clone path below). `npm link` needs no extra setup. To link with pnpm instead, run `pnpm setup` once (it creates `PNPM_HOME` and adds it to your PATH), open a new shell, then `pnpm link --global` — without that step pnpm fails with `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
+
+Without linking, invoke the clone’s bin from the other project:
+
+```bash
+cd /path/to/your-project
+/path/to/nocciolo/bin/nocciolo.js --help
+```
+
+Once published to npm:
+
+```bash
+npm install -g @nocciolo-ai/cli        # or: npx @nocciolo-ai/cli …
+nocciolo init
+```
+
+Developing **inside this repo** (no global install required):
+
+```bash
 pnpm install && pnpm build             # install deps and build the CLI
 pnpm nocciolo init                     # scaffold .nocciolo/ (prompts for bank id + Docker container)
 pnpm nocciolo configure                # generate Hindsight bank template
@@ -69,29 +96,22 @@ pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth --d
 When your Hindsight bank requires auth (typical for Docker with `HINDSIGHT_API_TENANT_API_KEY`), pass the **same secret value** into Nocciolo on live `seed` only — `--dry-run`, `init`, and `configure` do not need it:
 
 ```bash
-# Published
-NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' npx @nocciolo-ai/cli seed
+# Global install (linked clone or published package)
+NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' nocciolo seed
 
-# Developing this repo
+# Developing this repo without a global install
 NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' pnpm nocciolo seed
 
 # Or export once for the shell session
 export NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key'
-pnpm nocciolo seed
+nocciolo seed
 
 # Or pass the flag
-pnpm nocciolo seed --api-key 'your-actual-key'
+nocciolo seed --api-key 'your-actual-key'
 
 # Optional: read the key from a running Hindsight container (name from init / config; default hindsight)
 NOCCIOLO_HINDSIGHT_API_KEY="$(docker exec hindsight printenv HINDSIGHT_API_TENANT_API_KEY)" \
-  pnpm nocciolo seed
-```
-
-Optional: put `nocciolo` on your PATH (`pnpm link --global` after `pnpm build`):
-
-```bash
-nocciolo seed --dry-run
-NOCCIOLO_HINDSIGHT_API_KEY='your-actual-key' nocciolo seed
+  nocciolo seed
 ```
 
 Requires Node.js 20+. Point at a custom Hindsight URL with `--hindsight-url`, `NOCCIOLO_HINDSIGHT_URL`, or `hindsightBaseUrl` in `.nocciolo/config.json`. `HINDSIGHT_API_KEY` is accepted as an alias for `NOCCIOLO_HINDSIGHT_API_KEY`.
@@ -145,7 +165,7 @@ A full first seed can take several minutes (LLM extraction per item). That is ex
 
 **Re-seed only what changed**
 
-Re-running `seed` hashes sources against `.nocciolo/local/seed-manifest.json`. Unchanged files are skipped; changed sections are re-retained. The bank is not wiped. Use `--force` to re-send everything.
+Re-running `seed` hashes sources against `.nocciolo/local/seed-manifest.json`. Unchanged files are skipped; changed sections are re-retained with the same `document_id` (`nocciolo:<path>#<section>`), so Hindsight upserts them. The bank is not wiped. Use `--force` to re-send every **current** candidate — that still does not delete old memories.
 
 ```bash
 pnpm nocciolo seed --dry-run          # see what would update
@@ -153,6 +173,12 @@ pnpm nocciolo seed                    # incremental retain
 pnpm nocciolo seed --force            # re-retain all current candidates
 pnpm nocciolo seed --async            # submit + poll Hindsight operation progress
 ```
+
+There is no `nocciolo prune` (or unseed / invalidate) command. Seed is additive.
+
+If you **edit** a durable file in place, re-run `nocciolo seed`. That is enough: same path → same `document_id` → upsert.
+
+If you **rename or delete** a source (for example `docs/foo.md` → `docs/bar.md`), re-run `nocciolo seed` to retain the new path. That does **not** remove memories from the old path. Those stay in the bank under the old ids (`nocciolo:docs/foo.md#…`). `--force` does not fix this. Invalidate or delete those stale documents in Hindsight (Control Plane or MCP `invalidate_memory` / `delete_document`) if the duplicates matter.
 
 After retain, Hindsight may still run **consolidation** in the background (observations / mental models). That is expected and usually much faster than old file-sync workflows.
 

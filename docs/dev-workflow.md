@@ -29,8 +29,27 @@ Preferred local invocations (package `bin` + `pnpm nocciolo` script):
 
 ```bash
 pnpm nocciolo seed --dry-run
-pnpm link --global && nocciolo seed --dry-run   # optional PATH install
 ```
+
+Put `nocciolo` on your PATH, then run it **from the other project’s directory** (`pnpm nocciolo` only works inside this clone):
+
+```bash
+# in the Nocciolo clone
+pnpm build && npm link
+
+# in the other repo (Strumentario, Maglio, a fixture, …)
+cd /path/to/your-project
+nocciolo --help
+nocciolo init
+nocciolo configure
+nocciolo seed --dry-run
+```
+
+Without linking: `/path/to/nocciolo/bin/nocciolo.js` from that same directory.
+
+`npm link` works without extra configuration. For the pnpm equivalent, run `pnpm setup` once and start a new shell before `pnpm link --global`, otherwise pnpm reports `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
+
+Unlink with `npm unlink -g @nocciolo-ai/cli` or `pnpm unlink --global @nocciolo-ai/cli`. The link resolves to your clone, so a plain `pnpm build` picks up code changes.
 
 Rebuild after TypeScript changes before dogfooding:
 

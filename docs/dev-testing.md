@@ -47,13 +47,14 @@ Rebuild (`pnpm build`) after any TypeScript change before continuing.
 
 ## Recommended setup: fresh fixture project
 
-Dogfooding this repo works, but a **temp directory** best simulates a new user (no existing `.nocciolo/`).
+Dogfooding this repo works, but a **temp directory** best simulates a new user (no existing `.nocciolo/`). Put `nocciolo` on your PATH once from the built clone, then run the same binary from any fixture directory.
 
 ```bash
 export NOCCIOLO_REPO="/absolute/path/to/nocciolo"   # your built clone
 # Existing shared Hindsight server, or a new name if you will `docker up` one:
 export HINDSIGHT_CONTAINER="your-container-name"
-cd "$NOCCIOLO_REPO" && pnpm build
+cd "$NOCCIOLO_REPO" && pnpm build && npm link
+nocciolo --help
 
 export FIXTURE="$(mktemp -d /tmp/nocciolo-e2e-XXXX)"
 cd "$FIXTURE"
@@ -62,11 +63,16 @@ printf '# Fixture\n\nArchitecture decision: prefer local-first tooling.\n' > REA
 printf '# Agents\n\nPrefer durable docs over chat history.\n' > AGENTS.md
 mkdir docs && printf '# Overview\n\nDomain invariant: bank ids stay stable.\n' > docs/overview.md
 
-n() { node "$NOCCIOLO_REPO/dist/cli.js" "$@"; }
-n --help
+nocciolo --help
+# Optional shorthand for the steps below:
+# n() { nocciolo "$@"; }
 ```
 
-All steps below use `n` as that function. Substitute `pnpm nocciolo` when dogfooding inside the Nocciolo repo itself.
+All steps below use bare `nocciolo` on your PATH. The global entry is a symlink to `$NOCCIOLO_REPO`, so after TypeScript changes a plain `pnpm build` is enough — no re-link.
+
+`pnpm link --global` is equivalent but requires a one-time `pnpm setup` (plus a new shell) to create the pnpm global bin directory; without it pnpm fails with `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
+
+Unlink later with `npm unlink -g @nocciolo-ai/cli` (or `pnpm unlink --global @nocciolo-ai/cli` if you linked with pnpm).
 
 Set `HINDSIGHT_CONTAINER` to an **existing** Docker container that already hosts your banks, or to a new name if you will start a fresh server with `docker up`. One container can host many banks (`fixture-bank` beside others). Do not `docker down` a shared container at the end unless you intend to stop the whole server.
 
@@ -79,8 +85,8 @@ Run in order. Check the **Pass** line before moving on.
 ### 0. Docker — print (no execute)
 
 ```bash
-n docker print --name "$HINDSIGHT_CONTAINER"
-n docker print --name "$HINDSIGHT_CONTAINER" --api-key 'dev-tenant-key'
+nocciolo docker print --name "$HINDSIGHT_CONTAINER"
+nocciolo docker print --name "$HINDSIGHT_CONTAINER" --api-key 'dev-tenant-key'
 ```
 
 **Pass:**
@@ -96,10 +102,10 @@ n docker print --name "$HINDSIGHT_CONTAINER" --api-key 'dev-tenant-key'
 If `$HINDSIGHT_CONTAINER` is already running, skip live `up` and only check status:
 
 ```bash
-n docker status --name "$HINDSIGHT_CONTAINER"
-n docker up --name "$HINDSIGHT_CONTAINER" --dry-run
+nocciolo docker status --name "$HINDSIGHT_CONTAINER"
+nocciolo docker up --name "$HINDSIGHT_CONTAINER" --dry-run
 # only if the container does not already exist:
-# n docker up --name "$HINDSIGHT_CONTAINER" --api-key "$NOCCIOLO_HINDSIGHT_API_KEY"
+# nocciolo docker up --name "$HINDSIGHT_CONTAINER" --api-key "$NOCCIOLO_HINDSIGHT_API_KEY"
 ```
 
 **Pass:**
@@ -117,9 +123,9 @@ n docker up --name "$HINDSIGHT_CONTAINER" --dry-run
 Prefer non-interactive flags in fixtures (no TTY prompts). Interactive `init` asks for bank id and Docker container name when run in a TTY without flags/`--yes`.
 
 ```bash
-n init --dry-run --yes
-n init --bank-id fixture-bank --container-name "$HINDSIGHT_CONTAINER" --yes
-n init   # expect already-initialized error
+nocciolo init --dry-run --yes
+nocciolo init --bank-id fixture-bank --container-name "$HINDSIGHT_CONTAINER" --yes
+nocciolo init   # expect already-initialized error
 ```
 
 **Pass:**
@@ -127,15 +133,15 @@ n init   # expect already-initialized error
 - Dry-run writes nothing
 - Creates `.nocciolo/config.json` with `bankId: "fixture-bank"`, `provider: "hindsight"`, `root: "."`, and `docker.containerName` equal to `$HINDSIGHT_CONTAINER`
 - Re-init without `--force` errors with hint to use `--force` or `configure`
-- `n init --force --bank-id fixture-bank --container-name "$HINDSIGHT_CONTAINER" --yes` overwrites when intentionally re-run
+- `nocciolo init --force --bank-id fixture-bank --container-name "$HINDSIGHT_CONTAINER" --yes` overwrites when intentionally re-run
 - Bank id is project-specific; container name is the shared Hindsight server (not derived from bank id)
 
 ### 3. Configure
 
 ```bash
-n configure --dry-run
-n configure
-n configure   # expect already-exists error without --force
+nocciolo configure --dry-run
+nocciolo configure
+nocciolo configure   # expect already-exists error without --force
 ```
 
 **Pass:**
@@ -148,7 +154,7 @@ n configure   # expect already-exists error without --force
 ### 4. Seed — dry-run
 
 ```bash
-n seed --dry-run
+nocciolo seed --dry-run
 ```
 
 **Pass:**
@@ -162,10 +168,10 @@ n seed --dry-run
 
 ```bash
 # with tenant auth on the container:
-NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' n seed
+NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed
 
 # without tenant auth:
-# n seed
+# nocciolo seed
 ```
 
 **Pass:**
@@ -180,20 +186,20 @@ NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' n seed
 ### 6. Seed — incremental re-seed
 
 ```bash
-NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' n seed --dry-run
-NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' n seed
+NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed --dry-run
+NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed
 ```
 
 **Pass:**
 
 - Unchanged sources skipped (content-hash)
 - Touch a durable doc, re-run `--dry-run` → only changed candidates planned
-- `n seed --force` re-sends current candidates
+- `nocciolo seed --force` re-sends current candidates
 
 Optional:
 
 ```bash
-NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' n seed --async
+NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed --async
 ```
 
 **Pass:** async submit + operation poll (or clear message if no operation id).
@@ -201,9 +207,9 @@ NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' n seed --async
 ### 7. MCP — print snippets
 
 ```bash
-n mcp
-n mcp --harness cursor,claude-code
-n mcp --include-auth
+nocciolo mcp
+nocciolo mcp --harness cursor,claude-code
+nocciolo mcp --include-auth
 ```
 
 **Pass:**
@@ -217,11 +223,11 @@ n mcp --include-auth
 ### 8. MCP — write (dry-run then apply)
 
 ```bash
-n mcp --write --dry-run
-n mcp --write --write-agents --write-cursor-rules --include-auth --dry-run
-n mcp --write --write-agents --write-cursor-rules --include-auth
-n mcp --write   # expect conflict without --force if hindsight entry exists
-n mcp --write --force
+nocciolo mcp --write --dry-run
+nocciolo mcp --write --write-agents --write-cursor-rules --include-auth --dry-run
+nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+nocciolo mcp --write   # expect conflict without --force if hindsight entry exists
+nocciolo mcp --write --force
 ```
 
 **Pass:**
@@ -232,13 +238,13 @@ n mcp --write --force
 - Writes `.cursor/rules/hindsight-bank.mdc` with `alwaysApply: true`
 - Auth in written Cursor config uses `${env:NOCCIOLO_HINDSIGHT_API_KEY}` (not a literal key)
 - Existing other MCP servers in `.cursor/mcp.json` are preserved on merge
-- Optional: `n mcp --write-roo --write-kiro --dry-run` then apply if you care about those harnesses
+- Optional: `nocciolo mcp --write-roo --write-kiro --dry-run` then apply if you care about those harnesses
 
 ### 9. Docker — status (keep shared server)
 
 ```bash
-n docker status --name "$HINDSIGHT_CONTAINER"
-n docker down --name "$HINDSIGHT_CONTAINER" --dry-run
+nocciolo docker status --name "$HINDSIGHT_CONTAINER"
+nocciolo docker down --name "$HINDSIGHT_CONTAINER" --dry-run
 # Do NOT run live `docker down` against a shared container unless you intend to stop
 # the whole server (and every bank on it). Leave it up if other projects use it.
 ```
@@ -257,17 +263,17 @@ Run these deliberately; each should fail or warn **clearly**, not hang silently.
 
 | Case | Command / setup | Expect |
 |------|-----------------|--------|
-| No config | Fresh dir, `n seed` / `n mcp` / `n configure` | Error → run `init` |
-| Init twice | `n init` twice | Error → `--force` |
-| Init non-interactive | `n init --bank-id my-bank --container-name your-container-name --yes` | Config has custom bank id + docker names; no prompts |
-| Configure twice | `n configure` twice | Error → `--force` |
-| MCP dry-run alone | `n mcp --dry-run` | Error → dry-run only with write flags |
-| Docker up twice | `n docker up --name your-container-name` while running | Error → already exists |
-| Bad harness | `n mcp --harness nope` | Lists valid harnesses |
+| No config | Fresh dir, `nocciolo seed` / `nocciolo mcp` / `nocciolo configure` | Error → run `init` |
+| Init twice | `nocciolo init` twice | Error → `--force` |
+| Init non-interactive | `nocciolo init --bank-id my-bank --container-name your-container-name --yes` | Config has custom bank id + docker names; no prompts |
+| Configure twice | `nocciolo configure` twice | Error → `--force` |
+| MCP dry-run alone | `nocciolo mcp --dry-run` | Error → dry-run only with write flags |
+| Docker up twice | `nocciolo docker up --name your-container-name` while running | Error → already exists |
+| Bad harness | `nocciolo mcp --harness nope` | Lists valid harnesses |
 | Auth mismatch | Seed with wrong `NOCCIOLO_HINDSIGHT_API_KEY` | 401/403 + key hint |
-| Custom URL | `n seed --dry-run --hindsight-url http://127.0.0.1:8888` | Printed plan uses override |
-| Secret in print | `n docker print --name your-container-name` with `OPENAI_API_KEY` set | Display shows `$OPENAI_API_KEY`, not the secret |
-| Sensitive paths | Add `.env` with secrets under fixture; `n seed --dry-run` | `.env` not retained / denied |
+| Custom URL | `nocciolo seed --dry-run --hindsight-url http://127.0.0.1:8888` | Printed plan uses override |
+| Secret in print | `nocciolo docker print --name your-container-name` with `OPENAI_API_KEY` set | Display shows `$OPENAI_API_KEY`, not the secret |
+| Sensitive paths | Add `.env` with secrets under fixture; `nocciolo seed --dry-run` | `.env` not retained / denied |
 
 ---
 

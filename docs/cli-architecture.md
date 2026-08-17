@@ -316,7 +316,7 @@ node dist/cli.js --help
 - No interactive `configure` wizard yet (`init` prompts for bank id + Docker container name)
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
-- Single bank per project config (multi-bank CLI is Phase 6; one Docker server can already host many banks)
+- Single bank per project config (multi-bank CLI is Phase 7; one Docker server can already host many banks)
 - Team sharing / deployment profiles (Phase 4)
 
 ## Related docs

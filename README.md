@@ -6,9 +6,9 @@
 
 Nocciolo (Italian for kernel / core) — the durable core of project knowledge that agents inherit.
 
-## Goal 
+## Goal
 
-Seed Hindsight memory banks from durable project docs, ADRs, and decisions so agents inherit shared context instead of rediscovering it every session.
+Seed [Hindsight](https://hindsight.vectorize.io/) memory banks from durable project docs, ADRs, and decisions so agents inherit shared context instead of rediscovering it every session.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: Early](https://img.shields.io/badge/Status-Early%20%2F%20Public-orange)]()
@@ -40,7 +40,7 @@ Agents inherit shared context instead of rediscovering it.
 - **Shares** knowledgebases across teams with explicit deployment profiles — local/LAN, VPN, or public — so the company brain reaches the agents that need it
 - **Stays local-first** — you control the data and the hosting
 
-Later versions will support additional memory backends, event-driven updates, richer curation tools, and team-wide bank sharing across deployment modes.
+Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates). Other memory backends (for example Mem0) stay optional and later — only if real demand appears and without watering down the Hindsight path. Event-driven updates, richer curation, and team-wide sharing across deployment modes are on the [roadmap](./ROADMAP.md).
 
 ## Quick Start
 

@@ -34,7 +34,7 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 1. Default MCP server name should be bank-scoped (e.g. `hindsight-<bankId>`) so multi-root workspaces can attach multiple banks
 2. Optional `--server-name` on `mcp` for overrides
 3. Document Cursor env inheritance for tenant keys; consider a `nocciolo mcp --check` / health hint that probes MCP with resolved auth (without printing secrets)
-4. Clearer post-interrupt seed messaging and/or resume story (Phase 5 overlap)
+4. Clearer post-interrupt seed messaging and/or resume story (Phase 6 reliability overlap)
 
 ## Gap 2 — Bank template apply
 
@@ -83,7 +83,7 @@ Ordered by dogfood pain → sharing readiness:
 3. **Shareable config + profiles** — project vs environment split; local/LAN/VPN/public emitters
 4. Deployment security defaults and `nocciolo share` validation (remaining Phase 4 checklist)
 
-## Non-goals (still Phase 6+)
+## Non-goals (still Phase 7+; mental-model lifecycle is Phase 5)
 
 - Multi-provider backends
 - Automatic multi-bank orchestration across orgs

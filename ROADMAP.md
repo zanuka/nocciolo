@@ -57,12 +57,13 @@ High-level phased plan. This is a living document — priorities will shift base
 - [ ] Shareable knowledgebase configs — split portable project identity from environment/profile (base URL strategy, no secrets in git)
 - [ ] Deployment profile: **local / LAN** — single machine or trusted network, minimal exposure
 - [ ] Deployment profile: **VPN** — bank reachable only inside a private network for closed teams
-- [ ] Deployment profile: **public** — intentionally exposed hosting when knowledge is meant to be open
-- [ ] Documented security defaults and trade-offs per profile (auth, TLS, network binding)
+- [ ] Deployment profile: **public** — intentionally exposed self-hosted Hindsight when knowledge is meant to be open
+- [ ] Deployment profile: **hindsight-cloud** — managed [Hindsight Cloud](https://docs.hindsight.vectorize.io/) (`https://api.hindsight.vectorize.io`); API key for seed/apply; bank-scoped MCP and/or OAuth MCP; skip local Docker — see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)
+- [ ] Documented security defaults and trade-offs per profile (auth, TLS, network binding, Cloud credits / data residency)
 - [ ] CLI helpers to generate and validate the chosen profile (`nocciolo share` or equivalent, with `--dry-run`)
-- [ ] Profile-aware MCP / harness emission (URLs and server names follow the active deployment profile)
+- [ ] Profile-aware MCP / harness emission (URLs and server names follow the active deployment profile; Cloud emits `api.hindsight.vectorize.io` + env key placeholders)
 
-**Goal:** A team can publish one durable bank and let agents across the org inherit it — without forcing a single cloud path.
+**Goal:** A team can publish one durable bank and let agents across the org inherit it — local/self-host by default, [Hindsight Cloud](https://docs.hindsight.vectorize.io/) opt-in, never a forced cloud path.
 
 ## Phase 5 — Mental Models (Hindsight-native curated reflect)
 
@@ -116,9 +117,9 @@ Do **not** fold mental-model curation into `init` prompts. Keep generation in `c
 
 ### Guiding Constraints
 
-- Prefer local control and self-hosting
+- Prefer local control and self-hosting as the default; [Hindsight Cloud](https://docs.hindsight.vectorize.io/) is an explicit opt-in profile
 - Hindsight-native first; other memory providers only if demanded and without compromising the Hindsight experience
-- Team sharing must remain opt-in and profile-driven (local/LAN, VPN, public) — never a forced cloud default
+- Team sharing must remain opt-in and profile-driven (local/LAN, VPN, public self-host, or Hindsight Cloud) — never a forced cloud default
 - Amplify existing engineering practices (ADRs, standards, clear architecture) rather than replace them
 - Keep the CLI fast and the happy path short
 - Stay focused on knowledgebases and agent context before expanding into broader agent orchestration

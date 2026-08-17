@@ -80,7 +80,7 @@ Ordered by dogfood pain → sharing readiness:
 
 1. **MCP multi-repo DX** — bank-scoped server names; document Cursor auth env; optional connectivity check
 2. **Bank template apply** — CLI apply with dry-run; unblock reproducible bank bootstrap
-3. **Shareable config + profiles** — project vs environment split; local/LAN/VPN/public emitters
+3. **Shareable config + profiles** — project vs environment split; local/LAN/VPN/public self-host **and** [Hindsight Cloud](./hindsight-cloud.md) emitters
 4. Deployment security defaults and `nocciolo share` validation (remaining Phase 4 checklist)
 
 ## Non-goals (still Phase 7+; mental-model lifecycle is Phase 5)

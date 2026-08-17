@@ -1,6 +1,6 @@
 {
   "name": "@nocciolo-ai/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Company brain config for AI agents — seed Hindsight memory banks from durable project knowledge",
   "type": "module",
   "bin": {

@@ -37,10 +37,10 @@ Agents inherit shared context instead of rediscovering it.
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions so agents start with real context
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
-- **Shares** knowledgebases across teams with explicit deployment profiles — local/LAN, VPN, or public — so the company brain reaches the agents that need it
-- **Stays local-first** — you control the data and the hosting
+- **Shares** knowledgebases across teams with explicit deployment profiles — local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/) — so the company brain reaches the agents that need it
+- **Stays local-first** — self-host by default; Cloud is opt-in, never required
 
-Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates). Other memory backends (for example Mem0) stay optional and later — only if real demand appears and without watering down the Hindsight path. Event-driven updates, richer curation, and team-wide sharing across deployment modes are on the [roadmap](./ROADMAP.md).
+Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates). Host it yourself with Docker or use [Hindsight Cloud](https://docs.hindsight.vectorize.io/) when you want managed infra (same Nocciolo seed/MCP flow — see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)). Other memory backends stay optional and later — only if real demand appears. Event-driven updates, richer curation, and team-wide sharing are on the [roadmap](./ROADMAP.md).
 
 ## Quick Start
 
@@ -190,6 +190,8 @@ More detail: [developer workflow](./docs/dev-workflow.md).
 
 ## Local Hindsight & agent wiring
 
+Default path: run Hindsight yourself (Docker). For managed hosting, see [Hindsight Cloud](#hindsight-cloud-opt-in) below and [docs/hindsight-cloud.md](./docs/hindsight-cloud.md).
+
 ```bash
 pnpm nocciolo docker print             # print docker run (no execute)
 pnpm nocciolo docker up                # start local Hindsight (needs Docker + LLM key)
@@ -203,6 +205,21 @@ pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`. LLM key for Docker: `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Tenant auth on the container: `--api-key` (same value as `NOCCIOLO_HINDSIGHT_API_KEY` for seed/MCP).
 
 Hindsight **retain** (what `nocciolo seed` calls) needs a working LLM. If your Hindsight instance is configured for **Ollama**, that process must be running and reachable from the Hindsight container before you seed — otherwise retain returns `500` with errors like `ConnectError: All connection attempts failed` / `Fact extraction failed`. Start Ollama (`ollama serve`), ensure the model is pulled, and use a base URL the container can reach (often `host.docker.internal`, not `localhost`). Cloud providers (e.g. OpenAI via `HINDSIGHT_API_LLM_API_KEY`) do not need Ollama.
+
+### Hindsight Cloud (opt-in)
+
+Skip local Docker and point Nocciolo at [Hindsight Cloud](https://docs.hindsight.vectorize.io/) — same `configure` / `seed` / `mcp` commands, managed API at `https://api.hindsight.vectorize.io`. Create an org and API key in the [Cloud console](https://ui.hindsight.vectorize.io); free credits and a short course are on [Hindsight Academy](https://learn.hindsight.vectorize.io/).
+
+```bash
+export NOCCIOLO_HINDSIGHT_URL=https://api.hindsight.vectorize.io
+export NOCCIOLO_HINDSIGHT_API_KEY=hsk_…   # from Cloud → Connect → Create API Key
+
+nocciolo seed --dry-run
+nocciolo seed
+nocciolo mcp --hindsight-url https://api.hindsight.vectorize.io --include-auth --write
+```
+
+Interactive IDEs can also use Cloud’s OAuth MCP host (`https://mcp.hindsight.vectorize.io`) instead of pasting a key — details and trade-offs in [docs/hindsight-cloud.md](./docs/hindsight-cloud.md). First-class `hindsight-cloud` deployment profile lands in Phase 4 ([ROADMAP](./ROADMAP.md)).
 
 ### `nocciolo mcp` options
 
@@ -240,17 +257,19 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [CLI architecture](./docs/cli-architecture.md) — module boundaries, seed pipeline, config, and env/auth for contributors
 - [Developer workflow](./docs/dev-workflow.md) — build, first seed, re-seed, and Hindsight retain/consolidation tips
 - [Developer testing](./docs/dev-testing.md) — end-user command sequence and E2E regression checklist
+- [Hindsight Cloud](./docs/hindsight-cloud.md) — opt-in managed hosting vs local Docker; profiles, auth, MCP
+- [Hindsight mental models](./docs/hindsight-mental-models.md) — curated reflect, tagging, configure wizard, post-seed CLI
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md) — Strumentario lessons: multi-repo MCP, template apply, shareable config
 - [Sensitive data](./docs/sensitive-data.md) — allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles
 
 - **Durable over ephemeral** — only knowledge that should outlive a single session or model change
-- **Local control** — self-hostable, version-controlled, no forced cloud dependency
+- **Local control** — self-hostable by default; [Hindsight Cloud](https://docs.hindsight.vectorize.io/) is opt-in, never required
 - **Agent-native** — missions, directives, and structure that map cleanly to how modern memory systems actually work
 - **Traditional craft first** — clear architecture, ADRs, and standards remain the source of truth; Nocciolo amplifies them for agents
 - **Progressive** — start simple (single bank, one project), grow into multi-bank, multi-repo, team sharing, and event-driven workflows
-- **Share on your terms** — deploy the bank locally or on a LAN, behind a VPN for private teams, or publicly when the knowledge is meant to be open
+- **Share on your terms** — local/LAN, VPN, public self-host, or Hindsight Cloud when managed hosting fits the team
 
 ## Status
 

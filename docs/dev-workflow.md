@@ -259,6 +259,7 @@ Update this file when a new command becomes part of the daily loop.
 ## Related
 
 - [cli-architecture.md](./cli-architecture.md) — modules, env resolution, seed pipeline
+- [hindsight-cloud.md](./hindsight-cloud.md) — Hindsight Cloud vs local Docker
 - [dev-testing.md](./dev-testing.md) — end-user command sequence and E2E checklist
 - [sensitive-data.md](./sensitive-data.md) — secrets allowlist/denylist policy
 - [ROADMAP.md](../ROADMAP.md) — phased plan

@@ -258,6 +258,8 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Developer workflow](./docs/dev-workflow.md) — build, first seed, re-seed, and Hindsight retain/consolidation tips
 - [Developer testing](./docs/dev-testing.md) — end-user command sequence and E2E regression checklist
 - [Hindsight Cloud](./docs/hindsight-cloud.md) — opt-in managed hosting vs local Docker; profiles, auth, MCP
+- [Hindsight bank backup](./docs/hindsight-bank-backup.md) — Docker `hindsight-admin` full backup and per-bank export
+- [Hindsight upgrade](./docs/hindsight-upgrade.md) — upgrade the local Docker image while keeping the data volume
 - [Hindsight mental models](./docs/hindsight-mental-models.md) — curated reflect, tagging, configure wizard, post-seed CLI
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md) — Strumentario lessons: multi-repo MCP, template apply, shareable config
 - [Sensitive data](./docs/sensitive-data.md) — allowlist/denylist decisions so secrets never get retained

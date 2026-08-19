@@ -14,7 +14,7 @@ When changing the CLI, treat [docs/cli-architecture.md](docs/cli-architecture.md
 
 ## Module placement
 
-Put logic in the matching layer — do not collapse stages into `commands/` or a single helper:
+Put logic in the matching layer: do not collapse stages into `commands/` or a single helper:
 
 | Concern | Module |
 |---------|--------|
@@ -56,4 +56,4 @@ Resolve URL/key in order: CLI flag → config (URL only) → env → default `ht
 
 ## Errors
 
-Fail with `NoccioloError` (or equivalent) plus a concrete next step — e.g. run `init`, pass `--force`, or set an API key.
+Fail with `NoccioloError` (or equivalent) plus a concrete next step: e.g. run `init`, pass `--force`, or set an API key.

@@ -2,7 +2,7 @@
 
 Design notes for Phase 5. Upstream: [Mental Models API](https://hindsight.vectorize.io/developer/api/mental-models), [Tags and Visibility](https://hindsight.vectorize.io/developer/api/mental-models#tags-and-visibility), [Listing mental model tags](https://hindsight.vectorize.io/developer/api/mental-models#listing-mental-model-tags).
 
-Mental models are **saved reflect responses** — curated summaries for recurring questions. During reflect, Hindsight checks them **before** observations and raw facts. They are Hindsight-native; Mem0 has no equivalent curated-summary layer (see [ROADMAP Phase 5](../ROADMAP.md)).
+Mental models are **saved reflect responses**: curated summaries for recurring questions. During reflect, Hindsight checks them **before** observations and raw facts. They are Hindsight-native; Mem0 has no equivalent curated-summary layer (see [ROADMAP Phase 5](../ROADMAP.md)).
 
 ---
 
@@ -22,7 +22,7 @@ Same isolation rules as the rest of the bank, applied to synthesized knowledge: 
 - A **tagged** model defaults to `all_strict` for refresh: a memory must carry **every** tag on the model.
 - Untagged memories are excluded when the model has tags.
 - Multi-tag models whose memories are tagged narrowly (one topic each) often refresh **empty** unless you set `trigger.tags_match` to `any` (or use `tag_groups`).
-- `GET …/tags?source=mental_models` lists tags on models; `source=memories` (default) lists tags on memories — different tag spaces.
+- `GET …/tags?source=mental_models` lists tags on models; `source=memories` (default) lists tags on memories: different tag spaces.
 
 Nocciolo must keep **seed retain tags** and **mental model tags** coherent, or first refresh will fail silently into empty content.
 
@@ -43,7 +43,7 @@ mcp           → agents prefer reflect for playbook-style questions
 
 | Stage | Mental-model responsibility |
 |-------|-----------------------------|
-| **`configure` (wizard)** | Declare starter models: id, name, source query, tags, `tags_match`, refresh policy. Write version-controlled template only — no live Hindsight calls required. |
+| **`configure` (wizard)** | Declare starter models: id, name, source query, tags, `tags_match`, refresh policy. Write version-controlled template only: no live Hindsight calls required. |
 | **Template apply (Phase 4)** | Idempotent create-or-update of declared models on the bank (stable custom `id`s). |
 | **`seed`** | Stamp retain tags that match (or intentionally overlap) model scopes so refresh has something to read. |
 | **`mental-model` (post-seed)** | Add, edit, list, refresh, clear against the live bank; optionally write changes back into the template. |
@@ -68,7 +68,7 @@ Under `all_strict`, `architecture-decisions` (`["architecture", "decisions"]`) w
 
 1. Prefer **topic tags that seed already emits** (or will emit), e.g. `knowledge:architecture`, `knowledge:standard`, `knowledge:decision`, plus a shared bank tag such as `nocciolo` / project slug if useful for listing.
 2. For multi-tag models, set `trigger.tags_match: "any"` unless every memory is expected to carry all tags.
-3. Reserve customer/team/user scopes (`team:platform`, `customer:acme`) for multi-tenant or multi-team banks — not the default single-repo project template.
+3. Reserve customer/team/user scopes (`team:platform`, `customer:acme`) for multi-tenant or multi-team banks: not the default single-repo project template.
 4. Document that changing model tags without retagging memories (or changing `tags_match`) is a breaking refresh change.
 
 Entity labels (`knowledge_kind`, `durability`) on the bank template are **not** the same as memory tags. Labels guide extraction structure; tags drive visibility and refresh scope. Nocciolo may map `knowledge_kind` → `knowledge:<kind>` at seed time so models can filter on a stable vocabulary.
@@ -79,35 +79,35 @@ Entity labels (`knowledge_kind`, `durability`) on the bank template are **not** 
 
 `configure` is currently non-interactive template generation. Phase 5 should add an **optional interactive wizard** when stdin is a TTY (same pattern as `init`). Non-interactive paths stay first-class:
 
-- `nocciolo configure --yes` — accept starter defaults, no prompts
-- Flags / CI — generate or overwrite without a wizard
-- `--dry-run` — print the resulting template
+- `nocciolo configure --yes`: accept starter defaults, no prompts
+- Flags / CI: generate or overwrite without a wizard
+- `--dry-run`: print the resulting template
 
 ### Proposed wizard steps
 
 Keep steps short. Prefer selecting from defaults over free-form essays.
 
-1. **Extraction posture** — keep default retain/reflect missions, or lightly edit project name already baked in (advanced: open editor / skip).
-2. **Starter mental models** — multi-select which defaults to include:
+1. **Extraction posture**: keep default retain/reflect missions, or lightly edit project name already baked in (advanced: open editor / skip).
+2. **Starter mental models**: multi-select which defaults to include:
    - Project Context
    - Architecture Decisions
    - Coding Standards
    - (optional) custom: prompt for `id`, `name`, `source_query`
 3. **Tagging mode** (applies to selected models):
-   - **Project-wide (recommended)** — models untagged **or** tagged with the shared bank/project tag only; widest refresh + reflect visibility for coding agents
-   - **Topic-scoped** — map each model to seed-aligned tags (e.g. Architecture → `knowledge:architecture` / `knowledge:decision`) and set `tags_match: any` for multi-tag models
-   - **Custom scopes** — user enters comma-separated tags per model (advanced; warn about `all_strict` empty refresh)
-4. **Refresh policy** — per model or batch preset:
+   - **Project-wide (recommended)**: models untagged **or** tagged with the shared bank/project tag only; widest refresh + reflect visibility for coding agents
+   - **Topic-scoped**: map each model to seed-aligned tags (e.g. Architecture → `knowledge:architecture` / `knowledge:decision`) and set `tags_match: any` for multi-tag models
+   - **Custom scopes**: user enters comma-separated tags per model (advanced; warn about `all_strict` empty refresh)
+4. **Refresh policy**: per model or batch preset:
    - Auto after consolidation (good for evolving project context)
    - Manual only (good for curated policy / FAQ)
    - Optional later: cron / `delta` for long playbooks
-5. **Review** — print model table (id, tags, tags_match, refresh) → confirm write to `.nocciolo/hindsight/bank-template.json`
+5. **Review**: print model table (id, tags, tags_match, refresh) → confirm write to `.nocciolo/hindsight/bank-template.json`
 
 Wizard output remains the template file. Applying to Hindsight stays `configure --apply` / `bank apply` (Phase 4). The wizard must explain that models stay empty until seed + refresh.
 
 ### What the wizard should *not* do
 
-- Call Hindsight to create models before the bank exists or before seed (unless the user explicitly chose apply in the same session — still a separate step).
+- Call Hindsight to create models before the bank exists or before seed (unless the user explicitly chose apply in the same session: still a separate step).
 - Invent customer/tenant isolation for a single-repo “company brain” unless the user picks custom scopes.
 - Prompt for every directive by default; keep directive defaults automatic unless an “advanced” path is opened later.
 
@@ -115,7 +115,7 @@ Wizard output remains the template file. Applying to Hindsight stays `configure 
 
 ## Post-seed command: yes
 
-A dedicated command after seed/sync is the right place for day-2 mental model work. Declaring models at configure time is necessary but not sufficient — content is produced by reflect over retained memories.
+A dedicated command after seed/sync is the right place for day-2 mental model work. Declaring models at configure time is necessary but not sufficient: content is produced by reflect over retained memories.
 
 ### Proposed command surface
 
@@ -154,7 +154,7 @@ Once models exist and have content:
 
 - Prefer **`reflect`** (or `get_mental_model` / list with `detail=content`) for architecture, standards, and onboarding-style questions.
 - Prefer **`recall`** for narrow fact lookup and provenance hunting.
-- Callers that pass tags on reflect only see models in that tag scope — MCP snippets for a single project bank should usually use **no tags** (or the shared project tag) so project-wide models remain visible.
+- Callers that pass tags on reflect only see models in that tag scope: MCP snippets for a single project bank should usually use **no tags** (or the shared project tag) so project-wide models remain visible.
 
 ---
 
@@ -182,8 +182,8 @@ Keep provider logic out of commands. Do not invent a Mem0 mental-model API; if a
 
 ## Related
 
-- [ROADMAP.md](../ROADMAP.md) — Phase 5 checklist
-- [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md) — bank template apply
-- [nocciolo-configs.md](./nocciolo-configs.md) — `.nocciolo/` layout
-- [cli-architecture.md](./cli-architecture.md) — module boundaries
-- [dev-workflow.md](./dev-workflow.md) — happy path after seed
+- [ROADMAP.md](../ROADMAP.md): Phase 5 checklist
+- [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md): bank template apply
+- [nocciolo-configs.md](./nocciolo-configs.md): `.nocciolo/` layout
+- [cli-architecture.md](./cli-architecture.md): module boundaries
+- [dev-workflow.md](./dev-workflow.md): happy path after seed

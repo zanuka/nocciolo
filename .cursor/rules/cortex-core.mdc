@@ -1,5 +1,5 @@
 ---
-description: Core project rules for Nocciolo — company brain config for AI agents
+description: Core project rules for Nocciolo: company brain config for AI agents
 globs: ["**/*"]
 alwaysApply: true
 ---
@@ -12,7 +12,7 @@ You are working on **Nocciolo**, an open-source CLI that turns durable project k
 
 - Prefer **durable** knowledge over ephemeral content
 - Keep designs **local-first** and self-hostable
-- Amplify existing engineering practices (ADRs, standards, architecture docs) — do not replace them
+- Amplify existing engineering practices (ADRs, standards, architecture docs): do not replace them
 - CLI is the primary interface; keep it fast and predictable
 - Hindsight is the first-class target. Other providers must not compromise the Hindsight experience
 

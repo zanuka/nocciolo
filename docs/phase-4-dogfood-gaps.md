@@ -1,8 +1,8 @@
-# Phase 4 dogfood gaps — Strumentario pass
+# Phase 4 dogfood gaps: Strumentario pass
 
 Lessons from dogfooding Nocciolo against [Strumentario](https://github.com/zanuka/strumentario): full `init` → `configure` → template import → `seed` → `mcp` on a **shared** local Hindsight server (`suchconfig-hindsight`) with bank id `strumentario`, alongside the existing `nocciolo` bank.
 
-This capture feeds Phase 4 (team sharing & deployment profiles). It is not a substitute for the deployment-profile work — it names the product gaps that sharing must solve.
+This capture feeds Phase 4 (team sharing & deployment profiles). It is not a substitute for the deployment-profile work: it names the product gaps that sharing must solve.
 
 Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.md), [cli-architecture.md](./cli-architecture.md).
 
@@ -18,7 +18,7 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 | MCP endpoint | `http://localhost:8888/mcp/strumentario/` initializes when auth is correct |
 | Agent wiring files | `--write` / `--write-agents` / `--write-cursor-rules` produced usable Cursor artifacts |
 
-## Gap 1 — Multi-repo DX
+## Gap 1: Multi-repo DX
 
 **Symptom:** In a multi-root Cursor workspace (nocciolo + strumentario + …), both projects emit an MCP server named `hindsight`. Cursor surfaces one connection (e.g. `project-0-nocciolo-hindsight`) pinned to `/mcp/nocciolo/`. Agents cannot reliably recall the Strumentario bank from the same session even though `.cursor/mcp.json` in strumentario is correct.
 
@@ -26,7 +26,7 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 
 - `NOCCIOLO_HINDSIGHT_API_KEY` must be visible to the **Cursor process**, not only a terminal shell; missing/empty env → MCP `401 Invalid API key`
 - Printed/written MCP configs default to a generic server key `hindsight`, which collides across repos
-- `docker.containerName` is project-local config but often names a **machine-shared** server — easy to confuse with bank id (we already document “shared server, many banks,” but MCP naming still implies 1:1)
+- `docker.containerName` is project-local config but often names a **machine-shared** server: easy to confuse with bank id (we already document “shared server, many banks,” but MCP naming still implies 1:1)
 - Interrupted sync seed (Ctrl+C) leaves a partial bank and no/incomplete local manifest; recovery is “re-run with `--force`” but easy to miss mid-run
 
 **Product implications:**
@@ -36,7 +36,7 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 3. Document Cursor env inheritance for tenant keys; consider a `nocciolo mcp --check` / health hint that probes MCP with resolved auth (without printing secrets)
 4. Clearer post-interrupt seed messaging and/or resume story (Phase 6 reliability overlap)
 
-## Gap 2 — Bank template apply
+## Gap 2: Bank template apply
 
 **Symptom:** `configure` only writes a JSON file. Applying mission, directives, and mental models still requires a manual Control Plane import (or ad-hoc API). The happy path docs say “import the template,” but there is no first-class CLI step.
 
@@ -51,9 +51,9 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 1. `nocciolo configure --apply` (or `nocciolo bank apply`) that POSTs the template to Hindsight with `--dry-run`
 2. Idempotent create-or-update for bank + directives + mental models
 3. Actionable errors when the bank is missing vs auth fails vs template version mismatch
-4. Keep generation (`configure`) separate from apply (integration/provider concern) — do not collapse into seed
+4. Keep generation (`configure`) separate from apply (integration/provider concern): do not collapse into seed
 
-## Gap 3 — Shareable config shape
+## Gap 3: Shareable config shape
 
 **Symptom:** Version-controlled `.nocciolo/config.json` mixes **portable** project identity (`bankId`, `provider`, `name`) with **machine/environment** defaults (`docker.containerName`, optional `hindsightBaseUrl` pointing at localhost). Committed `.cursor/mcp.json` hard-codes `http://localhost:8888/mcp/<bankId>/`, which is correct for local dogfood but not for LAN/VPN/public teammates.
 
@@ -78,9 +78,9 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 
 Ordered by dogfood pain → sharing readiness:
 
-1. **MCP multi-repo DX** — bank-scoped server names; document Cursor auth env; optional connectivity check
-2. **Bank template apply** — CLI apply with dry-run; unblock reproducible bank bootstrap
-3. **Shareable config + profiles** — project vs environment split; local/LAN/VPN/public self-host **and** [Hindsight Cloud](./hindsight-cloud.md) emitters
+1. **MCP multi-repo DX**: bank-scoped server names; document Cursor auth env; optional connectivity check
+2. **Bank template apply**: CLI apply with dry-run; unblock reproducible bank bootstrap
+3. **Shareable config + profiles**: project vs environment split; local/LAN/VPN/public self-host **and** [Hindsight Cloud](./hindsight-cloud.md) emitters
 4. Deployment security defaults and `nocciolo share` validation (remaining Phase 4 checklist)
 
 ## Non-goals (still Phase 7+; mental-model lifecycle is Phase 5)

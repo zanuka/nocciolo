@@ -11,7 +11,7 @@ The configs under `.nocciolo/` are the version-controlled (and machine-local) kn
 | **Hindsight bank** | Structured memories agents query via MCP |
 | **Agent wiring** | MCP URL + rules / AGENTS snippets that steer agents to `recall` / `reflect` |
 
-Docs stay authoritative. The bank is the agent-facing index of those docs — with provenance — so sessions start warm instead of re-reading the whole tree.
+Docs stay authoritative. The bank is the agent-facing index of those docs: with provenance: so sessions start warm instead of re-reading the whole tree.
 
 ---
 
@@ -60,10 +60,10 @@ Written by `nocciolo init`. Portable project identity for this repo.
 
 | Field | Meaning |
 |-------|---------|
-| `bankId` | Hindsight bank name — **project-specific**. Many banks can share one server. |
+| `bankId` | Hindsight bank name: **project-specific**. Many banks can share one server. |
 | `provider` | Memory backend (`hindsight` today). |
 | `root` | Project root relative to config (usually `"."`). |
-| `docker.containerName` / `volumeName` | Which **local Docker server** hosts banks — not 1:1 with `bankId`. |
+| `docker.containerName` / `volumeName` | Which **local Docker server** hosts banks: not 1:1 with `bankId`. |
 | `hindsightBaseUrl` | Optional default Hindsight URL (still overridable by env / CLI). |
 
 Bank id defaults to a slug of the project directory name; it is never hardcoded to `nocciolo` for other projects. One Docker container is a Hindsight **server** that can hold many banks.
@@ -74,14 +74,14 @@ Never store API keys here. Use `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY
 
 ## `hindsight/bank-template.json`
 
-Written by `nocciolo configure`. Importable Hindsight bank template (version `"1"`) that shapes how the bank thinks — separate from the memories themselves.
+Written by `nocciolo configure`. Importable Hindsight bank template (version `"1"`) that shapes how the bank thinks: separate from the memories themselves.
 
 It typically includes:
 
-- **Retain / observations / reflect missions** — extract durable architecture, standards, and domain facts; ignore secrets and ephemeral noise
-- **Entity labels** — e.g. `knowledge_kind` (`decision`, `standard`, `architecture`, …) and `durability` (`stable`, `evolving`, `deprecated`)
-- **Mental models** — living summaries (project context, architecture decisions, coding standards) refreshed after consolidation
-- **Directives** — prefer durable sources, cite provenance, do not invent conventions, local-first defaults
+- **Retain / observations / reflect missions**: extract durable architecture, standards, and domain facts; ignore secrets and ephemeral noise
+- **Entity labels**: e.g. `knowledge_kind` (`decision`, `standard`, `architecture`, …) and `durability` (`stable`, `evolving`, `deprecated`)
+- **Mental models**: living summaries (project context, architecture decisions, coding standards) refreshed after consolidation
+- **Directives**: prefer durable sources, cite provenance, do not invent conventions, local-first defaults
 
 Example (abbreviated from this repo’s template):
 
@@ -124,7 +124,7 @@ Written by live `nocciolo seed`. Tracks **what was already retained** so re-seed
 
 - Per source path: content hash, list of stable fact / `document_id`s, last seeded time
 - Unchanged files are skipped on the next `seed` unless you pass `--force`
-- Fact ids look like `nocciolo:README.md#the-vision` — Hindsight upserts by id instead of duplicating
+- Fact ids look like `nocciolo:README.md#the-vision`: Hindsight upserts by id instead of duplicating
 
 This is **machine-local seed state**, not documentation. Prefer keeping it out of git (`.nocciolo/local/` is gitignored). The bank in Hindsight is the shared memory; the manifest only speeds up re-seed on this machine.
 
@@ -178,7 +178,7 @@ Wire the harness after seed:
 nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
-Auth (when the server requires a tenant key) uses the same secret as seed: set `NOCCIOLO_HINDSIGHT_API_KEY` in the environment the IDE inherits — never commit the key. Refresh MCP in Cursor Settings after writing `.cursor/mcp.json`.
+Auth (when the server requires a tenant key) uses the same secret as seed: set `NOCCIOLO_HINDSIGHT_API_KEY` in the environment the IDE inherits: never commit the key. Refresh MCP in Cursor Settings after writing `.cursor/mcp.json`.
 
 ---
 
@@ -186,11 +186,11 @@ Auth (when the server requires a tenant key) uses the same secret as seed: set `
 
 Without a bank, every agent session rediscovers architecture, standards, and domain rules from scattered files. With Nocciolo:
 
-- **Shared context** — teammates and agents hit the same bank id and template policy
-- **Provenance** — recalled facts point back to README / ADR / docs sections
-- **Conservative seeding** — only high-signal durable sections; secrets stay out
-- **Incremental updates** — change docs → `seed --dry-run` → live `seed`; unchanged sources are skipped
-- **Harness-ready MCP** — one command emits Cursor / AGENTS wiring so recall is the default path
+- **Shared context**: teammates and agents hit the same bank id and template policy
+- **Provenance**: recalled facts point back to README / ADR / docs sections
+- **Conservative seeding**: only high-signal durable sections; secrets stay out
+- **Incremental updates**: change docs → `seed --dry-run` → live `seed`; unchanged sources are skipped
+- **Harness-ready MCP**: one command emits Cursor / AGENTS wiring so recall is the default path
 
 Typical loop:
 
@@ -211,9 +211,9 @@ Update docs when the project evolves; re-seed when you want the bank to catch up
 
 ## Related
 
-- [README](../README.md) — quick start and MCP flags
-- [Developer workflow](./dev-workflow.md) — first seed, re-seed, retain tips
-- [CLI architecture](./cli-architecture.md) — config layout and seed pipeline for contributors
-- [Sensitive data](./sensitive-data.md) — what must never be retained
-- [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md) — multi-repo MCP DX and template apply
+- [README](../README.md): quick start and MCP flags
+- [Developer workflow](./dev-workflow.md): first seed, re-seed, retain tips
+- [CLI architecture](./cli-architecture.md): config layout and seed pipeline for contributors
+- [Sensitive data](./sensitive-data.md): what must never be retained
+- [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md): multi-repo MCP DX and template apply
 - [Hindsight bank templates](https://hindsight.vectorize.io/developer/api/bank-templates)

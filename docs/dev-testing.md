@@ -18,7 +18,7 @@ Companion docs: [dev-workflow.md](./dev-workflow.md) (day-to-day loop), [cli-arc
 | pnpm | `pnpm -v` |
 | Docker Desktop (or engine) running | `docker info` |
 | LLM API key | `OPENAI_API_KEY` or `HINDSIGHT_API_LLM_API_KEY` (Hindsight retain needs an LLM) |
-| Optional tenant API key | Any secret string, e.g. `dev-tenant-key` — used for container auth + Nocciolo seed |
+| Optional tenant API key | Any secret string, e.g. `dev-tenant-key`: used for container auth + Nocciolo seed |
 
 **Never** commit real keys. Prefer process-scoped env:
 
@@ -68,7 +68,7 @@ nocciolo --help
 # n() { nocciolo "$@"; }
 ```
 
-All steps below use bare `nocciolo` on your PATH. The global entry is a symlink to `$NOCCIOLO_REPO`, so after TypeScript changes a plain `pnpm build` is enough — no re-link.
+All steps below use bare `nocciolo` on your PATH. The global entry is a symlink to `$NOCCIOLO_REPO`, so after TypeScript changes a plain `pnpm build` is enough: no re-link.
 
 `pnpm link --global` is equivalent but requires a one-time `pnpm setup` (plus a new shell) to create the pnpm global bin directory; without it pnpm fails with `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
 
@@ -82,7 +82,7 @@ Set `HINDSIGHT_CONTAINER` to an **existing** Docker container that already hosts
 
 Run in order. Check the **Pass** line before moving on.
 
-### 0. Docker — print (no execute)
+### 0. Docker: print (no execute)
 
 ```bash
 nocciolo docker print --name "$HINDSIGHT_CONTAINER"
@@ -95,9 +95,9 @@ nocciolo docker print --name "$HINDSIGHT_CONTAINER" --api-key 'dev-tenant-key'
 - Ports `8888` / `9999`, container name matches `$HINDSIGHT_CONTAINER` (from `--name`)
 - LLM / tenant secrets appear as **env placeholders** (`$OPENAI_API_KEY`, `$NOCCIOLO_HINDSIGHT_API_KEY`), never raw key material
 - Does not start a container
-- One container can host many banks — container name is independent of `bankId`
+- One container can host many banks: container name is independent of `bankId`
 
-### 1. Docker — up (or reuse)
+### 1. Docker: up (or reuse)
 
 If `$HINDSIGHT_CONTAINER` is already running, skip live `up` and only check status:
 
@@ -112,7 +112,7 @@ nocciolo docker up --name "$HINDSIGHT_CONTAINER" --dry-run
 
 - `--dry-run` does not create a container
 - Status shows **Up** when reusing an existing server
-- UI reachable: open `http://localhost:9999` (may take ~30–60s on first pull)
+- UI reachable: open `http://localhost:9999` (may take ~30-60s on first pull)
 - API: `curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8888/` (expect non-connection-refused; exact code varies)
 - Live `up` when the container already exists fails with an **actionable** hint (already exists → use `status`, or `down` then `up` only if you mean to recreate)
 
@@ -151,7 +151,7 @@ nocciolo configure   # expect already-exists error without --force
 - Re-run without `--force` is actionable
 - Import template (or create bank with same `bankId`) in Hindsight UI before live seed
 
-### 4. Seed — dry-run
+### 4. Seed: dry-run
 
 ```bash
 nocciolo seed --dry-run
@@ -164,7 +164,7 @@ nocciolo seed --dry-run
 - Skips empty / low-signal sections with reasons
 - Does not create or require `.nocciolo/local/seed-manifest.json` updates for a pure preview (manifest may be absent)
 
-### 5. Seed — live
+### 5. Seed: live
 
 ```bash
 # with tenant auth on the container:
@@ -183,7 +183,7 @@ NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed
 - Wrong/missing key → early **401/403** with hint to set `NOCCIOLO_HINDSIGHT_API_KEY` / `--api-key`
 - Unreachable URL → failure naming the base URL and suggesting config/env check
 
-### 6. Seed — incremental re-seed
+### 6. Seed: incremental re-seed
 
 ```bash
 NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed --dry-run
@@ -204,7 +204,7 @@ NOCCIOLO_HINDSIGHT_API_KEY='dev-tenant-key' nocciolo seed --async
 
 **Pass:** async submit + operation poll (or clear message if no operation id).
 
-### 7. MCP — print snippets
+### 7. MCP: print snippets
 
 ```bash
 nocciolo mcp
@@ -220,7 +220,7 @@ nocciolo mcp --include-auth
 - `--harness` filters; unknown harness → actionable error
 - Missing `.nocciolo/config.json` → “run `nocciolo init`”
 
-### 8. MCP — write (dry-run then apply)
+### 8. MCP: write (dry-run then apply)
 
 ```bash
 nocciolo mcp --write --dry-run
@@ -240,7 +240,7 @@ nocciolo mcp --write --force
 - Existing other MCP servers in `.cursor/mcp.json` are preserved on merge
 - Optional: `nocciolo mcp --write-roo --write-kiro --dry-run` then apply if you care about those harnesses
 
-### 9. Docker — status (keep shared server)
+### 9. Docker: status (keep shared server)
 
 ```bash
 nocciolo docker status --name "$HINDSIGHT_CONTAINER"
@@ -253,7 +253,7 @@ nocciolo docker down --name "$HINDSIGHT_CONTAINER" --dry-run
 
 - Status reflects running accurately for `$HINDSIGHT_CONTAINER`
 - Dry-run `down` prints the remove command but does not execute
-- Volume data for that server persists across ups — expected
+- Volume data for that server persists across ups: expected
 
 ---
 
@@ -318,7 +318,7 @@ Unit tests (`pnpm test`) still cover pure modules (snippets, docker plan, extrac
 | Live `seed` (first, many candidates) | several minutes (LLM extract per item) |
 | `mcp` print/write | seconds |
 
-Do not treat sync seed “silence between progress lines” as a hang — watch `[i/N]` percent.
+Do not treat sync seed “silence between progress lines” as a hang: watch `[i/N]` percent.
 
 ---
 
@@ -339,7 +339,7 @@ Notes / bugs found:
 
 ## Related
 
-- [dev-workflow.md](./dev-workflow.md) — build → seed → consolidation tips
-- [cli-architecture.md](./cli-architecture.md) — command and module map
-- [sensitive-data.md](./sensitive-data.md) — what must never be retained
-- [ROADMAP.md](../ROADMAP.md) — phase status
+- [dev-workflow.md](./dev-workflow.md): build → seed → consolidation tips
+- [cli-architecture.md](./cli-architecture.md): command and module map
+- [sensitive-data.md](./sensitive-data.md): what must never be retained
+- [ROADMAP.md](../ROADMAP.md): phase status

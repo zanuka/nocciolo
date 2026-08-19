@@ -124,14 +124,14 @@ node dist/cli.js mcp --write --dry-run
 
 Common flags:
 
-- `--dry-run` — preview without mutating (or without calling Hindsight for seed)
-- `--force` — overwrite config/template/MCP entry, or re-seed unchanged sources
-- `--yes` / `-y` — on `init`, accept defaults without interactive prompts
-- `--bank-id <id>` — Hindsight bank id on `init` (project-specific; many banks can share one server)
-- `--container-name <name>` — local Docker container on `init` (shared Hindsight server)
-- `--hindsight-url <url>` — override Hindsight base URL for this run
-- `--api-key <key>` — override API key for this run (seed) or enable tenant auth (docker) / print auth snippets (mcp)
-- `--async` — submit retain asynchronously to Hindsight
+- `--dry-run`: preview without mutating (or without calling Hindsight for seed)
+- `--force`: overwrite config/template/MCP entry, or re-seed unchanged sources
+- `--yes` / `-y`: on `init`, accept defaults without interactive prompts
+- `--bank-id <id>`: Hindsight bank id on `init` (project-specific; many banks can share one server)
+- `--container-name <name>`: local Docker container on `init` (shared Hindsight server)
+- `--hindsight-url <url>`: override Hindsight base URL for this run
+- `--api-key <key>`: override API key for this run (seed) or enable tenant auth (docker) / print auth snippets (mcp)
+- `--async`: submit retain asynchronously to Hindsight
 
 ## Config and generated files
 
@@ -157,8 +157,8 @@ Local / gitignored state (do **not** commit secrets or machine-local seed state)
 
 Optional config fields:
 
-- `hindsightBaseUrl` — default Hindsight server for this project (still overridable by env/CLI)
-- `docker.containerName` / `docker.volumeName` — local Docker helper defaults (shared server; not 1:1 with `bankId`)
+- `hindsightBaseUrl`: default Hindsight server for this project (still overridable by env/CLI)
+- `docker.containerName` / `docker.volumeName`: local Docker helper defaults (shared server; not 1:1 with `bankId`)
 
 **Never** put API keys in version-controlled config. Use env vars or `--api-key`.
 
@@ -250,9 +250,9 @@ Each candidate gets a stable id used as Hindsight `document_id`, e.g. `nocciolo:
 4. Live seed maps candidates → retain items (`content`, `context`, `document_id`, `timestamp: "unset"`, metadata, tags).
 5. On success, rewrite the manifest with new hashes and fact ids.
 
-Synchronous retain (default) prints a clear warning not to close the terminal or press Ctrl+C, then retains **one item at a time** with `[i/N] percent` progress. Hindsight LLM extraction often takes several seconds per item, so a full first seed can take minutes — that is expected, not a hang.
+Synchronous retain (default) prints a clear warning not to close the terminal or press Ctrl+C, then retains **one item at a time** with `[i/N] percent` progress. Hindsight LLM extraction often takes several seconds per item, so a full first seed can take minutes: that is expected, not a hang.
 
-Use `--async` to submit the batch and have Nocciolo **poll** `GET /v1/default/banks/{bank}/operations/{id}` for Hindsight’s own `progress.processed` / `progress.total` (when the server reports them). Do **not** scrape Docker container logs for progress — that is fragile and environment-specific; the operations API is the supported channel.
+Use `--async` to submit the batch and have Nocciolo **poll** `GET /v1/default/banks/{bank}/operations/{id}` for Hindsight’s own `progress.processed` / `progress.total` (when the server reports them). Do **not** scrape Docker container logs for progress: that is fragile and environment-specific; the operations API is the supported channel.
 
 `--dry-run` still shows what **would** be retained (and what would be skipped as unchanged).
 
@@ -278,7 +278,7 @@ Import the generated template into Hindsight (Control Plane or import API) befor
 | `down` / `stop` | `docker rm -f` the container |
 | `status` | Show container status + API/UI URLs |
 
-Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`. Resolution for container/volume: `--name` → `docker` in `.nocciolo/config.json` → those defaults. One container is a Hindsight **server** that can host many banks — do not treat container name as the bank id. LLM key from `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Optional `--api-key` enables tenant auth (`HINDSIGHT_API_TENANT_API_KEY` + matching CP dataplane key).
+Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`. Resolution for container/volume: `--name` → `docker` in `.nocciolo/config.json` → those defaults. One container is a Hindsight **server** that can host many banks: do not treat container name as the bank id. LLM key from `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Optional `--api-key` enables tenant auth (`HINDSIGHT_API_TENANT_API_KEY` + matching CP dataplane key).
 
 ## Agent integration (MCP)
 
@@ -321,13 +321,13 @@ node dist/cli.js --help
 
 ## Related docs
 
-- [README](../README.md) — product overview and quick start
-- [Developer workflow](./dev-workflow.md) — build, first seed, re-seed, retain vs consolidation
-- [Developer testing](./dev-testing.md) — end-user command sequence and E2E regression checklist
-- [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md) — Strumentario multi-repo / template apply / shareable config lessons
-- [Sensitive data](./sensitive-data.md) — allowlist/denylist so secrets and noise stay out of banks
-- [AGENTS.md](../AGENTS.md) — principles for humans and agents
-- [ROADMAP.md](../ROADMAP.md) — phased plan
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — PR / setup conventions
+- [README](../README.md): product overview and quick start
+- [Developer workflow](./dev-workflow.md): build, first seed, re-seed, retain vs consolidation
+- [Developer testing](./dev-testing.md): end-user command sequence and E2E regression checklist
+- [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md): Strumentario multi-repo / template apply / shareable config lessons
+- [Sensitive data](./sensitive-data.md): allowlist/denylist so secrets and noise stay out of banks
+- [AGENTS.md](../AGENTS.md): principles for humans and agents
+- [ROADMAP.md](../ROADMAP.md): phased plan
+- [CONTRIBUTING.md](../CONTRIBUTING.md): PR / setup conventions
 - [Hindsight retain docs](https://hindsight.vectorize.io/developer/api/retain)
 - [Hindsight bank templates](https://hindsight.vectorize.io/developer/api/bank-templates)

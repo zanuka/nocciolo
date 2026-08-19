@@ -19,7 +19,7 @@ alwaysApply: false
 - Strict mode preferred
 - Prefer interfaces / types that model the domain clearly (BankTemplate, DurableFact, Provenance, etc.)
 - Avoid deep inheritance; favor composition
-- Keep modules focused — one primary responsibility per file when practical
+- Keep modules focused: one primary responsibility per file when practical
 - Public CLI surface should be stable; internal modules can evolve faster
 
 ## Error handling

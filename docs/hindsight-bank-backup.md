@@ -51,7 +51,7 @@ mkdir -p ~/hindsight-bank-backups
 docker cp "${HINDSIGHT_CONTAINER}:/tmp/${BACKUP}" ~/hindsight-bank-backups/
 ```
 
-Restore (destructive — deletes existing data in the target schema first):
+Restore (destructive; deletes existing data in the target schema first):
 
 ```bash
 docker cp ~/hindsight-bank-backups/hindsight-backup-YYYYMMDD.zip \
@@ -98,7 +98,7 @@ for BANK_ID in bank-a bank-b bank-c; do
 done
 ```
 
-Import into an instance (target bank must **not** already exist — delete it first or use `--target-bank`):
+Import into an instance (target bank must **not** already exist: delete it first or use `--target-bank`):
 
 ```bash
 docker cp ~/hindsight-bank-backups/nocciolo.zip \
@@ -125,7 +125,7 @@ Do **not** run `docker volume rm` on the data volume unless you intend to delete
 
 ## See also
 
-- [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli) — `backup`, `restore`, `export-bank`, `import-bank`
-- [Upgrading Hindsight](./hindsight-upgrade.md) — Docker image upgrade with the same data volume
-- [Developer workflow](./dev-workflow.md) — local Docker up / seed loop
-- [Hindsight Cloud](./hindsight-cloud.md) — managed hosting (different backup story; not this Docker path)
+- [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli): `backup`, `restore`, `export-bank`, `import-bank`
+- [Upgrading Hindsight](./hindsight-upgrade.md): Docker image upgrade with the same data volume
+- [Developer workflow](./dev-workflow.md): local Docker up / seed loop
+- [Hindsight Cloud](./hindsight-cloud.md): managed hosting (different backup story; not this Docker path)

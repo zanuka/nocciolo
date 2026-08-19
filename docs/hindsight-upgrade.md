@@ -11,9 +11,9 @@ Nocciolo talks to whatever Hindsight version you run. Upgrading the image is a D
 | Named volume (e.g. `hindsight-data` → `/home/hindsight/.pg0`) | **Yes** | Banks and embedded Postgres live here |
 | Container filesystem / image | No | Replaced when you pull a new tag |
 | Env vars / port maps / restart policy | No | Must be re-applied on `docker run` |
-| Portable ZIP backups | N/A | Separate copies on the host — see [hindsight-bank-backup.md](./hindsight-bank-backup.md) |
+| Portable ZIP backups | N/A | Separate copies on the host: see [hindsight-bank-backup.md](./hindsight-bank-backup.md) |
 
-`docker rm -f <container>` does **not** delete the volume. `docker volume rm hindsight-data` does — never run that unless you intend to wipe all banks.
+`docker rm -f <container>` does **not** delete the volume. `docker volume rm hindsight-data` does: never run that unless you intend to wipe all banks.
 
 Hindsight runs database migrations on API startup by default (`HINDSIGHT_API_RUN_MIGRATIONS_ON_STARTUP`). Recreating the container on the same volume is the supported upgrade path for Docker + pg0.
 
@@ -77,7 +77,7 @@ export NOCCIOLO_HINDSIGHT_API_KEY="$(
 )"
 ```
 
-If you use Ollama or other custom env (`HINDSIGHT_API_LLM_BASE_URL`, `HINDSIGHT_API_LLM_MODEL`, worker slots, etc.), copy those values into the new `docker run` — `nocciolo docker up` only covers a subset of flags and may not reproduce a hand-tuned container.
+If you use Ollama or other custom env (`HINDSIGHT_API_LLM_BASE_URL`, `HINDSIGHT_API_LLM_MODEL`, worker slots, etc.), copy those values into the new `docker run`: `nocciolo docker up` only covers a subset of flags and may not reproduce a hand-tuned container.
 
 Set a **stable** worker id across restarts (recommended by upstream):
 
@@ -154,7 +154,7 @@ Only use this if the helper’s flags cover your LLM/auth needs; otherwise prefe
 
 ## 7. Verify
 
-Wait ~30–60s for startup and migrations, then:
+Wait ~30-60s for startup and migrations, then:
 
 ```bash
 curl -sS http://localhost:8888/version
@@ -183,7 +183,7 @@ docker exec "$HINDSIGHT_CONTAINER" hindsight-admin repair-bank --all
 
 1. `docker rm -f "$HINDSIGHT_CONTAINER"`
 2. `docker run` again with the **previous** image tag and the **same** volume + env
-3. If the volume was damaged, restore from the zip taken in step 2 (`hindsight-admin restore` — destructive; see [backup docs](./hindsight-bank-backup.md))
+3. If the volume was damaged, restore from the zip taken in step 2 (`hindsight-admin restore`: destructive; see [backup docs](./hindsight-bank-backup.md))
 
 ## Common mistakes
 
@@ -197,7 +197,7 @@ docker exec "$HINDSIGHT_CONTAINER" hindsight-admin repair-bank --all
 
 ## See also
 
-- [hindsight-bank-backup.md](./hindsight-bank-backup.md) — full `backup` and per-bank `export-bank`
-- [dev-workflow.md](./dev-workflow.md) — `nocciolo docker` helper
-- [cli-architecture.md](./cli-architecture.md) — Docker defaults (`hindsight` / `hindsight-data`)
-- [Hindsight Cloud](./hindsight-cloud.md) — managed hosting (no local image upgrade)
+- [hindsight-bank-backup.md](./hindsight-bank-backup.md): full `backup` and per-bank `export-bank`
+- [dev-workflow.md](./dev-workflow.md): `nocciolo docker` helper
+- [cli-architecture.md](./cli-architecture.md): Docker defaults (`hindsight` / `hindsight-data`)
+- [Hindsight Cloud](./hindsight-cloud.md): managed hosting (no local image upgrade)

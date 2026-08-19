@@ -3,7 +3,7 @@ description: Prefer the project Hindsight bank (nocciolo) for durable context
 alwaysApply: true
 ---
 
-# Hindsight bank — nocciolo
+# Hindsight bank: nocciolo
 
 Use the project memory bank `nocciolo` via Hindsight MCP when answering questions about architecture, decisions, coding standards, or domain rules.
 

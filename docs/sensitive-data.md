@@ -19,7 +19,7 @@ How Nocciolo keeps secrets and low-value project noise out of Hindsight banks. C
 | Ignore wizard on every seed | **No** | Blocks automation; dry-run already shows candidates |
 | User customization | **Config-based ignore** (planned), optional one-time wizard later | Explicit, version-controlled, progressive |
 
-## Layer 1 — Allowlist (what can be considered)
+## Layer 1: Allowlist (what can be considered)
 
 The scanner only looks for durable documentation shapes:
 
@@ -38,7 +38,7 @@ Consequently, these are **not** seeded today even without a denylist hit:
 
 Seeding is for durable **project knowledge**, not for mirroring the repository into Hindsight.
 
-## Layer 2 — Sensitive denylist (never retain)
+## Layer 2: Sensitive denylist (never retain)
 
 Implemented in `src/scanner/sensitive.ts` and applied in `findDurableSources` **before** extraction.
 
@@ -76,9 +76,9 @@ Markdown that is usually a secret dump rather than architecture:
 
 ### Bank template alignment
 
-Generated Hindsight retain missions also tell the bank to ignore secrets/credentials during LLM extraction — a second line of defense after the scanner.
+Generated Hindsight retain missions also tell the bank to ignore secrets/credentials during LLM extraction: a second line of defense after the scanner.
 
-## Layer 3 — How developers verify
+## Layer 3: How developers verify
 
 Always preview before a live retain:
 
@@ -100,9 +100,9 @@ Rejected as the default. Reasons:
 
 ### Planned follow-ups
 
-1. **Broader noise denylist** — explicit excludes for lockfiles, package manifests, `.github/`, `.gitlab*`, language build dirs (`target`, `_build`, `deps`, etc.) even if scanning expands later
-2. **Project ignore file** — e.g. `.nocciolo/ignore` or `ignorePatterns` in `.nocciolo/config.json` (gitignore-style), committed with the repo
-3. **Optional one-time wizard** — during `configure` (or `nocciolo ignore`) that *writes* ignore patterns; never a mandatory gate on each `seed`
+1. **Broader noise denylist**: explicit excludes for lockfiles, package manifests, `.github/`, `.gitlab*`, language build dirs (`target`, `_build`, `deps`, etc.) even if scanning expands later
+2. **Project ignore file**: e.g. `.nocciolo/ignore` or `ignorePatterns` in `.nocciolo/config.json` (gitignore-style), committed with the repo
+3. **Optional one-time wizard**: during `configure` (or `nocciolo ignore`) that *writes* ignore patterns; never a mandatory gate on each `seed`
 
 ## Implementation map
 
@@ -121,7 +121,7 @@ If a real-world secret shape still reaches `--dry-run`, open an issue with a **r
 
 ## Related
 
-- [cli-architecture.md](./cli-architecture.md) — scanner and seed pipeline
-- [dev-workflow.md](./dev-workflow.md) — first seed and re-seed loop
-- [AGENTS.md](../AGENTS.md) — durable-over-ephemeral principle
-- [SECURITY.md](../SECURITY.md) — security reporting for the project
+- [cli-architecture.md](./cli-architecture.md): scanner and seed pipeline
+- [dev-workflow.md](./dev-workflow.md): first seed and re-seed loop
+- [AGENTS.md](../AGENTS.md): durable-over-ephemeral principle
+- [SECURITY.md](../SECURITY.md): security reporting for the project

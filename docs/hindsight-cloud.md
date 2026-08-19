@@ -1,14 +1,14 @@
 # Hindsight Cloud with Nocciolo
 
-How teams use Nocciolo against **[Hindsight Cloud](https://docs.hindsight.vectorize.io/)** (managed hosting) instead of — or in addition to — a local / self-hosted Hindsight Docker server.
+How teams use Nocciolo against **[Hindsight Cloud](https://docs.hindsight.vectorize.io/)** (managed hosting) instead of, or in addition to, a local / self-hosted Hindsight Docker server.
 
 Upstream:
 
 - [Hindsight Cloud docs](https://docs.hindsight.vectorize.io/)
-- [Getting started](https://docs.hindsight.vectorize.io/getting-started) — org, bank, API key
-- [Hindsight Academy](https://learn.hindsight.vectorize.io/) — free hands-on courses with Cloud credits
-- [MCP server](https://hindsight.vectorize.io/developer/mcp-server) — single-bank vs multi-bank endpoints
-- [Native MCP OAuth](https://hindsight.vectorize.io/blog/2026/03/30/mcp-oauth-native) — interactive agent clients on Cloud
+- [Getting started](https://docs.hindsight.vectorize.io/getting-started): org, bank, API key
+- [Hindsight Academy](https://learn.hindsight.vectorize.io/): free hands-on courses with Cloud credits
+- [MCP server](https://hindsight.vectorize.io/developer/mcp-server): single-bank vs multi-bank endpoints
+- [Native MCP OAuth](https://hindsight.vectorize.io/blog/2026/03/30/mcp-oauth-native): interactive agent clients on Cloud
 
 Nocciolo stays **local-first by default**. Cloud is an **opt-in deployment profile**, not the happy-path default and never a forced dependency.
 
@@ -21,7 +21,7 @@ Nocciolo stays **local-first by default**. Cloud is an **opt-in deployment profi
 | Solo / learning | Skip Docker + LLM wiring; [Academy](https://learn.hindsight.vectorize.io/) + free credits |
 | Small teams | Shared bank without running a Hindsight server; org invites + RBAC |
 | Orgs already on Cloud | Same Nocciolo seed/MCP flow against managed API |
-| Offline / regulated | Keep using local Docker / VPN / self-host — Cloud is optional |
+| Offline / regulated | Keep using local Docker / VPN / self-host: Cloud is optional |
 
 Self-host remains first-class: `nocciolo docker`, LAN/VPN/public profiles, full data control. Cloud is the managed alternative when infrastructure is the bottleneck, not when Nocciolo should become cloud-only.
 
@@ -41,7 +41,7 @@ What changes is **where** the bank lives and **how** agents authenticate:
 |---------|-------------------|-----------------|
 | Base URL (REST) | `http://localhost:8888` (or LAN/VPN host) | `https://api.hindsight.vectorize.io` |
 | Auth for `seed` / apply | Often optional locally; Bearer when tenant key set | **Required** API key (`hsk_…`) |
-| Docker helper | `nocciolo docker up` | Skip — managed infra |
+| Docker helper | `nocciolo docker up` | Skip: managed infra |
 | LLM for retain | You supply Ollama / OpenAI / etc. on the server | Managed by Cloud (credits / tokens) |
 | Single-bank MCP | `{base}/mcp/{bankId}/` | `https://api.hindsight.vectorize.io/mcp/{bankId}/` (+ Bearer) **or** OAuth MCP host |
 | Interactive MCP OAuth | N/A (local HTTP) | `https://mcp.hindsight.vectorize.io` ([native OAuth](https://hindsight.vectorize.io/blog/2026/03/30/mcp-oauth-native)) |
@@ -101,7 +101,7 @@ Optional committed non-secret hint (no keys):
 }
 ```
 
-Prefer env or a **local** profile overlay for the URL so teammates can use Cloud while the repo default stays local — or the reverse. Exact split lands with Phase 4 shareable config (`project` vs `environment/profile`).
+Prefer env or a **local** profile overlay for the URL so teammates can use Cloud while the repo default stays local: or the reverse. Exact split lands with Phase 4 shareable config (`project` vs `environment/profile`).
 
 ### `init` / profile selection
 
@@ -122,10 +122,10 @@ Flags (illustrative): `--profile hindsight-cloud` or `--hindsight-url https://ap
 
 | Command | Behavior |
 |---------|----------|
-| `configure` | Unchanged — writes bank template locally |
+| `configure` | Unchanged: writes bank template locally |
 | `configure --apply` / `bank apply` | REST against Cloud URL + API key |
 | `seed` / `seed --dry-run` | Same retain pipeline; live seed **requires** API key; fails with actionable “set NOCCIOLO_HINDSIGHT_API_KEY from Cloud dashboard” |
-| `docker *` | No-op or clear message: “Cloud profile — no local container” |
+| `docker *` | No-op or clear message: “Cloud profile: no local container” |
 | `mcp` | Emit Cloud MCP URL(s); see below |
 | `mental-model` | Same live API against Cloud |
 
@@ -153,7 +153,7 @@ Best for: scripted setups, Cursor project `mcp.json` with env placeholders, CI-a
 }
 ```
 
-`nocciolo mcp --include-auth` should keep using env placeholders for writes — never commit raw `hsk_` keys.
+`nocciolo mcp --include-auth` should keep using env placeholders for writes: never commit raw `hsk_` keys.
 
 ### B. Native OAuth MCP host (interactive IDEs)
 
@@ -187,7 +187,7 @@ Recommendation: **default Cloud MCP emission = bank-scoped API URL + env API key
 1. One person creates the Cloud org + bank (bank id = project `bankId`).
 2. Repo commits `.nocciolo/` template + profile hint `hindsight-cloud` (no secrets).
 3. Teammates: Cloud invite → personal or shared bot API key via secret channel → `export NOCCIOLO_HINDSIGHT_*` → `nocciolo seed` / agents via MCP.
-4. Role-based access and (enterprise) SSO live in Cloud — Nocciolo does not reinvent IAM.
+4. Role-based access and (enterprise) SSO live in Cloud: Nocciolo does not reinvent IAM.
 
 ### Hybrid
 
@@ -199,17 +199,17 @@ Recommendation: **default Cloud MCP emission = bank-scoped API URL + env API key
 
 - Commit API keys or OAuth tokens.
 - Make Cloud the default for `init --yes`.
-- Assume Cloud OAuth replaces bank-scoped MCP for multi-repo workspaces (bank-scoped names still matter — see [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md)).
-- Treat Cloud credits as unlimited — seed and mental-model refresh consume retain / mental-model tokens.
+- Assume Cloud OAuth replaces bank-scoped MCP for multi-repo workspaces (bank-scoped names still matter: see [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md)).
+- Treat Cloud credits as unlimited: seed and mental-model refresh consume retain / mental-model tokens.
 
 ---
 
 ## Security & data
 
-- Cloud means project knowledge leaves the machine — acceptable for many teams, wrong for some. Profile choice should be explicit.
+- Cloud means project knowledge leaves the machine: acceptable for many teams, wrong for some. Profile choice should be explicit.
 - Same Nocciolo rules: never seed secrets ([sensitive-data.md](./sensitive-data.md)); retain mission already tells the bank to ignore credentials.
 - Prefer short-lived or rotated API keys for bots; human OAuth for interactive MCP where available.
-- Enterprise Cloud features (SSO, audit logs, Memory Defense) are org-side — document links, do not reimplement.
+- Enterprise Cloud features (SSO, audit logs, Memory Defense) are org-side: document links, do not reimplement.
 
 ---
 
@@ -224,7 +224,7 @@ Recommendation: **default Cloud MCP emission = bank-scoped API URL + env API key
 - [ ] Errors: 401/403 → “create key at ui.hindsight.vectorize.io → Connect”; credit exhaustion → link Cloud billing docs
 - [ ] Tests: URL builders for `https://api.hindsight.vectorize.io` + MCP path; no secrets in fixtures
 
-CLI already resolves custom base URLs and Bearer keys — much of Cloud works today with:
+CLI already resolves custom base URLs and Bearer keys: much of Cloud works today with:
 
 ```bash
 export NOCCIOLO_HINDSIGHT_URL=https://api.hindsight.vectorize.io
@@ -234,7 +234,7 @@ nocciolo seed
 nocciolo mcp --hindsight-url https://api.hindsight.vectorize.io --include-auth --write
 ```
 
-First-class support is naming the profile, tightening UX, and teaching the Cloud vs local trade-off — not inventing a separate product path.
+First-class support is naming the profile, tightening UX, and teaching the Cloud vs local trade-off: not inventing a separate product path.
 
 ---
 
@@ -249,8 +249,8 @@ First-class support is naming the profile, tightening UX, and teaching the Cloud
 
 ## Related
 
-- [ROADMAP.md](../ROADMAP.md) — Phase 4 deployment profiles
-- [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md) — shareable config / MCP naming
-- [nocciolo-configs.md](./nocciolo-configs.md) — `.nocciolo/` layout
-- [cli-architecture.md](./cli-architecture.md) — URL / API key resolution
-- [hindsight-mental-models.md](./hindsight-mental-models.md) — post-seed curation (same on Cloud)
+- [ROADMAP.md](../ROADMAP.md): Phase 4 deployment profiles
+- [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md): shareable config / MCP naming
+- [nocciolo-configs.md](./nocciolo-configs.md): `.nocciolo/` layout
+- [cli-architecture.md](./cli-architecture.md): URL / API key resolution
+- [hindsight-mental-models.md](./hindsight-mental-models.md): post-seed curation (same on Cloud)

@@ -4,7 +4,7 @@
 
 **Company brain config for AI agents.**
 
-Nocciolo (Italian for kernel / core) — the durable core of project knowledge that agents inherit.
+Nocciolo (Italian for kernel / core): the durable core of project knowledge that agents inherit.
 
 ## Goal
 
@@ -27,7 +27,7 @@ Traditional documentation is written for humans. Agent memory systems need struc
 
 Nocciolo is the **company brain config** layer.
 
-It turns the durable knowledge already living in your repository into a properly configured memory bank that agents can retain, recall, and reflect against — starting with [Hindsight](https://hindsight.vectorize.io).
+It turns the durable knowledge already living in your repository into a properly configured memory bank that agents can retain, recall, and reflect against: starting with [Hindsight](https://hindsight.vectorize.io).
 
 Agents inherit shared context instead of rediscovering it.
 
@@ -35,12 +35,12 @@ Agents inherit shared context instead of rediscovering it.
 
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
-- **Seeds** the bank with high-signal facts and decisions so agents start with real context
+- **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
-- **Shares** knowledgebases across teams with explicit deployment profiles — local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/) — so the company brain reaches the agents that need it
-- **Stays local-first** — self-host by default; Cloud is opt-in, never required
+- **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
+- **Stays local-first**: self-host by default; Cloud is opt-in, never required
 
-Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates). Host it yourself with Docker or use [Hindsight Cloud](https://docs.hindsight.vectorize.io/) when you want managed infra (same Nocciolo seed/MCP flow — see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)). Other memory backends stay optional and later — only if real demand appears. Event-driven updates, richer curation, and team-wide sharing are on the [roadmap](./ROADMAP.md).
+Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates). Host it yourself with Docker or use [Hindsight Cloud](https://docs.hindsight.vectorize.io/) when you want managed infra (same Nocciolo seed/MCP flow: see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)). Other memory backends stay optional and later: only if real demand appears. Event-driven updates, richer curation, and team-wide sharing are on the [roadmap](./ROADMAP.md).
 
 ## Quick Start
 
@@ -63,7 +63,7 @@ nocciolo seed                          # retain
 nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
-`pnpm nocciolo …` only works **inside this repo**. Other projects need the linked `nocciolo` binary (or the clone path below). `npm link` needs no extra setup. To link with pnpm instead, run `pnpm setup` once (it creates `PNPM_HOME` and adds it to your PATH), open a new shell, then `pnpm link --global` — without that step pnpm fails with `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
+`pnpm nocciolo …` only works **inside this repo**. Other projects need the linked `nocciolo` binary (or the clone path below). `npm link` needs no extra setup. To link with pnpm instead, run `pnpm setup` once (it creates `PNPM_HOME` and adds it to your PATH), open a new shell, then `pnpm link --global`: without that step pnpm fails with `ERR_PNPM_NO_GLOBAL_BIN_DIR`.
 
 Without linking, invoke the clone’s bin from the other project:
 
@@ -92,8 +92,8 @@ pnpm nocciolo mcp                      # print MCP snippets
 pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth --dry-run
 ```
 
-`init` asks for a **bank id** (project-specific) and a **Docker container name** (shared Hindsight server — one container can host many banks). Non-interactive: `--bank-id`, `--container-name`, and `--yes`. Defaults: slug of the project directory for the bank id; container `hindsight`.
-When your Hindsight bank requires auth (typical for Docker with `HINDSIGHT_API_TENANT_API_KEY`), pass the **same secret value** into Nocciolo on live `seed` only — `--dry-run`, `init`, and `configure` do not need it:
+`init` asks for a **bank id** (project-specific) and a **Docker container name** (shared Hindsight server: one container can host many banks). Non-interactive: `--bank-id`, `--container-name`, and `--yes`. Defaults: slug of the project directory for the bank id; container `hindsight`.
+When your Hindsight bank requires auth (typical for Docker with `HINDSIGHT_API_TENANT_API_KEY`), pass the **same secret value** into Nocciolo on live `seed` only: `--dry-run`, `init`, and `configure` do not need it:
 
 ```bash
 # Global install (linked clone or published package)
@@ -120,7 +120,41 @@ The goal is a zero-to-useful bank in under five minutes.
 
 ## Seeding with `nocciolo seed`
 
-`seed` is the heart of the workflow: curated retain into Hindsight — not a bulk markdown upload.
+`seed` is the heart of the workflow: curated retain into Hindsight: not a bulk markdown upload. There is **no separate sync command**; when docs change, run `nocciolo seed` again (preview with `--dry-run` first).
+
+### Not a file-sync / upload script
+
+Many Hindsight setups use a script that **uploads markdown files** into the bank as a document corpus: re-processing the whole tree on every run. Nocciolo works differently:
+
+| File-sync / upload scripts | Nocciolo `seed` |
+|----------------------------|-----------------|
+| Upload raw `.md` files into Hindsight | Extract **high-signal sections** locally (heuristic, conservative) |
+| Bank holds a mirror of the doc tree | Bank holds **structured memories** (facts, entities, links) via Hindsight **retain** |
+| Re-upload often re-processes everything | **Incremental**: unchanged sources are skipped using content hashes in `.nocciolo/local/seed-manifest.json` |
+| Opaque file ids | Stable `document_id`s (`nocciolo:<path>#<section>`) so Hindsight **upserts** instead of duplicating |
+
+**Why retain instead of upload**
+
+- **Agent-native recall**: structured facts, entities, and links for `recall` / `reflect`, not a searchable copy of your `.md` tree
+- **Less noise**: conservative extraction skips boilerplate (TOCs, changelogs) and denies secrets before retain
+- **Incremental updates**: content hashes skip unchanged sources; only new or edited docs hit Hindsight
+- **Stable upserts**: same path + section → same `document_id`; edits update memories instead of duplicating them
+- **Provenance**: each fact carries source path, kind, and optional git commit
+- **Preview before retain**: `--dry-run` lists candidates and skips with no API calls
+- **Clear separation**: bank template (mission/directives) vs seed (project facts); additive, never wipes the bank
+
+Full rationale for contributors: [docs/nocciolo-sync-strategy.md](./docs/nocciolo-sync-strategy.md).
+
+What `seed` actually does:
+
+1. Scan durable sources locally (README, AGENTS.md, `docs/**`, ADRs: secrets like `.env` excluded)
+2. Extract scored candidate facts with provenance (source path + optional git commit)
+3. **Retain** each candidate via Hindsight’s memories API (LLM extraction per item)
+4. Write incremental state to `.nocciolo/local/seed-manifest.json` (gitignored, machine-local)
+
+Hindsight then runs **consolidation** in the background (observations / mental models). That is expected and usually much faster than re-uploading whole files.
+
+Every `seed` run **reads all durable sources locally** (to compute hashes), but only **new or changed** files are sent to Hindsight unless you pass `--force`. A successful **live** `seed` writes the manifest; `--dry-run` previews only and does not update it: so the first live seed after dry-run only establishes incremental state once retain completes.
 
 **Preview first**
 
@@ -136,7 +170,7 @@ Shows scored candidates from durable docs (README, AGENTS.md, docs, ADRs), with 
 NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed
 ```
 
-Before retain starts you will see a warning like this — leave the terminal open until Nocciolo finishes:
+Before retain starts you will see a warning like this: leave the terminal open until Nocciolo finishes:
 
 ```text
 ============================================================
@@ -160,16 +194,18 @@ Progress:
 A full first seed can take several minutes (LLM extraction per item). That is expected, not a hang.
 
 - Uses stable `document_id`s so Hindsight **upserts** a document’s memories instead of dumping duplicate files into the bank
-- Skips secrets and noise (`.env`, credentials, etc.) — see [sensitive data](./docs/sensitive-data.md)
+- Skips secrets and noise (`.env`, credentials, etc.): see [sensitive data](./docs/sensitive-data.md)
 - Auth failures stop early (pass `NOCCIOLO_HINDSIGHT_API_KEY` or `--api-key`)
 
 **Re-seed only what changed**
 
-Re-running `seed` hashes sources against `.nocciolo/local/seed-manifest.json`. Unchanged files are skipped; changed sections are re-retained with the same `document_id` (`nocciolo:<path>#<section>`), so Hindsight upserts them. The bank is not wiped. Use `--force` to re-send every **current** candidate — that still does not delete old memories.
+After a successful live seed, re-running `seed` compares each source’s content hash to `.nocciolo/local/seed-manifest.json`. Unchanged files appear under “Skipped N unchanged source(s)” in the plan output and are not retained again. Changed or new files are re-retained with the same `document_id` when the path and section slug match, so Hindsight upserts them. The bank is not wiped.
+
+If incremental skip is not working (everything is retained again), check that `.nocciolo/local/seed-manifest.json` exists on this machine: it is gitignored and is not shared via git. A first live seed, a failed/interrupted seed, or seeding on a fresh clone all behave like a full retain until the manifest is written.
 
 ```bash
-pnpm nocciolo seed --dry-run          # see what would update
-pnpm nocciolo seed                    # incremental retain
+pnpm nocciolo seed --dry-run          # see what would update vs skip as unchanged
+pnpm nocciolo seed                    # incremental retain (only new/changed sources)
 pnpm nocciolo seed --force            # re-retain all current candidates
 pnpm nocciolo seed --async            # submit + poll Hindsight operation progress
 ```
@@ -180,13 +216,11 @@ If you **edit** a durable file in place, re-run `nocciolo seed`. That is enough:
 
 If you **rename or delete** a source (for example `docs/foo.md` → `docs/bar.md`), re-run `nocciolo seed` to retain the new path. That does **not** remove memories from the old path. Those stay in the bank under the old ids (`nocciolo:docs/foo.md#…`). `--force` does not fix this. Invalidate or delete those stale documents in Hindsight (Control Plane or MCP `invalidate_memory` / `delete_document`) if the duplicates matter.
 
-After retain, Hindsight may still run **consolidation** in the background (observations / mental models). That is expected and usually much faster than old file-sync workflows.
-
-Here is the Nocciolo bank’s world-facts constellation in Hindsight after a `seed` — structured memories and links agents can recall, not a dump of raw markdown files:
+Here is the Nocciolo bank’s world-facts constellation in Hindsight after a `seed`: structured memories and links agents can recall, not a dump of raw markdown files:
 
 ![Nocciolo Hindsight world facts constellation](./images/nocciolo-world-facts.png)
 
-More detail: [developer workflow](./docs/dev-workflow.md).
+More detail: [developer workflow](./docs/dev-workflow.md), [sync strategy](./docs/nocciolo-sync-strategy.md).
 
 ## Local Hindsight & agent wiring
 
@@ -204,11 +238,11 @@ pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 
 Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`. LLM key for Docker: `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Tenant auth on the container: `--api-key` (same value as `NOCCIOLO_HINDSIGHT_API_KEY` for seed/MCP).
 
-Hindsight **retain** (what `nocciolo seed` calls) needs a working LLM. If your Hindsight instance is configured for **Ollama**, that process must be running and reachable from the Hindsight container before you seed — otherwise retain returns `500` with errors like `ConnectError: All connection attempts failed` / `Fact extraction failed`. Start Ollama (`ollama serve`), ensure the model is pulled, and use a base URL the container can reach (often `host.docker.internal`, not `localhost`). Cloud providers (e.g. OpenAI via `HINDSIGHT_API_LLM_API_KEY`) do not need Ollama.
+Hindsight **retain** (what `nocciolo seed` calls) needs a working LLM. If your Hindsight instance is configured for **Ollama**, that process must be running and reachable from the Hindsight container before you seed: otherwise retain returns `500` with errors like `ConnectError: All connection attempts failed` / `Fact extraction failed`. Start Ollama (`ollama serve`), ensure the model is pulled, and use a base URL the container can reach (often `host.docker.internal`, not `localhost`). Cloud providers (e.g. OpenAI via `HINDSIGHT_API_LLM_API_KEY`) do not need Ollama.
 
 ### Hindsight Cloud (opt-in)
 
-Skip local Docker and point Nocciolo at [Hindsight Cloud](https://docs.hindsight.vectorize.io/) — same `configure` / `seed` / `mcp` commands, managed API at `https://api.hindsight.vectorize.io`. Create an org and API key in the [Cloud console](https://ui.hindsight.vectorize.io); free credits and a short course are on [Hindsight Academy](https://learn.hindsight.vectorize.io/).
+Skip local Docker and point Nocciolo at [Hindsight Cloud](https://docs.hindsight.vectorize.io/): same `configure` / `seed` / `mcp` commands, managed API at `https://api.hindsight.vectorize.io`. Create an org and API key in the [Cloud console](https://ui.hindsight.vectorize.io); free credits and a short course are on [Hindsight Academy](https://learn.hindsight.vectorize.io/).
 
 ```bash
 export NOCCIOLO_HINDSIGHT_URL=https://api.hindsight.vectorize.io
@@ -219,11 +253,11 @@ nocciolo seed
 nocciolo mcp --hindsight-url https://api.hindsight.vectorize.io --include-auth --write
 ```
 
-Interactive IDEs can also use Cloud’s OAuth MCP host (`https://mcp.hindsight.vectorize.io`) instead of pasting a key — details and trade-offs in [docs/hindsight-cloud.md](./docs/hindsight-cloud.md). First-class `hindsight-cloud` deployment profile lands in Phase 4 ([ROADMAP](./ROADMAP.md)).
+Interactive IDEs can also use Cloud’s OAuth MCP host (`https://mcp.hindsight.vectorize.io`) instead of pasting a key: details and trade-offs in [docs/hindsight-cloud.md](./docs/hindsight-cloud.md). First-class `hindsight-cloud` deployment profile lands in Phase 4 ([ROADMAP](./ROADMAP.md)).
 
 ### `nocciolo mcp` options
 
-By default `mcp` **prints** ready-to-paste configs. It does not detect your IDE — use write flags for the files you want.
+By default `mcp` **prints** ready-to-paste configs. It does not detect your IDE: use write flags for the files you want.
 
 | Flag | What it does |
 |------|----------------|
@@ -253,25 +287,26 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 ## Docs
 
-- [Knowledge-base configs](./docs/nocciolo-configs.md) — `.nocciolo/` files, bank template, seed manifest, and MCP recall
-- [CLI architecture](./docs/cli-architecture.md) — module boundaries, seed pipeline, config, and env/auth for contributors
-- [Developer workflow](./docs/dev-workflow.md) — build, first seed, re-seed, and Hindsight retain/consolidation tips
-- [Developer testing](./docs/dev-testing.md) — end-user command sequence and E2E regression checklist
-- [Hindsight Cloud](./docs/hindsight-cloud.md) — opt-in managed hosting vs local Docker; profiles, auth, MCP
-- [Hindsight bank backup](./docs/hindsight-bank-backup.md) — Docker `hindsight-admin` full backup and per-bank export
-- [Hindsight upgrade](./docs/hindsight-upgrade.md) — upgrade the local Docker image while keeping the data volume
-- [Hindsight mental models](./docs/hindsight-mental-models.md) — curated reflect, tagging, configure wizard, post-seed CLI
-- [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md) — Strumentario lessons: multi-repo MCP, template apply, shareable config
-- [Sensitive data](./docs/sensitive-data.md) — allowlist/denylist decisions so secrets never get retained
+- [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
+- [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
+- [CLI architecture](./docs/cli-architecture.md): module boundaries, seed pipeline, config, and env/auth for contributors
+- [Developer workflow](./docs/dev-workflow.md): build, first seed, re-seed, and Hindsight retain/consolidation tips
+- [Developer testing](./docs/dev-testing.md): end-user command sequence and E2E regression checklist
+- [Hindsight Cloud](./docs/hindsight-cloud.md): opt-in managed hosting vs local Docker; profiles, auth, MCP
+- [Hindsight bank backup](./docs/hindsight-bank-backup.md): Docker `hindsight-admin` full backup and per-bank export
+- [Hindsight upgrade](./docs/hindsight-upgrade.md): upgrade the local Docker image while keeping the data volume
+- [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI
+- [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md): Strumentario lessons: multi-repo MCP, template apply, shareable config
+- [Sensitive data](./docs/sensitive-data.md): allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles
 
-- **Durable over ephemeral** — only knowledge that should outlive a single session or model change
-- **Local control** — self-hostable by default; [Hindsight Cloud](https://docs.hindsight.vectorize.io/) is opt-in, never required
-- **Agent-native** — missions, directives, and structure that map cleanly to how modern memory systems actually work
-- **Traditional craft first** — clear architecture, ADRs, and standards remain the source of truth; Nocciolo amplifies them for agents
-- **Progressive** — start simple (single bank, one project), grow into multi-bank, multi-repo, team sharing, and event-driven workflows
-- **Share on your terms** — local/LAN, VPN, public self-host, or Hindsight Cloud when managed hosting fits the team
+- **Durable over ephemeral**: only knowledge that should outlive a single session or model change
+- **Local control**: self-hostable by default; [Hindsight Cloud](https://docs.hindsight.vectorize.io/) is opt-in, never required
+- **Agent-native**: missions, directives, and structure that map cleanly to how modern memory systems actually work
+- **Traditional craft first**: clear architecture, ADRs, and standards remain the source of truth; Nocciolo amplifies them for agents
+- **Progressive**: start simple (single bank, one project), grow into multi-bank, multi-repo, team sharing, and event-driven workflows
+- **Share on your terms**: local/LAN, VPN, public self-host, or Hindsight Cloud when managed hosting fits the team
 
 ## Status
 

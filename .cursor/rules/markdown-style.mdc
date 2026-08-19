@@ -1,0 +1,24 @@
+---
+description: Markdown writing style: no em dashes in generated docs
+globs: **/*.md
+alwaysApply: false
+---
+
+# Markdown style
+
+When creating or editing markdown files, do not use em dashes (—, U+2014). Do not substitute en dashes (–, U+2013) as a stand-in.
+
+Prefer instead:
+
+- a comma or colon
+- parentheses for asides
+- two short sentences
+- hyphen-minus (`-`) only for compound modifiers, ranges written in words, or list markers
+
+```markdown
+Bad:  Ack replay is idempotent — same body on repeat.
+Good: Ack replay is idempotent: same body on repeat.
+Good: Ack replay is idempotent (same body on repeat).
+```
+
+Before finishing a markdown edit, scan the file and replace any em or en dashes used as punctuation.

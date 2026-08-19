@@ -1,4 +1,4 @@
-# AGENTS.md — Nocciolo
+# AGENTS.md: Nocciolo
 
 This file is the primary source of truth for any AI agent working on Nocciolo.
 
@@ -6,7 +6,7 @@ This file is the primary source of truth for any AI agent working on Nocciolo.
 
 Nocciolo is a **company brain config** utility.
 
-It helps developers turn durable project knowledge (docs, ADRs, decisions, domain references) into structured memory banks — starting with Hindsight — so AI agents inherit shared context instead of rediscovering it every session.
+It helps developers turn durable project knowledge (docs, ADRs, decisions, domain references) into structured memory banks: starting with Hindsight, so AI agents inherit shared context instead of rediscovering it every session.
 
 We are building this in public as open source.
 
@@ -41,7 +41,7 @@ We are building this in public as open source.
 ## Coding Standards
 
 - Prefer small, composable functions and clear module boundaries
-- Strong typing — avoid `any` unless there is a documented reason
+- Strong typing: avoid `any` unless there is a documented reason
 - CLI commands should be idempotent where practical and support `--dry-run`
 - Errors should be actionable (tell the user what to do next)
 - No silent failures on knowledge extraction

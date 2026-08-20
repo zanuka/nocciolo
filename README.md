@@ -2,7 +2,7 @@
 
 ![Nocciolo](./images/nocciolo.jpg)
 
-**Company brain config for AI agents.**
+**Turn durable project knowledge into agent memory banks**
 
 Nocciolo (Italian for kernel / core): the durable core of project knowledge that agents inherit.
 

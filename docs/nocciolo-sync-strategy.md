@@ -32,6 +32,10 @@ Nocciolo retains **candidate facts** per section. Hindsight runs LLM extraction,
 
 Section-level ids (e.g. `nocciolo:README.md#core-principles`) make recall granular: agents pull the principle, not an entire README.
 
+In the Hindsight Control Plane, consolidated knowledge shows up as Observations (and related memory types), not as a folder of uploaded markdown:
+
+![Hindsight Memories Observations constellation after seeding](../images/hindsight-memories-sm.png)
+
 ### 2. Less noise in the bank
 
 Bulk upload ingests everything: changelogs, licenses, install boilerplate, empty stubs, generated tables of contents.
@@ -151,6 +155,10 @@ nocciolo seed             # incremental live retain
 ```
 
 Unchanged sources (same content hash) are skipped. Use `--force` to re-retain all **current** candidates: still does not delete old memories.
+
+After a live seed, the Hindsight Control Plane may show a Consolidation operation while memories are processed:
+
+![Hindsight dashboard Consolidation operation after seeding](../images/hindsight-consolidation-sm.png)
 
 ### When incremental skip fails
 

@@ -40,7 +40,10 @@ Agents inherit shared context instead of rediscovering it.
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
 
-Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates). Host it yourself with Docker or use [Hindsight Cloud](https://docs.hindsight.vectorize.io/) when you want managed infra (same Nocciolo seed/MCP flow: see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)). Other memory backends stay optional and later: only if real demand appears. Event-driven updates, richer curation, and team-wide sharing are on the [roadmap](./ROADMAP.md).
+Hindsight is the first-class target ([retain / recall / reflect](https://hindsight.vectorize.io/), observations, mental models, bank templates).
+Host it yourself with Docker or use [Hindsight Cloud](https://docs.hindsight.vectorize.io/) when you want managed infra (same Nocciolo seed/MCP flow: see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)).
+[Graphiti](https://github.com/getzep/graphiti) (and optional Zep Cloud) is planned as an opt-in seed destination, not a second default: see [Graphiti (planned)](#graphiti-planned) below.
+Event-driven updates, richer curation, and team-wide sharing are on the [roadmap](./ROADMAP.md).
 
 ## Quick Start
 
@@ -259,6 +262,16 @@ nocciolo mcp --hindsight-url https://api.hindsight.vectorize.io --include-auth -
 
 Interactive IDEs can also use Cloud’s OAuth MCP host (`https://mcp.hindsight.vectorize.io`) instead of pasting a key: details and trade-offs in [docs/hindsight-cloud.md](./docs/hindsight-cloud.md). First-class `hindsight-cloud` deployment profile lands in Phase 4 ([ROADMAP](./ROADMAP.md)).
 
+### Graphiti (planned)
+
+Hindsight stays the default.
+A later [Graphiti](https://github.com/getzep/graphiti) / Zep adapter will reuse the same scan → curate → seed → MCP emit path behind `--provider graphiti` (Zep Cloud via `--provider zep`).
+
+Nocciolo will seed a project graph from durable docs (ADRs, standards, architecture), install a software ontology, and point `mcp` / `docker print` at the official Graphiti stack.
+It will not install or run Graphiti for you.
+
+Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
+
 ### `nocciolo mcp` options
 
 By default `mcp` **prints** ready-to-paste configs. It does not detect your IDE: use write flags for the files you want.
@@ -297,6 +310,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Developer workflow](./docs/dev-workflow.md): build, first seed, re-seed, and Hindsight retain/consolidation tips
 - [Developer testing](./docs/dev-testing.md): end-user command sequence and E2E regression checklist
 - [Hindsight Cloud](./docs/hindsight-cloud.md): opt-in managed hosting vs local Docker; profiles, auth, MCP
+- [Graphiti integration](./docs/graphiti-integration.md): planned opt-in Graphiti / Zep seed provider (not the CLI default)
 - [Hindsight bank backup](./docs/hindsight-bank-backup.md): Docker `hindsight-admin` full backup and per-bank export
 - [Hindsight upgrade](./docs/hindsight-upgrade.md): upgrade the local Docker image while keeping the data volume
 - [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI

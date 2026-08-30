@@ -106,7 +106,16 @@ Do **not** fold mental-model curation into `init` prompts. Keep generation in `c
 ## Phase 7: Advanced & Extensibility
 
 - [ ] File watcher / event-driven re-seeding
-- [ ] Multi-provider support: **optional / demand-driven**; Hindsight remains first-class. Do not schedule Mem0, Graphiti, Cognee, or others until the Hindsight path is strong and users ask for another backend
+- [ ] Multi-provider support: Hindsight remains first-class and the default; other backends are opt-in CLI options
+  - [ ] Multi-provider foundation (extract `HindsightProvider`, `--provider` dispatch)
+  - [ ] Mem0 adapter
+  - [ ] Graphiti / Zep adapter: **seed destination only** (see [docs/graphiti-integration.md](./docs/graphiti-integration.md))
+    - [ ] OSS HTTP transport spike (`add_episode` + `group_id`)
+    - [ ] `init` / `configure` / `seed --dry-run` / incremental `seed`
+    - [ ] Software ontology (`software-v1`) + extraction instructions
+    - [ ] Optional Zep Cloud runtime (`--provider zep`)
+    - [ ] `mcp` / `docker print` point at official Graphiti docs (do not vendor compose)
+  - [ ] Cognee adapter (later)
 - [ ] Multi-bank and multi-repo company brains
 - [ ] Lightweight inspection UI (optional, later)
 - [ ] Deeper ADR and decision-record parsers

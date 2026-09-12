@@ -2,7 +2,49 @@
 
 How to upgrade a **local / self-hosted** Hindsight Docker server while keeping banks on the named data volume. Upstream: [Installation](https://hindsight.vectorize.io/developer/installation), [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli).
 
-Nocciolo talks to whatever Hindsight version you run. Upgrading the image is a Docker ops task, not a `nocciolo` command. Prefer a **pinned tag** (e.g. `0.9.1`) over `latest` so upgrades are intentional.
+Prefer a **pinned tag** (e.g. `0.9.2`) over `latest` so upgrades are intentional.
+Nocciolo’s primary path is `nocciolo docker upgrade`.
+Manual Docker steps remain as a fallback.
+
+## CLI (recommended)
+
+From a Nocciolo project (uses `.nocciolo/config.json` for container name; volume is taken from live `docker inspect`):
+
+```bash
+nocciolo docker upgrade --to 0.9.2 --dry-run
+nocciolo docker upgrade --to 0.9.2 -y
+nocciolo docker upgrade --to 0.9.2 --backup-dir ~/hindsight-bank-backups/manual-pre-0.9.2 -y
+```
+
+What the command does:
+
+1. **Backup**: writes a directory under `~/hindsight-bank-backups/pre-<to>-<timestamp>/` with a full volume tarball (required), optional `hindsight-admin backup` ZIP, bank manifest + stats/exports, and a README (secrets masked).
+2. **Upgrade**: pulls `ghcr.io/vectorize-io/hindsight:<to>`, removes **only** the container, recreates it on the **same** named volume with **preserved env** and port bindings.
+3. **Validate**: `/version` matches `--to`, `/health` is healthy, every bank `fact_count` matches the pre-upgrade manifest.
+
+Useful flags:
+
+| Flag | Meaning |
+|------|---------|
+| `--to <version>` | Required pinned tag (refuses `latest`) |
+| `--dry-run` | Print backup + pull + recreate plan only |
+| `--backup-dir <path>` | Override backup directory |
+| `--skip-backup` | Dangerous; skips backups (loud warning; default off) |
+| `--force` | Recreate even if already on target version |
+| `--all-banks` | Default on: back up / validate every bank on the instance |
+| `--bank <id>` | Emphasize project bank in backup notes (defaults to config `bankId`) |
+| `-y` / `--yes` | Skip TTY confirms; required for non-interactive runs |
+| `--hindsight-url` / `--api-key` | Same resolution as `seed` (prefer env for the key) |
+
+Pending / processing operation fields in bank stats: the CLI **warns** and requires `-y` (or an interactive yes) before continuing.
+
+Consumer MCP URLs (e.g. `http://localhost:8888/mcp/<bankId>/`) stay valid; do not rewrite `.cursor/mcp.json` after a successful upgrade.
+
+0.9.x highlights (informational; this command does **not** install Coding Agents):
+
+- Knowledge Pages + Knowledge Base MCP tools (0.9.2)
+- Faster temporal extraction / ops hardening (0.9.1)
+- Same retain/recall/reflect banks; MCP URL paths unchanged
 
 ## What stays, what does not
 
@@ -10,19 +52,25 @@ Nocciolo talks to whatever Hindsight version you run. Upgrading the image is a D
 |-------|----------------------|--------|
 | Named volume (e.g. `hindsight-data` → `/home/hindsight/.pg0`) | **Yes** | Banks and embedded Postgres live here |
 | Container filesystem / image | No | Replaced when you pull a new tag |
-| Env vars / port maps / restart policy | No | Must be re-applied on `docker run` |
+| Env vars / port maps / restart policy | Re-applied by `upgrade` | Captured from `docker inspect` then passed to the new container |
 | Portable ZIP backups | N/A | Separate copies on the host: see [hindsight-bank-backup.md](./hindsight-bank-backup.md) |
 
 `docker rm -f <container>` does **not** delete the volume. `docker volume rm hindsight-data` does: never run that unless you intend to wipe all banks.
+`nocciolo docker upgrade` never runs volume delete.
 
-Hindsight runs database migrations on API startup by default (`HINDSIGHT_API_RUN_MIGRATIONS_ON_STARTUP`). Recreating the container on the same volume is the supported upgrade path for Docker + pg0.
+Hindsight runs database migrations on API startup by default (`HINDSIGHT_API_RUN_MIGRATIONS_ON_STARTUP`).
+Recreating the container on the same volume is the supported upgrade path for Docker + pg0.
 
-## Prerequisites
+## Manual fallback
+
+Use these steps only if you cannot run the CLI helper.
+
+### Prerequisites
 
 ```bash
 export HINDSIGHT_CONTAINER=hindsight          # from init / .nocciolo/config.json
 export HINDSIGHT_VOLUME=hindsight-data        # usual default; confirm with inspect
-export HINDSIGHT_IMAGE=ghcr.io/vectorize-io/hindsight:0.9.1   # target version
+export HINDSIGHT_IMAGE=ghcr.io/vectorize-io/hindsight:0.9.2   # target version
 ```
 
 Confirm the volume name on your running container:
@@ -34,7 +82,7 @@ docker inspect "$HINDSIGHT_CONTAINER" \
 
 You want a mount of `<volume> -> /home/hindsight/.pg0`.
 
-## 1. Check the current version
+### 1. Check the current version
 
 ```bash
 curl -sS http://localhost:8888/version
@@ -43,7 +91,7 @@ curl -sS http://localhost:8888/version
 docker inspect "$HINDSIGHT_CONTAINER" --format '{{.Config.Image}}'
 ```
 
-## 2. Back up before upgrading
+### 2. Back up before upgrading
 
 Quiesce writes if you can (pause `seed` / retain traffic), then take at least a **full instance** backup and copy it off the container:
 
@@ -56,7 +104,16 @@ docker cp "${HINDSIGHT_CONTAINER}:/tmp/${BACKUP}" ~/hindsight-bank-backups/
 
 Optional: also export important banks one-by-one. Full commands: [hindsight-bank-backup.md](./hindsight-bank-backup.md).
 
-## 3. Capture the current run config
+Prefer also tarring the named volume (what the CLI does as the primary artifact):
+
+```bash
+docker run --rm \
+  -v "${HINDSIGHT_VOLUME}:/data:ro" \
+  -v "$HOME/hindsight-bank-backups:/backup" \
+  alpine tar czf "/backup/hindsight-data-volume.tar.gz" -C /data .
+```
+
+### 3. Capture the current run config
 
 You will recreate the container with the **same** ports, volume, and environment. Dump what matters before removing it:
 
@@ -77,7 +134,9 @@ export NOCCIOLO_HINDSIGHT_API_KEY="$(
 )"
 ```
 
-If you use Ollama or other custom env (`HINDSIGHT_API_LLM_BASE_URL`, `HINDSIGHT_API_LLM_MODEL`, worker slots, etc.), copy those values into the new `docker run`: `nocciolo docker up` only covers a subset of flags and may not reproduce a hand-tuned container.
+If you use Ollama or other custom env (`HINDSIGHT_API_LLM_BASE_URL`, `HINDSIGHT_API_LLM_MODEL`, worker slots, etc.), copy those values into the new `docker run`.
+`nocciolo docker up` only covers a subset of flags and may not reproduce a hand-tuned container.
+`nocciolo docker upgrade` preserves full env from inspect.
 
 Set a **stable** worker id across restarts (recommended by upstream):
 
@@ -85,7 +144,7 @@ Set a **stable** worker id across restarts (recommended by upstream):
 -e HINDSIGHT_API_WORKER_ID=hindsight-local
 ```
 
-## 4. Pull the new image
+### 4. Pull the new image
 
 ```bash
 docker pull "$HINDSIGHT_IMAGE"
@@ -93,7 +152,7 @@ docker pull "$HINDSIGHT_IMAGE"
 
 Tags are published as `ghcr.io/vectorize-io/hindsight:<version>` (and `-slim` variants). See [Available tags](https://hindsight.vectorize.io/developer/installation#available-tags).
 
-## 5. Remove the old container (keep the volume)
+### 5. Remove the old container (keep the volume)
 
 ```bash
 docker rm -f "$HINDSIGHT_CONTAINER"
@@ -105,7 +164,7 @@ Confirm the volume still exists:
 docker volume ls --filter "name=${HINDSIGHT_VOLUME}"
 ```
 
-## 6. Start the new container on the same volume
+### 6. Start the new container on the same volume
 
 Minimal shape (OpenAI-style LLM key). Adjust env to match what you captured in step 3:
 
@@ -141,18 +200,7 @@ docker run -d \
   "$HINDSIGHT_IMAGE"
 ```
 
-Using Nocciolo’s helper instead (simpler env only):
-
-```bash
-pnpm nocciolo docker up \
-  --name "$HINDSIGHT_CONTAINER" \
-  --image "$HINDSIGHT_IMAGE" \
-  --api-key "$NOCCIOLO_HINDSIGHT_API_KEY"
-```
-
-Only use this if the helper’s flags cover your LLM/auth needs; otherwise prefer an explicit `docker run`.
-
-## 7. Verify
+### 7. Verify
 
 Wait ~30-60s for startup and migrations, then:
 
@@ -183,7 +231,7 @@ docker exec "$HINDSIGHT_CONTAINER" hindsight-admin repair-bank --all
 
 1. `docker rm -f "$HINDSIGHT_CONTAINER"`
 2. `docker run` again with the **previous** image tag and the **same** volume + env
-3. If the volume was damaged, restore from the zip taken in step 2 (`hindsight-admin restore`: destructive; see [backup docs](./hindsight-bank-backup.md))
+3. If the volume was damaged, restore from the backup taken before upgrade (`hindsight-admin restore` is destructive; see [backup docs](./hindsight-bank-backup.md))
 
 ## Common mistakes
 

@@ -117,7 +117,7 @@ node dist/cli.js mcp --write --dry-run
 |---------|----------------|
 | `init` | Detect project root; prompt (or flags) for bank id + Docker container; write `.nocciolo/config.json` |
 | `configure` | Generate Hindsight bank template under `.nocciolo/hindsight/` |
-| `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print`) |
+| `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`) |
 | `seed --dry-run` | Scan + extract; print candidates; **no** API calls |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
 | `mcp` | Print ready-to-paste MCP snippets; optional `--write` / AGENTS / Cursor rules |
@@ -269,7 +269,7 @@ Import the generated template into Hindsight (Control Plane or import API) befor
 
 ## Local Docker helper
 
-`nocciolo docker` wraps the official Hindsight image (`ghcr.io/vectorize-io/hindsight:latest`):
+`nocciolo docker` wraps the official Hindsight image (`ghcr.io/vectorize-io/hindsight:latest` for `up`; **pinned tags** for `upgrade`):
 
 | Action | Behavior |
 |--------|----------|
@@ -277,8 +277,11 @@ Import the generated template into Hindsight (Control Plane or import API) befor
 | `up` / `start` | Start detached container (`--dry-run` to preview) |
 | `down` / `stop` | `docker rm -f` the container |
 | `status` | Show container status + API/UI URLs |
+| `upgrade --to <ver>` | Back up all banks, recreate container on the same volume with preserved env, validate `/version` + fact counts |
 
 Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`. Resolution for container/volume: `--name` → `docker` in `.nocciolo/config.json` → those defaults. One container is a Hindsight **server** that can host many banks: do not treat container name as the bank id. LLM key from `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Optional `--api-key` enables tenant auth (`HINDSIGHT_API_TENANT_API_KEY` + matching CP dataplane key).
+
+`upgrade` is a different operation from `up`: it inspects the running container, never deletes the data volume, and refuses `:latest`. See [hindsight-upgrade.md](./hindsight-upgrade.md).
 
 ## Agent integration (MCP)
 

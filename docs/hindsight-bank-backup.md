@@ -39,7 +39,7 @@ Both write files **inside** the container. Copy them to the host with `docker cp
 
 ## Full instance backup
 
-Creates a consistent zip of all Hindsight data in the schema (banks, documents, memories, mental models, directives, webhooks, operational tables). Recommended before an image upgrade (`0.8.x` → `0.9.x`, etc.) while keeping the same named volume.
+Creates a consistent zip of all Hindsight data in the schema (banks, documents, memories, mental models, directives, webhooks, operational tables). Recommended before an image upgrade (`0.8.x` → `0.9.x`, etc.) while keeping the same named volume. The CLI path `nocciolo docker upgrade --to <version>` takes a volume tarball plus this admin backup when available; see [hindsight-upgrade.md](./hindsight-upgrade.md).
 
 ```bash
 BACKUP="hindsight-backup-$(date +%Y%m%d).zip"
@@ -126,6 +126,6 @@ Do **not** run `docker volume rm` on the data volume unless you intend to delete
 ## See also
 
 - [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli): `backup`, `restore`, `export-bank`, `import-bank`
-- [Upgrading Hindsight](./hindsight-upgrade.md): Docker image upgrade with the same data volume
+- [Upgrading Hindsight](./hindsight-upgrade.md): prefer `nocciolo docker upgrade --to <version>`; manual Docker steps as fallback
 - [Developer workflow](./dev-workflow.md): local Docker up / seed loop
 - [Hindsight Cloud](./hindsight-cloud.md): managed hosting (different backup story; not this Docker path)

@@ -233,11 +233,14 @@ Default path: run Hindsight yourself (Docker). For managed hosting, see [Hindsig
 pnpm nocciolo docker print             # print docker run (no execute)
 pnpm nocciolo docker up                # start local Hindsight (needs Docker + LLM key)
 pnpm nocciolo docker status
+pnpm nocciolo docker upgrade --to 0.9.2 --dry-run   # pinned image upgrade plan
 pnpm nocciolo docker down
 
 pnpm nocciolo mcp                      # print snippets for all harnesses
 pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
+
+Pinned Docker upgrades (backup all banks, recreate on the same volume, validate fact counts): [docs/hindsight-upgrade.md](./docs/hindsight-upgrade.md).
 
 After `nocciolo mcp --write ...`, a successful Hindsight MCP connection in Cursor shows your bank with memory tools enabled:
 
@@ -312,7 +315,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Hindsight Cloud](./docs/hindsight-cloud.md): opt-in managed hosting vs local Docker; profiles, auth, MCP
 - [Graphiti integration](./docs/graphiti-integration.md): planned opt-in Graphiti / Zep seed provider (not the CLI default)
 - [Hindsight bank backup](./docs/hindsight-bank-backup.md): Docker `hindsight-admin` full backup and per-bank export
-- [Hindsight upgrade](./docs/hindsight-upgrade.md): upgrade the local Docker image while keeping the data volume
+- [Hindsight upgrade](./docs/hindsight-upgrade.md): `nocciolo docker upgrade --to <version>` (manual Docker fallback)
 - [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md): Strumentario lessons: multi-repo MCP, template apply, shareable config
 - [Sensitive data](./docs/sensitive-data.md): allowlist/denylist decisions so secrets never get retained

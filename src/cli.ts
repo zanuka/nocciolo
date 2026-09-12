@@ -8,6 +8,10 @@ import {
   printDockerResult,
   runDockerHelper,
 } from "./commands/docker.js";
+import {
+  printDockerUpgradeResult,
+  runDockerUpgrade,
+} from "./commands/docker-upgrade.js";
 import { printInitResult, runInit } from "./commands/init.js";
 import { printMcpResult, runMcp } from "./commands/mcp.js";
 import { runSeedCommand } from "./commands/seed.js";
@@ -188,9 +192,11 @@ async function main(): Promise<void> {
       },
     );
 
-  program
+  const docker = program
     .command("docker")
-    .description("Local Hindsight Docker helper (up / down / status / print)")
+    .description(
+      "Local Hindsight Docker helper (up / down / status / print / upgrade)",
+    )
     .argument(
       "[action]",
       "up|start, down|stop, status, or print (default: print)",
@@ -260,6 +266,89 @@ async function main(): Promise<void> {
           ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
         });
         printDockerResult(result);
+      },
+    );
+
+  docker
+    .command("upgrade")
+    .description(
+      "Upgrade the local Hindsight Docker image to a pinned tag. Backs up all banks, recreates the container on the same data volume, then verifies /version and bank fact counts.",
+    )
+    .requiredOption(
+      "--to <version>",
+      "Target Hindsight image tag (pinned; e.g. 0.9.2). :latest is refused.",
+    )
+    .option("--dry-run", "Print backup + pull + recreate plan without mutating")
+    .option(
+      "--backup-dir <path>",
+      "Backup directory (default: ~/hindsight-bank-backups/pre-<to>-<timestamp>/)",
+    )
+    .option(
+      "--skip-backup",
+      "Skip backups (dangerous; loud warning; default off)",
+    )
+    .option(
+      "--force",
+      "Recreate even when api_version already matches --to",
+    )
+    .option(
+      "--all-banks",
+      "Back up and validate every bank on the instance (default: on)",
+      true,
+    )
+    .option(
+      "--bank <id>",
+      "Emphasize this project bank in backup notes (default: config bankId)",
+    )
+    .option("-y, --yes", "Skip TTY confirmation prompts")
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .option(
+      "--name <name>",
+      "Container name (default: config docker.containerName, or hindsight)",
+    )
+    .action(
+      async (
+        opts: {
+          to: string;
+          dryRun?: boolean;
+          backupDir?: string;
+          skipBackup?: boolean;
+          force?: boolean;
+          allBanks?: boolean;
+          bank?: string;
+          yes?: boolean;
+          hindsightUrl?: string;
+          apiKey?: string;
+          name?: string;
+        },
+        command: Command,
+      ) => {
+        const merged = command.optsWithGlobals() as typeof opts;
+        const result = await runDockerUpgrade({
+          to: merged.to,
+          dryRun: Boolean(merged.dryRun),
+          skipBackup: Boolean(merged.skipBackup),
+          force: Boolean(merged.force),
+          allBanks: merged.allBanks !== false,
+          yes: Boolean(merged.yes),
+          ...(merged.backupDir !== undefined
+            ? { backupDir: merged.backupDir }
+            : {}),
+          ...(merged.bank !== undefined ? { bank: merged.bank } : {}),
+          ...(merged.hindsightUrl !== undefined
+            ? { hindsightUrl: merged.hindsightUrl }
+            : {}),
+          ...(merged.apiKey !== undefined ? { apiKey: merged.apiKey } : {}),
+          ...(merged.name !== undefined ? { containerName: merged.name } : {}),
+        });
+        printDockerUpgradeResult(result);
       },
     );
 

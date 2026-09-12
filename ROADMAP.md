@@ -39,6 +39,7 @@ High-level phased plan. This is a living document; priorities will shift based o
 ## Phase 3: Local Hosting & Agent Integration
 
 - [x] Docker / local Hindsight helper (`nocciolo docker` or equivalent)
+- [x] `nocciolo docker upgrade --to <version>`: backup all banks, recreate on same volume with preserved env, validate fact counts (pinned tags only)
 - [x] MCP endpoint generation for Cursor, Kiro, Claude Code, Roo, Codex, etc.
 - [x] `nocciolo mcp`: emit ready-to-paste configs and rules
 - [x] Optional updates to `AGENTS.md` / Cursor rules that tell agents to prefer the project bank

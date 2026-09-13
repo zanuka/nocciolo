@@ -95,6 +95,8 @@ pnpm nocciolo mcp                      # print MCP snippets
 pnpm nocciolo mcp --write --write-agents --write-cursor-rules --include-auth --dry-run
 ```
 
+Full command and flag reference: [docs/nocciolo-cli-commands.md](./docs/nocciolo-cli-commands.md).
+
 `init` asks for a **bank id** (project-specific) and a **Docker container name** (shared Hindsight server: one container can host many banks). Non-interactive: `--bank-id`, `--container-name`, and `--yes`. Defaults: slug of the project directory for the bank id; container `hindsight`.
 When your Hindsight bank requires auth (typical for Docker with `HINDSIGHT_API_TENANT_API_KEY`), pass the **same secret value** into Nocciolo on live `seed` only: `--dry-run`, `init`, and `configure` do not need it:
 
@@ -250,6 +252,77 @@ Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`. LLM key for Do
 
 Hindsight **retain** (what `nocciolo seed` calls) needs a working LLM. If your Hindsight instance is configured for **Ollama**, that process must be running and reachable from the Hindsight container before you seed: otherwise retain returns `500` with errors like `ConnectError: All connection attempts failed` / `Fact extraction failed`. Start Ollama (`ollama serve`), ensure the model is pulled, and use a base URL the container can reach (often `host.docker.internal`, not `localhost`). Cloud providers (e.g. OpenAI via `HINDSIGHT_API_LLM_API_KEY`) do not need Ollama.
 
+### Hindsight MCP tools (any agent)
+
+After you wire the project bank MCP endpoint (`http://localhost:8888/mcp/<bankId>/`), Cursor, Claude Code, Roo, Codex, Kiro, and other harnesses that speak MCP expose the same Hindsight tools for that bank.
+
+The three you will use most often:
+
+| Tool | Use it to |
+|------|-----------|
+| `recall` | Query the project memory bank for durable knowledge (architecture, decisions, standards, domain rules) |
+| `reflect` | Pull insights and mental models from the bank (synthesis against observations) |
+| `retain` | Add new memories (prefer `nocciolo seed` for doc-backed facts; use MCP `retain` sparingly for ad hoc notes) |
+
+Typical prompts once MCP is connected:
+
+- “Recall our architecture boundaries / coding standards / how we treat secrets.”
+- “Reflect on how seeding and bank configuration should stay separated.”
+
+Prefer `recall` / `reflect` before rediscovering the same facts from scattered docs.
+Treat repo docs and ADRs as source of truth; the bank is the agent-facing memory of those sources.
+Do not retain secrets, credentials, or ephemeral chat into the bank.
+
+Wire any harness with `nocciolo mcp` (print snippets, or `--write` / `--write-agents` / `--write-cursor-rules`).
+Full CLI flag list: [docs/nocciolo-cli-commands.md](./docs/nocciolo-cli-commands.md).
+
+### Claude Code
+
+Claude Code does not read `.cursor/mcp.json`.
+Use the Claude Code snippet from `nocciolo mcp` (or run the printed `claude mcp add` command).
+
+```bash
+# Print only the Claude Code snippet (single-bank MCP URL for this project)
+pnpm nocciolo mcp --harness claude-code
+
+# If your Hindsight tenant requires auth, include the Authorization header
+pnpm nocciolo mcp --harness claude-code --include-auth
+```
+
+Typical output (bank id and URL follow your `.nocciolo/config.json`):
+
+```bash
+claude mcp add --transport http hindsight http://localhost:8888/mcp/nocciolo/
+```
+
+With auth (`--include-auth`), the command also passes a Bearer header that references `NOCCIOLO_HINDSIGHT_API_KEY` (export that env var in the shell where Claude Code runs).
+
+**Before you trust `docker status`**
+
+`nocciolo docker status` looks for the container name in `.nocciolo/config.json` (`docker.containerName`, default `hindsight`).
+If Hindsight is already running under a different name (for example a shared `suchconfig-hindsight` server), status may say the container was not found even though the UI at `http://localhost:9999` and the API at `http://localhost:8888` work.
+Check with `docker ps | grep -i hindsight`, then either:
+
+```bash
+pnpm nocciolo docker status --name your-actual-container-name
+```
+
+or update `docker.containerName` in `.nocciolo/config.json` to match the running container.
+Do not run `nocciolo docker up` if ports `8888` / `9999` are already bound.
+
+**Finish the Claude Code wiring**
+
+1. Run the printed `claude mcp add …` command from the project directory (project scope).
+2. Confirm the MCP URL responds (HTTP 200 on `http://localhost:8888/mcp/<bankId>/`).
+   A raw `curl` may show `Missing session ID`; that is expected without an MCP handshake.
+   Claude Code performs the session handshake itself.
+3. Exit and restart the Claude Code session so the new MCP server loads.
+4. Prefer the bank with `--write-agents` (or keep the AGENTS.md bank section) so the agent recalls before rediscovering docs.
+
+Once connected, Claude Code uses the same Hindsight MCP tools as other agents (`recall`, `reflect`, `retain`).
+See [Hindsight MCP tools (any agent)](#hindsight-mcp-tools-any-agent) above.
+Ask Claude Code to recall project context after restart; it should call those tools when the server is configured.
+
 ### Hindsight Cloud (opt-in)
 
 Skip local Docker and point Nocciolo at [Hindsight Cloud](https://docs.hindsight.vectorize.io/): same `configure` / `seed` / `mcp` commands, managed API at `https://api.hindsight.vectorize.io`. Create an org and API key in the [Cloud console](https://ui.hindsight.vectorize.io); free credits and a short course are on [Hindsight Academy](https://learn.hindsight.vectorize.io/).
@@ -298,6 +371,7 @@ Examples:
 
 ```bash
 pnpm nocciolo mcp --harness cursor,claude-code
+pnpm nocciolo mcp --harness claude-code --include-auth   # print `claude mcp add` (+ auth header)
 pnpm nocciolo mcp --write --dry-run
 pnpm nocciolo mcp --write --include-auth
 pnpm nocciolo mcp --write-roo --write-kiro --dry-run
@@ -307,6 +381,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 ## Docs
 
+- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `mcp`, `docker`)
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
 - [CLI architecture](./docs/cli-architecture.md): module boundaries, seed pipeline, config, and env/auth for contributors

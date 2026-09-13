@@ -6,7 +6,7 @@
   "root": ".",
   "createdAt": "2026-08-04T04:55:22.981Z",
   "docker": {
-    "containerName": "hindsight",
+    "containerName": "suchconfig-hindsight",
     "volumeName": "hindsight-data"
   }
 }

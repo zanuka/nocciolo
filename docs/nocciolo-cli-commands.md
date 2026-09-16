@@ -113,7 +113,7 @@ It does not detect your IDE: use write flags for the files you want.
 
 | Flag | Description |
 |------|-------------|
-| `--harness <list>` | Limit output: `cursor`, `claude-code`, `claude-desktop`, `roo`, `codex`, `kiro`, or `all` (comma-separated) |
+| `--harness <list>` | Limit output: `cursor`, `claude-code`, `claude-desktop`, `roo`, `codex`, `kiro`, `firstmate`, or `all` (comma-separated) |
 | `--write` | Write/merge project `.cursor/mcp.json` |
 | `--write-roo` | Write/merge project `.roo/mcp.json` |
 | `--write-kiro` | Write/merge project `.kiro/settings/mcp.json` |
@@ -126,6 +126,8 @@ It does not detect your IDE: use write flags for the files you want.
 | `--api-key <key>` | Include this key literally in printed snippets only; file writes still use env placeholders |
 
 Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`.
+
+`--harness firstmate` is print-only: it prints a `cd` into the Firstmate home followed by a `claude mcp add --transport http …` command wired to this project's single-bank Hindsight URL. There is no `--write-firstmate`; Nocciolo never writes MCP config into the Firstmate home or detects whether Firstmate is installed. The printed notes say to run the command from the Firstmate home, that the wiring is captain-only (do not wire scouts or ships), that it must not write into this product repo, and that the git project should be registered in Firstmate separately.
 
 Once wired, agents use Hindsight MCP tools such as `recall`, `reflect`, and `retain`.
 See the [Hindsight MCP tools](../README.md#hindsight-mcp-tools-any-agent) section in the README.

@@ -254,7 +254,7 @@ Hindsight **retain** (what `nocciolo seed` calls) needs a working LLM. If your H
 
 ### Hindsight MCP tools (any agent)
 
-After you wire the project bank MCP endpoint (`http://localhost:8888/mcp/<bankId>/`), Cursor, Claude Code, Roo, Codex, Kiro, and other harnesses that speak MCP expose the same Hindsight tools for that bank.
+After you wire the project bank MCP endpoint (`http://localhost:8888/mcp/<bankId>/`), Cursor, Claude Code, Roo, Codex, Kiro, Firstmate, and other harnesses that speak MCP expose the same Hindsight tools for that bank. `--harness firstmate` prints a captain-home snippet only (see [docs/nocciolo-cli-commands.md](./docs/nocciolo-cli-commands.md)); it does not write into this repo.
 
 The three you will use most often:
 
@@ -355,7 +355,7 @@ By default `mcp` **prints** ready-to-paste configs. It does not detect your IDE:
 | Flag | What it does |
 |------|----------------|
 | *(none)* | Print snippets for Cursor, Claude Code, Claude Desktop, Roo, Codex, and Kiro |
-| `--harness <list>` | Limit output: `cursor`, `claude-code`, `claude-desktop`, `roo`, `codex`, `kiro`, or `all` (comma-separated) |
+| `--harness <list>` | Limit output: `cursor`, `claude-code`, `claude-desktop`, `roo`, `codex`, `kiro`, `firstmate`, or `all` (comma-separated) |
 | `--write` | Write/merge project `.cursor/mcp.json` |
 | `--write-roo` | Write/merge project `.roo/mcp.json` (`type: streamable-http`) |
 | `--write-kiro` | Write/merge project `.kiro/settings/mcp.json` |

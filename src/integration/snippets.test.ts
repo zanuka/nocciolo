@@ -79,6 +79,32 @@ describe("generateMcpSnippets", () => {
     );
   });
 
+  it("emits Firstmate as a print-only shell snippet with the single-bank URL", () => {
+    const firstmate = generateMcpSnippets(input).find(
+      (s) => s.harness === "firstmate",
+    );
+    expect(firstmate).toBeDefined();
+    expect(firstmate!.format).toBe("shell");
+    expect(firstmate!.body).toContain("cd ");
+    expect(firstmate!.body).toContain("claude mcp add --transport http");
+    expect(firstmate!.body).toContain("http://localhost:8888/mcp/nocciolo/");
+    expect(firstmate!.notes.join(" ")).toMatch(/Firstmate home/);
+    expect(firstmate!.notes.join(" ")).toMatch(/Captain-only/);
+    expect(firstmate!.notes.join(" ")).toMatch(/scouts or ships/);
+    expect(firstmate!.notes.join(" ")).toMatch(/not write MCP config/);
+    expect(firstmate!.notes.join(" ")).toMatch(/Register this git project/);
+  });
+
+  it("adds env placeholder auth headers for Firstmate with --include-auth", () => {
+    const firstmate = generateMcpSnippets({
+      ...input,
+      includeAuth: true,
+    }).find((s) => s.harness === "firstmate");
+    expect(firstmate!.body).toContain(
+      '--header "Authorization: Bearer ${NOCCIOLO_HINDSIGHT_API_KEY}"',
+    );
+  });
+
   it("filters harnesses", () => {
     const all = generateMcpSnippets(input);
     const filtered = filterSnippets(all, ["cursor", "codex"]);
@@ -93,6 +119,16 @@ describe("parseHarnessList", () => {
 
   it("rejects unknown harnesses", () => {
     expect(() => parseHarnessList("cursor,nope")).toThrow(/Unknown harness/);
+  });
+
+  it("still errors on --harness nope and lists firstmate in the valid harnesses", () => {
+    expect(() => parseHarnessList("nope")).toThrow(/Unknown harness "nope"/);
+    try {
+      parseHarnessList("nope");
+      throw new Error("expected parseHarnessList to throw");
+    } catch (error) {
+      expect((error as Error).message).toContain("firstmate");
+    }
   });
 });
 

@@ -6,7 +6,8 @@ export type McpHarness =
   | "claude-desktop"
   | "roo"
   | "codex"
-  | "kiro";
+  | "kiro"
+  | "firstmate";
 
 export const ALL_HARNESSES: readonly McpHarness[] = [
   "cursor",
@@ -15,6 +16,7 @@ export const ALL_HARNESSES: readonly McpHarness[] = [
   "roo",
   "codex",
   "kiro",
+  "firstmate",
 ] as const;
 
 export interface McpSnippetInput {
@@ -175,6 +177,19 @@ export function generateMcpSnippets(input: McpSnippetInput): McpSnippet[] {
         "Workspace: .kiro/settings/mcp.json — or ~/.kiro/settings/mcp.json.",
       ],
     },
+    {
+      harness: "firstmate",
+      title: "Firstmate",
+      targetPath: "(claude mcp add, run from the Firstmate home)",
+      format: "shell",
+      body: buildFirstmateCommand(serverName, mcpUrl, headers),
+      notes: [
+        "Print-only: run this from the Firstmate home, not from this product repo.",
+        "Captain-only: do not wire scouts or ships to this MCP server.",
+        "Do not write MCP config into this product repo.",
+        "Register this git project in Firstmate separately (this snippet only wires the MCP server).",
+      ],
+    },
   ];
 }
 
@@ -226,6 +241,28 @@ function buildClaudeCodeCommand(
     }
   }
   return parts.join(" ");
+}
+
+function buildFirstmateCommand(
+  serverName: string,
+  mcpUrl: string,
+  headers: Record<string, string> | undefined,
+): string {
+  const claudeParts = [
+    "claude",
+    "mcp",
+    "add",
+    "--transport",
+    "http",
+    serverName,
+    mcpUrl,
+  ];
+  if (headers) {
+    for (const [key, value] of Object.entries(headers)) {
+      claudeParts.push("--header", `"${key}: ${value}"`);
+    }
+  }
+  return ["cd \"$FIRSTMATE_HOME\"", claudeParts.join(" ")].join("\n");
 }
 
 function buildCodexToml(

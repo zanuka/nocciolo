@@ -18,6 +18,10 @@ import {
   writeCursorBankRule,
   writeMergedMcpJson,
 } from "../integration/write.js";
+import {
+  installFirstmateProjectBank,
+  type InstallProjectBankSkillResult,
+} from "../integration/project-bank-skill.js";
 import { NoccioloError } from "../utils/errors.js";
 
 export interface McpOptions {
@@ -29,6 +33,7 @@ export interface McpOptions {
   writeCursorRules?: boolean;
   writeRoo?: boolean;
   writeKiro?: boolean;
+  writeFirstmate?: boolean;
   harness?: string;
   hindsightUrl?: string;
   apiKey?: string;
@@ -43,6 +48,7 @@ export interface McpResult {
   snippets: McpSnippet[];
   dryRun: boolean;
   writes: Array<{ path: string; wrote: boolean; dryRun: boolean }>;
+  firstmateSkill?: InstallProjectBankSkillResult;
 }
 
 export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
@@ -54,11 +60,20 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
   const writeCursorRules = options.writeCursorRules ?? false;
   const writeRoo = options.writeRoo ?? false;
   const writeKiro = options.writeKiro ?? false;
+  const writeFirstmate = options.writeFirstmate ?? false;
 
-  if (dryRun && !write && !writeAgents && !writeCursorRules && !writeRoo && !writeKiro) {
+  if (
+    dryRun &&
+    !write &&
+    !writeAgents &&
+    !writeCursorRules &&
+    !writeRoo &&
+    !writeKiro &&
+    !writeFirstmate
+  ) {
     throw new NoccioloError(
       "--dry-run only applies when writing files",
-      "Use --write, --write-agents, --write-cursor-rules, --write-roo, and/or --write-kiro with --dry-run to preview.",
+      "Use --write, --write-agents, --write-cursor-rules, --write-roo, --write-kiro, and/or --write-firstmate with --dry-run to preview.",
     );
   }
 
@@ -171,6 +186,17 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
     );
   }
 
+  let firstmateSkill: InstallProjectBankSkillResult | undefined;
+  if (writeFirstmate) {
+    firstmateSkill = await installFirstmateProjectBank({
+      projectRoot,
+      bankId: config.bankId,
+      hindsightBaseUrl: baseUrl,
+      dryRun,
+      force,
+    });
+  }
+
   return {
     projectRoot,
     bankId: config.bankId,
@@ -179,6 +205,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
     snippets,
     dryRun,
     writes,
+    ...(firstmateSkill !== undefined ? { firstmateSkill } : {}),
   };
 }
 
@@ -197,6 +224,29 @@ export function printMcpResult(result: McpResult): void {
     console.log("");
   }
 
+  if (result.firstmateSkill) {
+    const prefix = result.dryRun ? "[dry-run] " : "";
+    const skill = result.firstmateSkill;
+    if (skill.printOnly) {
+      console.log("$FM_HOME is not set: printing install steps instead of writing.");
+      console.log("Run this from the Firstmate home (or with FM_HOME set):");
+      console.log(`  mkdir -p "$FM_HOME/.agents/skills/project-bank"`);
+      console.log(
+        `  # write the project-bank skill (see docs/firstmate/project-bank/SKILL.md in this repo) to`,
+      );
+      console.log(`  # $FM_HOME/.agents/skills/project-bank/SKILL.md`);
+      console.log(
+        `  # then record { "${result.projectRoot}": { "bankId": "${result.bankId}", "hindsightBaseUrl": "${result.baseUrl}" } }`,
+      );
+      console.log(`  # under "projects" in $FM_HOME/.nocciolo/projects.json`);
+    } else {
+      const verb = result.dryRun ? "Would write" : "Wrote";
+      console.log(`${prefix}${verb}: ${skill.skillPath}`);
+      console.log(`${prefix}${verb}: ${skill.registryPath}`);
+    }
+    console.log("");
+  }
+
   if (result.writes.length > 0) {
     const prefix = result.dryRun ? "[dry-run] " : "";
     for (const w of result.writes) {
@@ -206,7 +256,7 @@ export function printMcpResult(result: McpResult): void {
     if (result.dryRun) {
       console.log("No files were written.");
     }
-  } else {
+  } else if (!result.firstmateSkill) {
     console.log(
       "Tip: `nocciolo mcp --write` writes .cursor/mcp.json; add --write-agents / --write-cursor-rules for agent preference text.",
     );

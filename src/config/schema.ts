@@ -5,6 +5,10 @@ export const DockerConfigSchema = z.object({
   volumeName: z.string().min(1).optional(),
 });
 
+export const StoreConfigSchema = z.object({
+  allowlist: z.array(z.string().min(1)).default([]),
+});
+
 export const NoccioloConfigSchema = z.object({
   version: z.literal(1),
   name: z.string().min(1),
@@ -14,9 +18,11 @@ export const NoccioloConfigSchema = z.object({
   createdAt: z.string().datetime(),
   hindsightBaseUrl: z.string().url().optional(),
   docker: DockerConfigSchema.optional(),
+  store: StoreConfigSchema.optional(),
 });
 
 export type DockerConfig = z.infer<typeof DockerConfigSchema>;
+export type StoreConfig = z.infer<typeof StoreConfigSchema>;
 export type NoccioloConfig = z.infer<typeof NoccioloConfigSchema>;
 
 export function createDefaultConfig(input: {

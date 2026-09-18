@@ -15,6 +15,7 @@ import {
 import { printInitResult, runInit } from "./commands/init.js";
 import { printMcpResult, runMcp } from "./commands/mcp.js";
 import { runSeedCommand } from "./commands/seed.js";
+import { runStoreCommand } from "./commands/store.js";
 import { formatError } from "./utils/errors.js";
 
 function readPackageVersion(): string {
@@ -128,6 +129,69 @@ async function main(): Promise<void> {
     );
 
   program
+    .command("store")
+    .description(
+      "Retain operator-selected durable markdown into the configured bank (preview first; reuses seed's retain path)",
+    )
+    .option(
+      "--dry-run",
+      "Print known/new/changed/unchanged buckets without calling Hindsight",
+    )
+    .option("--force", "Re-store selected sources even when unchanged")
+    .option("--async", "Submit retain asynchronously to Hindsight")
+    .option(
+      "-y, --yes",
+      "Store changed known files only; never adopt new files silently",
+    )
+    .option(
+      "--files <list>",
+      "Comma-separated paths to store exactly (also allowlists them)",
+    )
+    .option(
+      "--add-files <list>",
+      "Comma-separated paths to add to store.allowlist without retaining",
+    )
+    .option(
+      "--project <path>",
+      "Project root (defaults to cwd, walking out of a disposable worktree to the durable clone)",
+    )
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .action(
+      async (opts: {
+        dryRun?: boolean;
+        force?: boolean;
+        async?: boolean;
+        yes?: boolean;
+        files?: string;
+        addFiles?: string;
+        project?: string;
+        hindsightUrl?: string;
+        apiKey?: string;
+      }) => {
+        await runStoreCommand({
+          dryRun: Boolean(opts.dryRun),
+          force: Boolean(opts.force),
+          async: Boolean(opts.async),
+          yes: Boolean(opts.yes),
+          ...(opts.files !== undefined ? { files: opts.files } : {}),
+          ...(opts.addFiles !== undefined ? { addFiles: opts.addFiles } : {}),
+          ...(opts.project !== undefined ? { project: opts.project } : {}),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+      },
+    );
+
+  program
     .command("mcp")
     .description("Emit MCP / agent config snippets for the project bank")
     .option(
@@ -145,8 +209,12 @@ async function main(): Promise<void> {
       "--write-cursor-rules",
       "Write .cursor/rules/hindsight-bank.mdc (alwaysApply)",
     )
+    .option(
+      "--write-firstmate",
+      "Install the project-bank skill + project->bank map into $FM_HOME (prints install steps if FM_HOME is unset); never writes into this product repo",
+    )
     .option("--dry-run", "Preview file writes without mutating the filesystem")
-    .option("--force", "Overwrite existing MCP server entry / Cursor rule")
+    .option("--force", "Overwrite existing MCP server entry / Cursor rule / project-bank skill")
     .option(
       "--hindsight-url <url>",
       "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
@@ -167,6 +235,7 @@ async function main(): Promise<void> {
         writeKiro?: boolean;
         writeAgents?: boolean;
         writeCursorRules?: boolean;
+        writeFirstmate?: boolean;
         dryRun?: boolean;
         force?: boolean;
         hindsightUrl?: string;
@@ -181,6 +250,7 @@ async function main(): Promise<void> {
           writeKiro: Boolean(opts.writeKiro),
           writeAgents: Boolean(opts.writeAgents),
           writeCursorRules: Boolean(opts.writeCursorRules),
+          writeFirstmate: Boolean(opts.writeFirstmate),
           includeAuth: Boolean(opts.includeAuth),
           ...(opts.harness !== undefined ? { harness: opts.harness } : {}),
           ...(opts.hindsightUrl !== undefined

@@ -90,7 +90,7 @@ flowchart TD
 | `src/commands/` | Command orchestration + user-facing output |
 | `src/project/` | Project root detection, git commit lookup, worktree detection, captain-home registry |
 | `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` (including `store.allowlist`) |
-| `src/scanner/` | Find durable docs (README, AGENTS.md, docs/**, ADRs); `store`'s stricter denylist |
+| `src/scanner/` | Find durable docs (README, docs/**, ADRs); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template types/generator + HTTP retain client |
 | `src/seeder/` | Prepare retain payload, incremental manifest (shared by `seed` and `store`) |
@@ -218,9 +218,10 @@ If Hindsight returns `401`/`403`, the CLI hints that an API key may be required.
 Conservative first pass looks for:
 
 - `README.md`
-- `AGENTS.md`
 - Markdown under `docs/`, `doc/`, `documentation/`
 - ADR paths (`adr/`, `docs/adr/`, `docs/decisions/`, root `ADR*.md`, etc.)
+
+`AGENTS.md` is **not** scanned for seed or store. It is agent harness wiring (integration emission via `nocciolo mcp --write-agents`), not bank seed material.
 
 Ephemeral chat logs, lockfiles, and generated noise are out of scope for seeding.
 
@@ -241,7 +242,7 @@ The extractor is **heuristic**, not an LLM:
 - Splits markdown on `#` / `##` / `###` headings (skips fenced code blocks so shell comments are not treated as headings)
 - Scores sections with keyword signals (decision, architecture, standard, domain, overview, …)
 - Drops noisy headings (install, quick start, contributing, license, changelog, …)
-- Keeps **whole** ADR and `AGENTS.md` files as single high-value documents
+- Keeps **whole** ADR files as single high-value documents
 - Attaches provenance: source path, source kind, optional git commit (`git rev-parse HEAD`)
 
 Each candidate gets a stable id used as Hindsight `document_id`, e.g. `nocciolo:README.md#core-principles`. Re-retaining the same id upserts in Hindsight.

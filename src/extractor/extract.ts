@@ -69,13 +69,13 @@ export function extractFromSource(
     };
   }
 
-  if (source.kind === "adr" || source.kind === "agents") {
+  if (source.kind === "adr") {
     const fact = buildFact({
       source,
       title: firstHeading(trimmed) ?? source.relativePath,
       body: trimmed,
-      knowledgeKind: source.kind === "adr" ? "decision" : "agents",
-      score: source.kind === "adr" ? 10 : 8,
+      knowledgeKind: "decision",
+      score: 10,
       sectionSlug: "document",
       ...(options.commit !== undefined ? { commit: options.commit } : {}),
     });

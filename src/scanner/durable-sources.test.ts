@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { findDurableSources } from "./durable-sources.js";
 
 describe("findDurableSources", () => {
-  it("finds README, AGENTS, docs, and ADRs", async () => {
+  it("finds README, docs, and ADRs; skips AGENTS.md", async () => {
     const root = await mkdtemp(join(tmpdir(), "nocciolo-scan-"));
     await writeFile(join(root, "README.md"), "# Hello\n");
     await writeFile(join(root, "AGENTS.md"), "# Agents\n");
@@ -17,7 +17,6 @@ describe("findDurableSources", () => {
     const paths = sources.map((s) => s.relativePath).sort();
 
     expect(paths).toEqual([
-      "AGENTS.md",
       "README.md",
       "docs/adr/0001-use-ts.md",
       "docs/guide.md",

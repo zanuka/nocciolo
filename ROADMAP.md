@@ -26,7 +26,7 @@ High-level phased plan. This is a living document; priorities will shift based o
 
 ## Phase 2: Knowledge Curation & Seeding
 
-- [x] Project scanner for durable sources (README, `/docs`, ADRs, AGENTS.md): conservative first pass
+- [x] Project scanner for durable sources (README, `/docs`, ADRs): conservative first pass; `AGENTS.md` is integration surface, not seed input
 - [x] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
 - [x] `nocciolo seed --dry-run`: preview extracted candidates with provenance
 - [x] `nocciolo seed`: retain high-signal knowledge into the configured Hindsight bank

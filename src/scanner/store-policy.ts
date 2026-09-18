@@ -3,6 +3,8 @@ import { isSensitiveRelativePath } from "./sensitive.js";
 
 const DENIED_BASENAMES = new Set([".stow-archive.md", ".stow-notes.md"]);
 
+const INTEGRATION_SURFACE_BASENAMES = new Set(["agents.md"]);
+
 const DENIED_PATH_PATTERNS: RegExp[] = [
   /(^|\/)\.backpass\//i,
   /(^|\/)node_modules\//i,
@@ -15,6 +17,7 @@ export interface StoreDenyReason {
 
 /**
  * Store's denylist is stricter than the seed scanner's: it also blocks
+ * AGENTS.md (agent harness wiring, not bank seed material),
  * .stow-archive.md / .stow-notes.md (Firstmate disk-pref files, not project
  * knowledge) and .backpass/ trees, and requires paths to stay inside the
  * project root and be markdown.
@@ -33,6 +36,14 @@ export function checkStoreDeny(
 
   if (isSensitiveRelativePath(normalized)) {
     return { denied: true, reason: "matches secrets/credentials denylist" };
+  }
+
+  if (INTEGRATION_SURFACE_BASENAMES.has(basename.toLowerCase())) {
+    return {
+      denied: true,
+      reason:
+        "AGENTS.md is agent harness wiring (integration surface), not bank seed material",
+    };
   }
 
   if (!/\.(md|markdown)$/i.test(basename)) {

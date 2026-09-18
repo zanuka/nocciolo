@@ -152,7 +152,7 @@ Full rationale for contributors: [docs/nocciolo-sync-strategy.md](./docs/nocciol
 
 What `seed` actually does:
 
-1. Scan durable sources locally (README, AGENTS.md, `docs/**`, ADRs: secrets like `.env` excluded)
+1. Scan durable sources locally (README, `docs/**`, ADRs: secrets like `.env` excluded)
 2. Extract scored candidate facts with provenance (source path + optional git commit)
 3. **Retain** each candidate via Hindsight’s memories API (LLM extraction per item)
 4. Write incremental state to `.nocciolo/local/seed-manifest.json` (gitignored, machine-local)
@@ -167,7 +167,7 @@ Every `seed` run **reads all durable sources locally** (to compute hashes), but 
 pnpm nocciolo seed --dry-run
 ```
 
-Shows scored candidates from durable docs (README, AGENTS.md, docs, ADRs), with provenance and skips for empty or low-signal sections. No API calls.
+Shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections. No API calls.
 
 **Retain with clear progress**
 
@@ -238,7 +238,7 @@ More detail: [developer workflow](./docs/dev-workflow.md), [sync strategy](./doc
 | | `seed` | `store` |
 |---|---|---|
 | When | Once, to bootstrap a brand-new bank | Repeatedly, after the bank already exists |
-| Scope | Broad default scan: README, ADRs, `docs/**`, `AGENTS.md` | Operator-picked scope only: `store.allowlist` in `.nocciolo/config.json` |
+| Scope | Broad default scan: README, ADRs, `docs/**` | Operator-picked scope only: `store.allowlist` in `.nocciolo/config.json` |
 | New files | Adopted automatically | Never adopted implicitly: always previewed or picked, even with `--yes` |
 | Retain path | `retainPreparedItems` (shared with `store`) | Same `retainPreparedItems`, same `document_id` upserts, manifest, auth, and progress handling: not a second implementation |
 
@@ -247,7 +247,7 @@ Typical use: run `seed` once per project at the start, then run `store` whenever
 ```bash
 pnpm nocciolo store --dry-run   # known / new / changed / unchanged, with explicit zero counts
 pnpm nocciolo store --yes       # store changed known files only; never adopts new files silently
-pnpm nocciolo store --files docs/architecture.md,AGENTS.md   # store exactly these; allowlists them
+pnpm nocciolo store --files docs/architecture.md   # store exactly these; allowlists them
 pnpm nocciolo store --add-files docs/roadmap-notes.md        # allowlist only, no retain
 ```
 
@@ -256,7 +256,7 @@ New markdown is never stored implicitly. Preview first: `--dry-run` prints the f
 The allowlist lives at `store.allowlist` in `.nocciolo/config.json` (version-controlled, alongside `bankId`):
 
 ```json
-{ "store": { "allowlist": ["README.md", "AGENTS.md", "docs/architecture.md"] } }
+{ "store": { "allowlist": ["README.md", "docs/architecture.md"] } }
 ```
 
 The first `store` run after a `seed` bootstraps this allowlist from the last seed manifest's sources, so already-seeded files read as known, not new.

@@ -9,12 +9,11 @@ import {
 export interface DurableSource {
   absolutePath: string;
   relativePath: string;
-  kind: "readme" | "agents" | "docs" | "adr";
+  kind: "readme" | "docs" | "adr";
 }
 
 const ROOT_FILES: Array<{ name: string; kind: DurableSource["kind"] }> = [
   { name: "README.md", kind: "readme" },
-  { name: "AGENTS.md", kind: "agents" },
 ];
 
 const DOC_DIRS = ["docs", "doc", "documentation"];
@@ -143,8 +142,6 @@ export function summarizeSource(source: DurableSource): string {
   switch (source.kind) {
     case "readme":
       return "Project overview and goals";
-    case "agents":
-      return "Agent-facing project instructions";
     case "adr":
       return `Decision record (${basename(source.relativePath)})`;
     case "docs":

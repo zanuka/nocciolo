@@ -328,7 +328,7 @@ function printSeedPlan(input: {
   if (prepared.sources.length === 0) {
     console.log("No durable sources found.");
     console.log(
-      "Looked for README.md, AGENTS.md, docs/**, and ADR files. Add project docs, then re-run.",
+      "Looked for README.md, docs/**, and ADR files. Add project docs, then re-run.",
     );
     return;
   }

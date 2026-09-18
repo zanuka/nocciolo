@@ -8,5 +8,25 @@
   "docker": {
     "containerName": "suchconfig-hindsight",
     "volumeName": "hindsight-data"
+  },
+  "store": {
+    "allowlist": [
+      "AGENTS.md",
+      "README.md",
+      "docs/cli-architecture.md",
+      "docs/dev-testing.md",
+      "docs/dev-workflow.md",
+      "docs/dev/mem0-vs-hindsight.md",
+      "docs/dev/multi-provider-plan.md",
+      "docs/graphiti-integration.md",
+      "docs/hindsight-bank-backup.md",
+      "docs/hindsight-cloud.md",
+      "docs/hindsight-mental-models.md",
+      "docs/hindsight-upgrade.md",
+      "docs/nocciolo-configs.md",
+      "docs/nocciolo-sync-strategy.md",
+      "docs/phase-4-dogfood-gaps.md",
+      "docs/sensitive-data.md"
+    ]
   }
 }

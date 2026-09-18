@@ -18,7 +18,7 @@ Graphiti already has a simple path to **stand up a graph and wire Cursor** (`doc
 
 What Graphiti does not have — and why this provider exists — is a **project-native seeder**:
 
-- scan README / ADRs / `docs/` / `AGENTS.md`
+- scan README / ADRs / `docs/`
 - skip secrets and low-signal noise
 - install a software ontology instead of Preference / Person / Object
 - incremental re-seed when those files change
@@ -216,7 +216,7 @@ Reuse the existing scanner. Do not add a Graphiti-specific crawler.
 | README / docs section | `text` | Section markdown, already trimmed by the scanner | file git date |
 | ADR with parseable fields (`title`, `status`, `date`, `context`, `decision`, `consequences`) | `json` | those fields + `source` | ADR date, else git date |
 | ADR that will not parse | `text` | section body | git date |
-| `AGENTS.md` / standards | `text` | section | git date |
+| Standards docs | `text` | section | git date |
 | Secrets / denylist / low score | skip | — | — |
 
 JSON ADRs can wait until the text path works. Ship text-only in the first vertical slice if parsing is not already in the scanner.

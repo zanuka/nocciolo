@@ -233,6 +233,17 @@ More detail: [developer workflow](./docs/dev-workflow.md), [sync strategy](./doc
 
 `store` never auto-retains chat, diffs, worktrees, or transcripts. It is not transcript ingest, not Backpass, and not Hindsight Coding Agents auto-retain.
 
+### `seed` vs. `store`
+
+| | `seed` | `store` |
+|---|---|---|
+| When | Once, to bootstrap a brand-new bank | Repeatedly, after the bank already exists |
+| Scope | Broad default scan: README, ADRs, `docs/**`, `AGENTS.md` | Operator-picked scope only: `store.allowlist` in `.nocciolo/config.json` |
+| New files | Adopted automatically | Never adopted implicitly: always previewed or picked, even with `--yes` |
+| Retain path | `retainPreparedItems` (shared with `store`) | Same `retainPreparedItems`, same `document_id` upserts, manifest, auth, and progress handling: not a second implementation |
+
+Typical use: run `seed` once per project at the start, then run `store` whenever project docs change.
+
 ```bash
 pnpm nocciolo store --dry-run   # known / new / changed / unchanged, with explicit zero counts
 pnpm nocciolo store --yes       # store changed known files only; never adopts new files silently

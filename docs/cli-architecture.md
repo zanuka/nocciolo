@@ -11,8 +11,8 @@ It is **not** a general multi-agent orchestrator. It is a local-first config + c
 1. Discover durable sources (scanner)
 2. Extract high-signal candidates (extractor)
 3. Generate bank templates (provider template)
-4. Retain into the memory system (seeder)
-5. Emit agent integration snippets (MCP configs, optional AGENTS.md / Cursor rules)
+4. Retain into the memory system (seeder), driven by `seed` (bootstrap scan) or `store` (ongoing operator-selected subset; same retain path)
+5. Emit agent integration snippets (MCP configs, optional AGENTS.md / Cursor rules, Firstmate `project-bank` skill)
 
 Prefer missing a weak fact over injecting noise.
 
@@ -88,13 +88,13 @@ flowchart TD
 |------|----------------|
 | `src/cli.ts` | Commander entry: wires commands and flags |
 | `src/commands/` | Command orchestration + user-facing output |
-| `src/project/` | Project root detection, git commit lookup |
-| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` |
-| `src/scanner/` | Find durable docs (README, AGENTS.md, docs/**, ADRs) |
+| `src/project/` | Project root detection, git commit lookup, worktree detection, captain-home registry |
+| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` (including `store.allowlist`) |
+| `src/scanner/` | Find durable docs (README, docs/**, ADRs); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template types/generator + HTTP retain client |
-| `src/seeder/` | Prepare retain payload, incremental manifest |
-| `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters |
+| `src/seeder/` | Prepare retain payload, incremental manifest (shared by `seed` and `store`) |
+| `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
 | `src/utils/` | Shared FS helpers and actionable errors |
 
@@ -109,6 +109,8 @@ node dist/cli.js configure
 node dist/cli.js docker print
 node dist/cli.js seed --dry-run
 node dist/cli.js seed
+node dist/cli.js store --dry-run
+node dist/cli.js store --yes
 node dist/cli.js mcp
 node dist/cli.js mcp --write --dry-run
 ```
@@ -120,7 +122,9 @@ node dist/cli.js mcp --write --dry-run
 | `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`) |
 | `seed --dry-run` | Scan + extract; print candidates; **no** API calls |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
-| `mcp` | Print ready-to-paste MCP snippets; optional `--write` / AGENTS / Cursor rules |
+| `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
+| `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path |
+| `mcp` | Print ready-to-paste MCP snippets; optional `--write` / AGENTS / Cursor rules / Firstmate `project-bank` skill |
 
 Common flags:
 
@@ -214,9 +218,10 @@ If Hindsight returns `401`/`403`, the CLI hints that an API key may be required.
 Conservative first pass looks for:
 
 - `README.md`
-- `AGENTS.md`
 - Markdown under `docs/`, `doc/`, `documentation/`
 - ADR paths (`adr/`, `docs/adr/`, `docs/decisions/`, root `ADR*.md`, etc.)
+
+`AGENTS.md` is **not** scanned for seed or store. It is agent harness wiring (integration emission via `nocciolo mcp --write-agents`), not bank seed material.
 
 Ephemeral chat logs, lockfiles, and generated noise are out of scope for seeding.
 
@@ -237,7 +242,7 @@ The extractor is **heuristic**, not an LLM:
 - Splits markdown on `#` / `##` / `###` headings (skips fenced code blocks so shell comments are not treated as headings)
 - Scores sections with keyword signals (decision, architecture, standard, domain, overview, …)
 - Drops noisy headings (install, quick start, contributing, license, changelog, …)
-- Keeps **whole** ADR and `AGENTS.md` files as single high-value documents
+- Keeps **whole** ADR files as single high-value documents
 - Attaches provenance: source path, source kind, optional git commit (`git rev-parse HEAD`)
 
 Each candidate gets a stable id used as Hindsight `document_id`, e.g. `nocciolo:README.md#core-principles`. Re-retaining the same id upserts in Hindsight.
@@ -255,6 +260,19 @@ Synchronous retain (default) prints a clear warning not to close the terminal or
 Use `--async` to submit the batch and have Nocciolo **poll** `GET /v1/default/banks/{bank}/operations/{id}` for Hindsight’s own `progress.processed` / `progress.total` (when the server reports them). Do **not** scrape Docker container logs for progress: that is fragile and environment-specific; the operations API is the supported channel.
 
 `--dry-run` still shows what **would** be retained (and what would be skipped as unchanged).
+
+## Store: ongoing selected retain
+
+`seed` bootstraps from a default scan. `store` (`src/commands/store.ts`) is the ongoing follow-up once durable project `.md` already exists on disk: an operator picks which files to retain, previewed first. It never reimplements retain: it filters `prepareSeed`'s discovered sources down to a selected subset (`only: Set<relativePath>`) and calls the same `retainPreparedItems` loop `seed` uses (extracted into `src/commands/seed.ts` and shared), then writes the same `.nocciolo/local/seed-manifest.json`.
+
+Flow: `store` resolves the project root (refusing a disposable git worktree via `src/project/worktree.ts`, walking out to the durable clone via `src/project/registry.ts` when possible), reads `store.allowlist` from `.nocciolo/config.json`, scans with `src/scanner/durable-sources.ts`, and classifies each result into four buckets against the allowlist and the seed manifest's content hashes:
+
+- **known**: allowlisted and found on disk (changed + unchanged)
+- **new**: found on disk but not yet allowlisted (never stored implicitly)
+- **changed**: known, content hash differs from the manifest
+- **unchanged**: known, content hash matches (skipped)
+
+`--files` and `--add-files` both persist onto `store.allowlist`; `--add-files` never retains. `--yes` stores changed known files only and prints skipped new files. Interactively (TTY, no `--yes`/`--files`), `store` multi-selects new files via `src/utils/prompt.ts`'s `promptMultiSelect`, and always includes changed known files by default. `src/scanner/store-policy.ts` adds a stricter denylist on top of `sensitive.ts`: non-markdown paths, paths outside the project root, `.backpass/`, and Firstmate's `.stow-archive.md` / `.stow-notes.md` disk-pref files (allowed only via explicit `--files`).
 
 ## Hindsight integration
 
@@ -294,10 +312,13 @@ Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`.
 | `nocciolo mcp --write-roo` / `--write-kiro` | Project Roo / Kiro MCP JSON |
 | `nocciolo mcp --write-agents` | Idempotent AGENTS.md section (HTML comment markers) |
 | `nocciolo mcp --write-cursor-rules` | `.cursor/rules/hindsight-bank.mdc` (`alwaysApply`) |
+| `nocciolo mcp --harness firstmate --write-firstmate` | Install Firstmate's on-demand `project-bank` skill under `$FM_HOME/.agents/skills/project-bank/` and record this project's bank in `$FM_HOME/.nocciolo/projects.json` (prints install steps when `$FM_HOME` is unset; never writes into this repo) |
 | `--dry-run` | Preview writes without mutating |
 | `--include-auth` | Add Authorization headers (env placeholders on write) |
 
 Harness filter: `--harness cursor,claude-code`.
+
+`src/project/registry.ts` owns the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, fallback `~/.nocciolo/projects.json`): the same file `store` reads to walk out of a disposable worktree to its durable clone. `src/integration/project-bank-skill.ts` owns the skill content and the write; a checked-in copy for manual install lives at [docs/firstmate/project-bank/SKILL.md](./firstmate/project-bank/SKILL.md).
 
 ## Development tips
 

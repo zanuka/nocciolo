@@ -152,7 +152,7 @@ Full rationale for contributors: [docs/nocciolo-sync-strategy.md](./docs/nocciol
 
 What `seed` actually does:
 
-1. Scan durable sources locally (README, AGENTS.md, `docs/**`, ADRs: secrets like `.env` excluded)
+1. Scan durable sources locally (README, `docs/**`, ADRs: secrets like `.env` excluded)
 2. Extract scored candidate facts with provenance (source path + optional git commit)
 3. **Retain** each candidate via Hindsight’s memories API (LLM extraction per item)
 4. Write incremental state to `.nocciolo/local/seed-manifest.json` (gitignored, machine-local)
@@ -167,7 +167,7 @@ Every `seed` run **reads all durable sources locally** (to compute hashes), but 
 pnpm nocciolo seed --dry-run
 ```
 
-Shows scored candidates from durable docs (README, AGENTS.md, docs, ADRs), with provenance and skips for empty or low-signal sections. No API calls.
+Shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections. No API calls.
 
 **Retain with clear progress**
 
@@ -226,6 +226,42 @@ Here is the Nocciolo bank’s world-facts constellation in Hindsight after a `se
 ![Nocciolo Hindsight world facts constellation](./images/nocciolo-world-facts.png)
 
 More detail: [developer workflow](./docs/dev-workflow.md), [sync strategy](./docs/nocciolo-sync-strategy.md).
+
+## Keeping the bank current with `nocciolo store`
+
+`seed` is the initial bootstrap: it scans and retains everything durable it can find. `store` is what you run afterward, for ongoing, operator-selected retain once durable project markdown already exists on disk. It reuses `seed`'s retain path exactly (same `document_id` upserts, same manifest, same auth and progress): it does not reimplement retain, and it never seeds broadly on its own.
+
+`store` never auto-retains chat, diffs, worktrees, or transcripts. It is not transcript ingest, not Backpass, and not Hindsight Coding Agents auto-retain.
+
+### `seed` vs. `store`
+
+| | `seed` | `store` |
+|---|---|---|
+| When | Once, to bootstrap a brand-new bank | Repeatedly, after the bank already exists |
+| Scope | Broad default scan: README, ADRs, `docs/**` | Operator-picked scope only: `store.allowlist` in `.nocciolo/config.json` |
+| New files | Adopted automatically | Never adopted implicitly: always previewed or picked, even with `--yes` |
+| Retain path | `retainPreparedItems` (shared with `store`) | Same `retainPreparedItems`, same `document_id` upserts, manifest, auth, and progress handling: not a second implementation |
+
+Typical use: run `seed` once per project at the start, then run `store` whenever project docs change.
+
+```bash
+pnpm nocciolo store --dry-run   # known / new / changed / unchanged, with explicit zero counts
+pnpm nocciolo store --yes       # store changed known files only; never adopts new files silently
+pnpm nocciolo store --files docs/architecture.md   # store exactly these; allowlists them
+pnpm nocciolo store --add-files docs/roadmap-notes.md        # allowlist only, no retain
+```
+
+New markdown is never stored implicitly. Preview first: `--dry-run` prints the four buckets and suggested next commands with no API calls. In an interactive terminal (no `--yes`, no `--files`), `store` lets you multi-select which new files to adopt; changed files already on the allowlist are included by default.
+
+The allowlist lives at `store.allowlist` in `.nocciolo/config.json` (version-controlled, alongside `bankId`):
+
+```json
+{ "store": { "allowlist": ["README.md", "docs/architecture.md"] } }
+```
+
+The first `store` run after a `seed` bootstraps this allowlist from the last seed manifest's sources, so already-seeded files read as known, not new.
+
+`store` refuses to run from a disposable git worktree (a Treehouse pool checkout, for example): it only operates on the durable clone that owns `.nocciolo/`. When run from a worktree it resolves the durable clone via the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, installed by `nocciolo mcp --harness firstmate --write-firstmate`) or via `--project <durable-clone-path>`.
 
 ## Local Hindsight & agent wiring
 
@@ -361,8 +397,9 @@ By default `mcp` **prints** ready-to-paste configs. It does not detect your IDE:
 | `--write-kiro` | Write/merge project `.kiro/settings/mcp.json` |
 | `--write-agents` | Upsert an `AGENTS.md` section telling agents to prefer the project bank |
 | `--write-cursor-rules` | Write `.cursor/rules/hindsight-bank.mdc` (`alwaysApply: true`) |
+| `--write-firstmate` | Install the `project-bank` skill and record this project's bank in the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, fallback `~/.nocciolo/projects.json`); prints install steps instead of writing when `$FM_HOME` is unset. Never writes MCP config into this product repo. |
 | `--dry-run` | Preview writes without touching the filesystem (requires at least one `--write*` flag) |
-| `--force` | Overwrite an existing `hindsight` MCP entry or Cursor rule file |
+| `--force` | Overwrite an existing `hindsight` MCP entry, Cursor rule file, or `project-bank` skill |
 | `--hindsight-url <url>` | Override Hindsight base URL for the MCP endpoint |
 | `--include-auth` | Add `Authorization` headers; written files use env placeholders (`${env:NOCCIOLO_HINDSIGHT_API_KEY}` for Cursor) |
 | `--api-key <key>` | Include this key **literally** in printed snippets only; file writes still use env placeholders |

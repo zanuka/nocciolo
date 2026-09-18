@@ -13,7 +13,7 @@ Companion: [dev-testing.md](./dev-testing.md), [dev-workflow.md](./dev-workflow.
 | Shared Docker server | One container hosts both `nocciolo` and `strumentario` banks |
 | `init` bank id + container | Distinct `bankId`; `docker.containerName` points at existing server |
 | `configure` | Wrote `.nocciolo/hindsight/bank-template.json` for the project |
-| Live `seed` | Retained durable README / AGENTS / docs candidates with provenance |
+| Live `seed` | Retained durable README / docs candidates with provenance |
 | HTTP recall | `POST …/banks/strumentario/memories/recall` returned Strumentario facts |
 | MCP endpoint | `http://localhost:8888/mcp/strumentario/` initializes when auth is correct |
 | Agent wiring files | `--write` / `--write-agents` / `--write-cursor-rules` produced usable Cursor artifacts |

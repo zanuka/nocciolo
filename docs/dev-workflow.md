@@ -104,7 +104,7 @@ Uses `ghcr.io/vectorize-io/hindsight:latest` (API `:8888`, UI `:9999`). Containe
 pnpm nocciolo seed --dry-run
 ```
 
-No API calls. Prints scored candidates from README, AGENTS.md, docs/**, ADRs: plus skips (empty files, low-signal sections, unchanged sources).
+No API calls. Prints scored candidates from README, docs/**, ADRs: plus skips (empty files, low-signal sections, unchanged sources).
 
 ### 5. Live seed into Hindsight
 

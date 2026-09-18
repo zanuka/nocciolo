@@ -6,6 +6,7 @@ import {
   HindsightClient,
   resolveHindsightApiKey,
   resolveHindsightBaseUrl,
+  type RetainItem,
 } from "../providers/hindsight/client.js";
 import { formatOperationProgressLine } from "../providers/hindsight/progress.js";
 import {
@@ -111,73 +112,13 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     baseUrl,
     ...(apiKey !== undefined ? { apiKey } : {}),
   });
-  const items = toRetainItems(prepared.factsToRetain);
-  const retainedIds = new Set<string>();
-  let failed = 0;
-
-  printRetainWarning(items.length, asyncRetain);
-
-  if (asyncRetain) {
-    console.log(
-      `Submitting ${items.length} item(s) asynchronously to Hindsight...`,
-    );
-    const response = await client.retain(config.bankId, {
-      items,
-      async: true,
-    });
-    for (const item of items) {
-      retainedIds.add(item.document_id);
-    }
-
-    const operationIds = collectOperationIds(response);
-    if (operationIds.length === 0) {
-      console.log(
-        "Async retain submitted (no operation id returned). Watch the Hindsight dashboard for progress.",
-      );
-    } else {
-      for (const operationId of operationIds) {
-        console.log(`Tracking operation ${operationId}...`);
-        await pollOperationUntilDone(client, config.bankId, operationId);
-      }
-    }
-  } else {
-    const total = items.length;
-    console.log(
-      `Retaining ${total} item(s) synchronously (LLM extraction per item).`,
-    );
-    console.log("Progress:");
-    for (const [index, item] of items.entries()) {
-      const n = index + 1;
-      const pct = formatPercent(n - 1, total);
-      console.log(`  [${n}/${total}] ${pct}  starting  ${item.document_id}`);
-      try {
-        await client.retain(config.bankId, {
-          items: [item],
-          async: false,
-        });
-        retainedIds.add(item.document_id);
-        console.log(
-          `  [${n}/${total}] ${formatPercent(n, total)}  done      ${item.document_id}`,
-        );
-      } catch (error) {
-        failed += 1;
-        const message =
-          error instanceof Error ? error.message : String(error);
-        console.error(`  [${n}/${total}] failed    ${message}`);
-        if (isAuthError(error)) {
-          console.error("");
-          console.error(formatError(error));
-          console.error(
-            "Stopping early — fix auth and re-run. Example:",
-          );
-          console.error(
-            "  NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed",
-          );
-          break;
-        }
-      }
-    }
-  }
+  const { retainedIds, failed } = await retainPreparedItems({
+    client,
+    bankId: config.bankId,
+    items: toRetainItems(prepared.factsToRetain),
+    asyncRetain,
+    retryHint: "NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed",
+  });
 
   const previous =
     (await loadSeedManifest(projectRoot)) ??
@@ -213,6 +154,90 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     async: asyncRetain,
     failed,
   };
+}
+
+export interface RetainRunResult {
+  retainedIds: Set<string>;
+  failed: number;
+}
+
+/**
+ * Shared retain-execution loop for both `seed` and `store`: same client
+ * call, same sync/async modes, same progress/warning output. `store` must
+ * not reimplement this — it only decides *which* prepared items to pass in.
+ */
+export async function retainPreparedItems(input: {
+  client: HindsightClient;
+  bankId: string;
+  items: RetainItem[];
+  asyncRetain: boolean;
+  retryHint: string;
+}): Promise<RetainRunResult> {
+  const { client, bankId, items, asyncRetain, retryHint } = input;
+  const retainedIds = new Set<string>();
+  let failed = 0;
+
+  printRetainWarning(items.length, asyncRetain);
+
+  if (asyncRetain) {
+    console.log(
+      `Submitting ${items.length} item(s) asynchronously to Hindsight...`,
+    );
+    const response = await client.retain(bankId, {
+      items,
+      async: true,
+    });
+    for (const item of items) {
+      retainedIds.add(item.document_id);
+    }
+
+    const operationIds = collectOperationIds(response);
+    if (operationIds.length === 0) {
+      console.log(
+        "Async retain submitted (no operation id returned). Watch the Hindsight dashboard for progress.",
+      );
+    } else {
+      for (const operationId of operationIds) {
+        console.log(`Tracking operation ${operationId}...`);
+        await pollOperationUntilDone(client, bankId, operationId);
+      }
+    }
+  } else {
+    const total = items.length;
+    console.log(
+      `Retaining ${total} item(s) synchronously (LLM extraction per item).`,
+    );
+    console.log("Progress:");
+    for (const [index, item] of items.entries()) {
+      const n = index + 1;
+      const pct = formatPercent(n - 1, total);
+      console.log(`  [${n}/${total}] ${pct}  starting  ${item.document_id}`);
+      try {
+        await client.retain(bankId, {
+          items: [item],
+          async: false,
+        });
+        retainedIds.add(item.document_id);
+        console.log(
+          `  [${n}/${total}] ${formatPercent(n, total)}  done      ${item.document_id}`,
+        );
+      } catch (error) {
+        failed += 1;
+        const message =
+          error instanceof Error ? error.message : String(error);
+        console.error(`  [${n}/${total}] failed    ${message}`);
+        if (isAuthError(error)) {
+          console.error("");
+          console.error(formatError(error));
+          console.error("Stopping early — fix auth and re-run. Example:");
+          console.error(`  ${retryHint}`);
+          break;
+        }
+      }
+    }
+  }
+
+  return { retainedIds, failed };
 }
 
 function printRetainWarning(itemCount: number, asyncRetain: boolean): void {
@@ -303,7 +328,7 @@ function printSeedPlan(input: {
   if (prepared.sources.length === 0) {
     console.log("No durable sources found.");
     console.log(
-      "Looked for README.md, AGENTS.md, docs/**, and ADR files. Add project docs, then re-run.",
+      "Looked for README.md, docs/**, and ADR files. Add project docs, then re-run.",
     );
     return;
   }

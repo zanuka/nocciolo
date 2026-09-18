@@ -26,7 +26,7 @@ High-level phased plan. This is a living document; priorities will shift based o
 
 ## Phase 2: Knowledge Curation & Seeding
 
-- [x] Project scanner for durable sources (README, `/docs`, ADRs, AGENTS.md): conservative first pass
+- [x] Project scanner for durable sources (README, `/docs`, ADRs): conservative first pass; `AGENTS.md` is integration surface, not seed input
 - [x] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
 - [x] `nocciolo seed --dry-run`: preview extracted candidates with provenance
 - [x] `nocciolo seed`: retain high-signal knowledge into the configured Hindsight bank
@@ -44,6 +44,8 @@ High-level phased plan. This is a living document; priorities will shift based o
 - [x] `nocciolo mcp`: emit ready-to-paste configs and rules
 - [x] Optional updates to `AGENTS.md` / Cursor rules that tell agents to prefer the project bank
 - [x] Single-bank focus (multi-bank later)
+- [x] `nocciolo store`: operator-selected, ongoing incremental retain once durable project `.md` already exists on disk (preview first; reuses `seed`'s retain path exactly, no second implementation)
+- [x] Firstmate dogfood: on-demand `project-bank` skill (`nocciolo mcp --harness firstmate --write-firstmate`) appends a recall-only bank card to the ship brief before a crewmate spawn; crewmates recall, they never seed or store
 
 **Goal:** End-to-end path from repo → configured bank → agent that actually uses it.
 

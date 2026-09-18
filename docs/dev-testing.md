@@ -160,7 +160,7 @@ nocciolo seed --dry-run
 **Pass:**
 
 - **No** Hindsight HTTP calls required (works even if API is down)
-- Lists candidates from README / AGENTS / docs with provenance
+- Lists candidates from README / docs with provenance (not `AGENTS.md`)
 - Skips empty / low-signal sections with reasons
 - Does not create or require `.nocciolo/local/seed-manifest.json` updates for a pure preview (manifest may be absent)
 

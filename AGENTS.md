@@ -68,7 +68,7 @@ We are building this in public as open source.
 
 ## Current Focus
 
-See `ROADMAP.md`. Phase 4 is underway: Strumentario dogfood gaps are captured in `docs/phase-4-dogfood-gaps.md` (multi-repo MCP DX, bank template apply, shareable config / deployment profiles).
+See `ROADMAP.md`. Phase 3 added `nocciolo store` (ongoing, operator-selected retain after durable `.md` already exists; reuses `seed`'s retain path) and the Firstmate `project-bank` skill (`nocciolo mcp --harness firstmate --write-firstmate`). Phase 4 is underway: Strumentario dogfood gaps are captured in `docs/phase-4-dogfood-gaps.md` (multi-repo MCP DX, bank template apply, shareable config / deployment profiles).
 
 <!-- nocciolo:hindsight-bank -->
 

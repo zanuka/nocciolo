@@ -15,6 +15,8 @@ nocciolo init
 nocciolo configure
 nocciolo seed --dry-run
 nocciolo seed
+nocciolo store --dry-run
+nocciolo store --yes
 nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
@@ -105,6 +107,32 @@ See [sync strategy](./nocciolo-sync-strategy.md).
 
 ---
 
+## `nocciolo store`
+
+Retain operator-selected durable markdown into the configured bank, on an ongoing basis after durable project `.md` already exists on disk. `seed` bootstraps from a default scan; `store` is the incremental follow-up: preview first, and new files are never stored implicitly. It reuses `seed`'s retain path exactly (same `document_id` upserts, same seed manifest, same client, auth, and progress reporting): no second retain implementation.
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Print `known` / `new` / `changed` / `unchanged` bucket counts (zeros explicit) and suggested next commands; no API calls |
+| `--force` | Re-store selected sources even when their content hash is unchanged |
+| `--async` | Submit retain asynchronously to Hindsight |
+| `-y, --yes` | Store changed known files only; print and skip new files rather than adopting them |
+| `--files <list>` | Comma-separated paths to store exactly (must pass the scanner/denylist); persists them onto `store.allowlist` |
+| `--add-files <list>` | Comma-separated paths to add to `store.allowlist` only; never retains |
+| `--project <path>` | Project root (default: cwd, walking out of a disposable git worktree to the durable clone) |
+| `--hindsight-url <url>` | Override Hindsight base URL |
+| `--api-key <key>` | Hindsight API key (or set env vars above) |
+
+Selection when neither `--yes` nor `--files` is given: in an interactive terminal, `store` prompts a multi-select over new files (changed known files are included by default); otherwise it behaves like `--yes` and never silently adopts new files.
+
+The allowlist is `store.allowlist` in `.nocciolo/config.json` (version-controlled). The first `store` after a `seed` bootstraps it from `.nocciolo/local/seed-manifest.json`'s sources, so already-seeded files read as known, not new. Content hashes for incremental skip live in the same seed manifest `store` reuses.
+
+`store` refuses to run from a disposable git worktree (detected via `git rev-parse --git-dir` vs. `--git-common-dir`, not path naming): it only operates on the durable clone that owns `.nocciolo/`. From a worktree it resolves the durable clone through the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, fallback `~/.nocciolo/projects.json`, installed by `nocciolo mcp --harness firstmate --write-firstmate`), or via an explicit `--project <durable-clone-path>`.
+
+Denylist (in addition to the seed scanner's secrets/credentials rules): `.stow-archive.md`, `.stow-notes.md` unless passed explicitly via `--files`, `.backpass/` paths, non-markdown files, and any path outside the project root.
+
+---
+
 ## `nocciolo mcp`
 
 Emit MCP and agent wiring for the project bank.
@@ -119,15 +147,16 @@ It does not detect your IDE: use write flags for the files you want.
 | `--write-kiro` | Write/merge project `.kiro/settings/mcp.json` |
 | `--write-agents` | Upsert an `AGENTS.md` section telling agents to prefer the project bank |
 | `--write-cursor-rules` | Write `.cursor/rules/hindsight-bank.mdc` (`alwaysApply: true`) |
+| `--write-firstmate` | Install the `project-bank` skill under `$FM_HOME/.agents/skills/project-bank/` and record this project's `bankId` + `hindsightBaseUrl` in `$FM_HOME/.nocciolo/projects.json` (fallback `~/.nocciolo/projects.json`); prints install steps instead of writing when `$FM_HOME` is unset |
 | `--dry-run` | Preview writes without touching the filesystem (requires at least one `--write*` flag) |
-| `--force` | Overwrite an existing `hindsight` MCP entry or Cursor rule file |
+| `--force` | Overwrite an existing `hindsight` MCP entry, Cursor rule file, or `project-bank` skill |
 | `--hindsight-url <url>` | Override Hindsight base URL for the MCP endpoint |
 | `--include-auth` | Add `Authorization` headers; written files use env placeholders |
 | `--api-key <key>` | Include this key literally in printed snippets only; file writes still use env placeholders |
 
 Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`.
 
-`--harness firstmate` is print-only: it prints a `cd` into the Firstmate home followed by a `claude mcp add --transport http …` command wired to this project's single-bank Hindsight URL. There is no `--write-firstmate`; Nocciolo never writes MCP config into the Firstmate home or detects whether Firstmate is installed. The printed notes say to run the command from the Firstmate home, that the wiring is captain-only (do not wire scouts or ships), that it must not write into this product repo, and that the git project should be registered in Firstmate separately.
+`--harness firstmate` still prints a `cd` into the Firstmate home followed by a `claude mcp add --transport http …` command wired to this project's single-bank Hindsight URL. The wiring itself stays captain-only (do not wire scouts or ships) and is never written into this product repo. `--write-firstmate` adds one more write path alongside that: the on-demand `project-bank` skill (see [Firstmate `project-bank` skill](../docs/firstmate/project-bank/SKILL.md)), plus the project-to-bank map Firstmate reads before a crewmate spawn. That skill is on-demand, not an always-on persona, and a crewmate that reads its bank card recalls from Hindsight only: it does not seed or store.
 
 Once wired, agents use Hindsight MCP tools such as `recall`, `reflect`, and `retain`.
 See the [Hindsight MCP tools](../README.md#hindsight-mcp-tools-any-agent) section in the README.

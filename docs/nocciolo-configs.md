@@ -6,7 +6,7 @@ The configs under `.nocciolo/` are the version-controlled (and machine-local) kn
 
 | Layer | Role |
 |-------|------|
-| **Docs in git** | Source of truth (README, AGENTS.md, ADRs, architecture notes, …) |
+| **Docs in git** | Source of truth (README, ADRs, architecture notes, …); `AGENTS.md` is harness wiring |
 | **`.nocciolo/`** | Project identity, bank template, incremental seed state |
 | **Hindsight bank** | Structured memories agents query via MCP |
 | **Agent wiring** | MCP URL + rules / AGENTS snippets that steer agents to `recall` / `reflect` |
@@ -144,9 +144,9 @@ Illustrative shape (from a dogfood project):
       ],
       "seededAt": "2026-08-07T22:59:26.952Z"
     },
-    "AGENTS.md": {
+    "docs/overview.md": {
       "contentHash": "…",
-      "factIds": ["nocciolo:AGENTS.md#document"],
+      "factIds": ["nocciolo:docs/overview.md#overview"],
       "seededAt": "2026-08-07T23:13:46.596Z"
     }
   }

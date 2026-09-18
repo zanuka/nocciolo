@@ -28,9 +28,19 @@ export async function prepareSeed(input: {
   projectRoot: string;
   bankId: string;
   force?: boolean;
+  /**
+   * Restrict extraction to these relative paths (used by `store` to retain a
+   * selected subset instead of every discovered durable source). Omit to
+   * process everything the scanner finds, which is seed's default.
+   */
+  only?: ReadonlySet<string>;
 }): Promise<PreparedSeed> {
   const commit = await resolveGitCommit(input.projectRoot);
-  const sources = await findDurableSources(input.projectRoot);
+  const allSources = await findDurableSources(input.projectRoot);
+  const sources =
+    input.only === undefined
+      ? allSources
+      : allSources.filter((s) => input.only?.has(s.relativePath));
   const manifest =
     (await loadSeedManifest(input.projectRoot)) ??
     createEmptyManifest(input.bankId);

@@ -44,7 +44,7 @@ Nocciolo’s extractor is **conservative by design** ([AGENTS.md](../AGENTS.md))
 
 - Scores sections for signal (decisions, architecture, standards, domain rules)
 - Skips common noise headings (changelog, TOC, getting started, etc.)
-- Keeps whole ADRs and `AGENTS.md` as high-value single documents
+- Keeps whole ADRs as high-value single documents
 - Ignores fenced code when parsing markdown headings
 
 Better to miss a weak section than pollute the bank. Upload scripts have no equivalent gate unless you maintain custom filters.
@@ -135,7 +135,7 @@ flowchart LR
   retain --> manifest[seed-manifest.json]
 ```
 
-1. **Scanner**: README.md, AGENTS.md, `docs/**`, ADRs (see `src/scanner/durable-sources.ts`)
+1. **Scanner**: README.md, `docs/**`, ADRs (see `src/scanner/durable-sources.ts`); skips `AGENTS.md` (integration surface)
 2. **Extractor**: heuristic sections + scoring (`src/extractor/`)
 3. **Seeder**: hash check, manifest, retain payload (`src/seeder/`)
 4. **Hindsight client**: `POST …/banks/{bankId}/memories` with `timestamp: "unset"` for timeless reference docs
@@ -185,7 +185,7 @@ If every source is retained again on a second run with no edits:
 | Incremental re-seed | Manifest is per-machine unless you copy `.nocciolo/local/` |
 | Conservative extraction | May miss edge content: intentional; expand docs or adjust extractors rather than “upload everything” |
 | Additive upserts | Stale memories after rename/delete need manual cleanup in Hindsight |
-| Section-level ids | Very large single files (non-ADR) are split by heading: ADRs and AGENTS.md stay whole-document |
+| Section-level ids | Very large single files (non-ADR) are split by heading: ADRs stay whole-document |
 
 ---
 

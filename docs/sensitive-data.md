@@ -24,9 +24,10 @@ How Nocciolo keeps secrets and low-value project noise out of Hindsight banks. C
 The scanner only looks for durable documentation shapes:
 
 - `README.md`
-- `AGENTS.md`
 - Markdown under `docs/`, `doc/`, `documentation/`
 - ADR locations (`adr/`, `docs/adr/`, `docs/decisions/`, root `ADR*.md`, …)
+
+`AGENTS.md` is intentionally excluded: it is agent harness wiring (integration surface), not institutional knowledge to retain.
 
 Consequently, these are **not** seeded today even without a denylist hit:
 

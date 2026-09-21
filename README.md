@@ -36,6 +36,7 @@ Agents inherit shared context instead of rediscovering it.
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
+- **May add an optional Jev judgment layer (planned)** for bounded decisions around seeding, recall, audits, and routing: see [Jev (planned)](#jev-planned)
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
@@ -383,6 +384,18 @@ Nocciolo will seed a project graph from durable docs (ADRs, standards, architect
 It will not install or run Graphiti for you.
 
 Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
+
+### Jev (planned)
+
+Jev ([TypeSafe System One](https://typesafe.dev/)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
+
+Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/19) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
+
+- Confidence-gated seed and retain decisions, plus `store` and seed-priority decisions.
+- Read-only audit plans that require explicit confirmation before any apply, and MCP recall guards.
+- Deployment-profile and share-safety checks, with Firstmate routing and escalation when confidence is low.
+
+Jev would return typed choices and scores; Nocciolo would retain control of scanning, side effects, and apply. Secrets and denylisted paths would remain local. These capabilities are planned and are not available yet.
 
 ### `nocciolo mcp` options
 

@@ -387,7 +387,7 @@ Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tra
 
 ### Jev (planned)
 
-Jev ([TypeSafe System One](https://typesafe.dev/)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
+Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
 
 Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/19) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
 

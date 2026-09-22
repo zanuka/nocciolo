@@ -66,7 +66,20 @@ Individual issues stay on GitHub.
 - [ ] Product rule and judge port: `docs/jev.md`, a `Judge` interface (`off` / `heuristic` / `jev`), `--judge` and `--confidence`, and state sanitization (secrets, denylist, size). A missing key or API failure falls back to heuristics. The default path makes no TypeSafe calls. (JEV-1, JEV-2, JEV-3)
 - [ ] Seed keep/skip: section-level relevance, knowledge-kind, contradiction against existing observations, citation support, and a PII or secret second pass. `seed --dry-run --judge jev` shows keep/skip plus scores. (JEV-4 through JEV-9)
 - [ ] Store and retain budget: propose allowlist adoption for new durable files, rank candidates under a retain budget, and gate `store` edits on durability. The operator still confirms. (JEV-10, JEV-11, JEV-12)
-- [ ] Audit plans: `nocciolo audit --judge jev` writes a read-only prune and refresh plan (aging policy, mental-model refresh vs leave, bank drift). Apply requires explicit confirmation. Jev does not delete bank items. (JEV-14 through JEV-17, JEV-35)
+- [ ] `nocciolo prune`: remove memories that are no longer true.
+  `seed` and `store` only add or upsert, so a deleted doc, a renamed path, a removed section, or a detail that becomes irrelevant months later stays in the bank.
+  In a TTY the command groups candidates and asks you to pick.
+  Groups: source path gone, section gone, a path or `document_id` you pass, and (with `--judge jev`) items Jev scores as outdated, irrelevant, or contradicted by the current docs, including when the file is still on disk.
+  Jev annotates the prompt with a choice and a confidence score.
+  Low confidence is listed and left unchecked.
+  Jev does not delete.
+  `--dry-run` prints the groups and does not mutate the bank.
+  Apply invalidates or deletes the chosen documents in Hindsight and writes a local tombstone so an unchanged source is not re-retained on the next `seed` or `store`.
+  A later edit, or `--force`, can retain it again.
+  Non-interactive runs require an explicit selection (`--source` or `--document-id`) and `--yes`.
+  Mental-model refresh can be recommended in the same plan and is a separate confirmation.
+  Path-gone and section-gone groups work with no TypeSafe key.
+  `--judge jev` is what adds the "still on disk, but no longer true" scores. (JEV-14 through JEV-17, JEV-35)
 - [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. (JEV-18 through JEV-21)
 - [ ] Recall and MCP guards: block unsafe MCP `retain`, rerank recalled passages, check whether a memory is still true, and route `reflect` vs `recall` vs mental-model lookup. (JEV-22 through JEV-25)
 - [ ] Firstmate routing: whether a task needs the project bank, which bank, knowledge update vs PR vs both, escalate vs dispatch, and whether a scout report is seedable. Low confidence escalates to the captain. (JEV-26 through JEV-30)

@@ -216,7 +216,9 @@ pnpm nocciolo seed --force            # re-retain all current candidates
 pnpm nocciolo seed --async            # submit + poll Hindsight operation progress
 ```
 
-There is no `nocciolo prune` (or unseed / invalidate) command. Seed is additive.
+There is no `nocciolo prune` yet.
+Seed is additive. A later `nocciolo prune` is planned in [Phase 4](./ROADMAP.md): it will ask what to remove, and optional Jev scores can recommend items that are outdated or irrelevant.
+Until that command exists, clean up by hand as below.
 
 If you **edit** a durable file in place, re-run `nocciolo seed`. That is enough: same path → same `document_id` → upsert.
 
@@ -392,7 +394,8 @@ Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as
 Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/19) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
 
 - Confidence-gated seed and retain decisions, plus `store` and seed-priority decisions.
-- Read-only audit plans that require explicit confirmation before any apply, and MCP recall guards.
+- `nocciolo prune`: a prompt for memories that are stale, irrelevant, or left behind by a rename or delete. `--judge jev` recommends; you confirm; Nocciolo deletes. `--dry-run` prints the plan only.
+- MCP recall guards.
 - Deployment-profile and share-safety checks, with Firstmate routing and escalation when confidence is low.
 
 Jev would return typed choices and scores; Nocciolo would retain control of scanning, side effects, and apply. Secrets and denylisted paths would remain local. These capabilities are planned and are not available yet.

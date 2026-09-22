@@ -36,7 +36,7 @@ Agents inherit shared context instead of rediscovering it.
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
-- **May add an optional Jev judgment layer (planned)** for bounded decisions around seeding, recall, audits, and routing: see [Jev (planned)](#jev-planned)
+- **May add an optional Jev judgment layer (planned)** for bounded decisions around seeding, recall, prune, and routing: see [Jev (planned)](#jev-planned) and [Jev integration](./docs/jev-integration.md)
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
@@ -217,7 +217,11 @@ pnpm nocciolo seed --async            # submit + poll Hindsight operation progre
 ```
 
 There is no `nocciolo prune` yet.
-Seed is additive. A later `nocciolo prune` is planned in [Phase 4](./ROADMAP.md): it will ask what to remove, and optional Jev scores can recommend items that are outdated or irrelevant.
+Seed is additive.
+The coming-soon command is specified in the [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon).
+It will ask what to remove.
+Optional Jev scores can recommend items that are outdated or irrelevant.
+Design: [Jev integration](./docs/jev-integration.md).
 Until that command exists, clean up by hand as below.
 
 If you **edit** a durable file in place, re-run `nocciolo seed`. That is enough: same path → same `document_id` → upsert.
@@ -391,10 +395,14 @@ Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tra
 
 Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
 
+Full design: [docs/jev-integration.md](./docs/jev-integration.md).
+`nocciolo prune` is specified there and as a coming-soon placeholder in the [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon).
+It is not in the CLI yet.
+
 Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/19) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
 
 - Confidence-gated seed and retain decisions, plus `store` and seed-priority decisions.
-- `nocciolo prune`: a prompt for memories that are stale, irrelevant, or left behind by a rename or delete. `--judge jev` recommends; you confirm; Nocciolo deletes. `--dry-run` prints the plan only.
+- `nocciolo prune` (coming soon): a prompt for memories that are stale, irrelevant, or left behind by a rename or delete. `--judge jev` recommends; you confirm; Nocciolo deletes. `--dry-run` prints the plan only. Placeholder flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon).
 - MCP recall guards.
 - Deployment-profile and share-safety checks, with Firstmate routing and escalation when confidence is low.
 
@@ -434,7 +442,8 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 ## Docs
 
-- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `mcp`, `docker`)
+- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mcp`, `docker`), plus coming-soon [`prune`](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon)
+- [Jev integration](./docs/jev-integration.md): planned opt-in judge, including `nocciolo prune`
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
 - [CLI architecture](./docs/cli-architecture.md): module boundaries, seed pipeline, config, and env/auth for contributors

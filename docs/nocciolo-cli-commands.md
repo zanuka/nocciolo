@@ -1,7 +1,7 @@
 # Nocciolo CLI commands
 
 Reference for the `nocciolo` command surface.
-Flags and behavior match `src/cli.ts`.
+Flags and behavior match `src/cli.ts`, except the coming-soon `prune` section below.
 Run `nocciolo --help` or `nocciolo <command> --help` for the live list.
 
 Related: [README](../README.md), [CLI architecture](./cli-architecture.md), [developer workflow](./dev-workflow.md), [sync strategy](./nocciolo-sync-strategy.md).
@@ -32,6 +32,9 @@ nocciolo docker down
 
 Mutating or network commands support `--dry-run` where practical.
 `seed --dry-run` previews candidates and never calls Hindsight.
+
+`nocciolo prune` is coming soon and is not in this build.
+The placeholder is [below](#nocciolo-prune-coming-soon).
 
 ---
 
@@ -133,6 +136,47 @@ Denylist (in addition to the seed scanner's secrets/credentials rules): `.stow-a
 
 ---
 
+## `nocciolo prune` (coming soon)
+
+Not in `src/cli.ts`.
+`nocciolo --help` does not list this command yet.
+`seed` and `store` only add or upsert, so a deleted doc, a renamed path, a removed section, or a detail that later becomes irrelevant stays in the bank.
+
+When it ships, a TTY run will group candidates and ask you to pick:
+
+- source path no longer in the repo
+- section no longer in the file
+- a path or `document_id` you name
+- with `--judge jev`, items scored as outdated, irrelevant, or contradicted, including when the file is still on disk
+
+Jev annotates the prompt.
+It does not delete.
+A low score is shown and left unchecked.
+`--dry-run` prints the groups and does not mutate the bank.
+Apply invalidates or deletes the chosen documents in Hindsight and writes a local tombstone so an unchanged source is not re-retained on the next `seed` or `store`.
+A later edit, or `--force` on `seed` or `store`, can retain it again.
+Non-interactive runs require `--source` or `--document-id` plus `--yes`.
+Path-gone and section-gone groups do not need a TypeSafe key.
+
+Planned flags:
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Print the groups. Do not delete. |
+| `--judge jev` | Score items that are still on disk but no longer true. Requires `NOCCIOLO_TYPESAFE_API_KEY`. Jev does not delete. |
+| `--source <path>` | Limit the selection to this repo path |
+| `--document-id <id>` | Limit the selection to this Hindsight `document_id` |
+| `-y, --yes` | Apply an explicit `--source` or `--document-id` selection without a second prompt. Refused when nothing is selected. |
+| `--hindsight-url <url>` | Override Hindsight base URL |
+| `--api-key <key>` | Hindsight API key (or set env vars above) |
+
+Until the command exists, invalidate or delete stale documents in Hindsight (Control Plane or MCP `invalidate_memory` / `delete_document`).
+
+Design: [Jev integration](./jev-integration.md).
+Tracked in [Phase 4](../ROADMAP.md).
+
+---
+
 ## `nocciolo mcp`
 
 Emit MCP and agent wiring for the project bank.
@@ -215,4 +259,5 @@ Full procedure: [hindsight-upgrade.md](./hindsight-upgrade.md).
 - [Sync strategy](./nocciolo-sync-strategy.md): curated retain vs file upload
 - [Knowledge-base configs](./nocciolo-configs.md): `.nocciolo/` layout and seed manifest
 - [Sensitive data](./sensitive-data.md): what the scanner denies before retain
+- [Jev integration](./jev-integration.md): planned judge, including coming-soon `nocciolo prune`
 - [Hindsight Cloud](./hindsight-cloud.md): managed hosting instead of local Docker

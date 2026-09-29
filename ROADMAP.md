@@ -27,7 +27,8 @@ High-level phased plan. This is a living document; priorities will shift based o
 ## Phase 2: Knowledge Curation & Seeding
 
 - [x] Project scanner for durable sources (README, `/docs`, ADRs): conservative first pass; `AGENTS.md` is integration surface, not seed input
-- [x] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content
+- [x] Optional `scanner.include` / `exclude` / `extensions` in `.nocciolo/config.json` (MDX when listed; secrets denylist still wins; `store.allowlist` stays orthogonal)
+- [x] Extraction heuristics that prefer decisions, invariants, and architecture over ephemeral content (YAML frontmatter stripped before section scoring)
 - [x] `nocciolo seed --dry-run`: preview extracted candidates with provenance
 - [x] `nocciolo seed`: retain high-signal knowledge into the configured Hindsight bank
 - [x] Seed progress reporting: do-not-interrupt warning + `[i/N]` percent during sync retain; optional `--async` operation polling

@@ -72,6 +72,34 @@ Please open an issue.
     expect(titles.some((t) => /contributing/i.test(t))).toBe(false);
   });
 
+  it("strips MDX frontmatter before scoring sections", () => {
+    const content = `---
+title: Nike SNKRS
+description: Launch work.
+status: shipped
+---
+
+## Architecture
+
+I owned the SNKRS web launch experience under production traffic constraints and shared component boundaries.
+
+## Contributions
+
+I built the product-first launch surface and reusable component libraries for the platform.
+`;
+    const result = extractFromSource(
+      source("src/content/works/nike-snkrs-juno.mdx", "docs"),
+      content,
+    );
+    const blob = result.facts.map((fact) => fact.content).join("\n");
+    expect(result.facts.length).toBeGreaterThan(0);
+    expect(blob).not.toMatch(/^title:/m);
+    expect(blob).not.toContain("status: shipped");
+    expect(result.facts.some((fact) => /architecture/i.test(fact.title))).toBe(
+      true,
+    );
+  });
+
   it("skips empty files", () => {
     const result = extractFromSource(source("README.md", "readme"), "   \n");
     expect(result.skipped).toBe(true);

@@ -9,6 +9,14 @@ export const StoreConfigSchema = z.object({
   allowlist: z.array(z.string().min(1)).default([]),
 });
 
+export const ScannerConfigSchema = z.object({
+  include: z.array(z.string().min(1)).optional(),
+  exclude: z.array(z.string().min(1)).optional(),
+  extensions: z
+    .array(z.string().regex(/^\.[A-Za-z0-9]+$/, "extension must look like .md"))
+    .optional(),
+});
+
 export const NoccioloConfigSchema = z.object({
   version: z.literal(1),
   name: z.string().min(1),
@@ -19,10 +27,12 @@ export const NoccioloConfigSchema = z.object({
   hindsightBaseUrl: z.string().url().optional(),
   docker: DockerConfigSchema.optional(),
   store: StoreConfigSchema.optional(),
+  scanner: ScannerConfigSchema.optional(),
 });
 
 export type DockerConfig = z.infer<typeof DockerConfigSchema>;
 export type StoreConfig = z.infer<typeof StoreConfigSchema>;
+export type ScannerConfig = z.infer<typeof ScannerConfigSchema>;
 export type NoccioloConfig = z.infer<typeof NoccioloConfigSchema>;
 
 export function createDefaultConfig(input: {

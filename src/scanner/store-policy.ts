@@ -25,7 +25,7 @@ export interface StoreDenyReason {
 export function checkStoreDeny(
   relativePath: string,
   projectRoot: string,
-  options: { explicit?: boolean } = {},
+  options: { explicit?: boolean; extensions?: readonly string[] } = {},
 ): StoreDenyReason {
   const normalized = relativePath.split(/[/\\]/).join("/");
   const basename = normalized.split("/").pop() ?? normalized;
@@ -46,7 +46,10 @@ export function checkStoreDeny(
     };
   }
 
-  if (!/\.(md|markdown)$/i.test(basename)) {
+  const extensions = options.extensions?.length
+    ? options.extensions
+    : [".md", ".markdown", ".mdx"];
+  if (!extensions.some((ext) => basename.toLowerCase().endsWith(ext.toLowerCase()))) {
     return { denied: true, reason: "not a markdown file" };
   }
 

@@ -5,6 +5,15 @@ import {
   isSensitiveRelativePath,
   isSkippableTraversalDirectory,
 } from "./sensitive.js";
+import {
+  activeExclude,
+  activeInclude,
+  effectiveExtensions,
+  extensionAllowed,
+  isExcludedPath,
+  matchesInclude,
+  type ScannerPolicy,
+} from "./policy.js";
 
 export interface DurableSource {
   absolutePath: string;
@@ -21,6 +30,21 @@ const ADR_DIRS = ["adr", "adrs", "docs/adr", "docs/adrs", "docs/decisions"];
 
 export async function findDurableSources(
   projectRoot: string,
+  policy?: ScannerPolicy,
+): Promise<DurableSource[]> {
+  const include = activeInclude(policy);
+  const exclude = activeExclude(policy);
+  const extensions = effectiveExtensions(policy);
+  if (include.length > 0) {
+    return findIncludedSources(projectRoot, include, exclude, extensions);
+  }
+  return findDefaultSources(projectRoot, exclude, extensions);
+}
+
+async function findDefaultSources(
+  projectRoot: string,
+  exclude: readonly string[],
+  extensions: readonly string[],
 ): Promise<DurableSource[]> {
   const found: DurableSource[] = [];
   const seen = new Set<string>();
@@ -36,8 +60,8 @@ export async function findDurableSources(
     if (!info.isFile()) {
       return;
     }
-    const relativePath = relative(projectRoot, absolutePath);
-    if (isSensitiveRelativePath(relativePath)) {
+    const relativePath = toProjectRelative(projectRoot, absolutePath);
+    if (!relativePath || !acceptRelativePath(relativePath, exclude, extensions)) {
       return;
     }
     if (seen.has(relativePath)) {
@@ -58,6 +82,8 @@ export async function findDurableSources(
       "docs",
       found,
       seen,
+      exclude,
+      extensions,
     );
   }
 
@@ -68,6 +94,8 @@ export async function findDurableSources(
       "adr",
       found,
       seen,
+      exclude,
+      extensions,
     );
   }
 
@@ -76,7 +104,7 @@ export async function findDurableSources(
     const lower = entry.toLowerCase();
     if (
       lower.startsWith("adr") &&
-      (lower.endsWith(".md") || lower.endsWith(".markdown"))
+      extensionAllowed(lower, extensions)
     ) {
       await add(join(projectRoot, entry), "adr");
     }
@@ -86,12 +114,112 @@ export async function findDurableSources(
   return found;
 }
 
+async function findIncludedSources(
+  projectRoot: string,
+  include: readonly string[],
+  exclude: readonly string[],
+  extensions: readonly string[],
+): Promise<DurableSource[]> {
+  const found: DurableSource[] = [];
+  await walkIncluded(projectRoot, projectRoot, include, exclude, extensions, found);
+  found.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  return found;
+}
+
+async function walkIncluded(
+  dir: string,
+  projectRoot: string,
+  include: readonly string[],
+  exclude: readonly string[],
+  extensions: readonly string[],
+  found: DurableSource[],
+): Promise<void> {
+  const entries = await readdir(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isDirectory()) {
+      if (isSkippableTraversalDirectory(entry.name)) {
+        continue;
+      }
+      await walkIncluded(
+        join(dir, entry.name),
+        projectRoot,
+        include,
+        exclude,
+        extensions,
+        found,
+      );
+      continue;
+    }
+    if (!entry.isFile()) {
+      continue;
+    }
+    const absolutePath = join(dir, entry.name);
+    const relativePath = toProjectRelative(projectRoot, absolutePath);
+    if (!relativePath || !extensionAllowed(entry.name, extensions)) {
+      continue;
+    }
+    if (!matchesInclude(relativePath, include)) {
+      continue;
+    }
+    if (!acceptRelativePath(relativePath, exclude, extensions)) {
+      continue;
+    }
+    found.push({
+      absolutePath,
+      relativePath,
+      kind: sourceKind(relativePath),
+    });
+  }
+}
+
+function acceptRelativePath(
+  relativePath: string,
+  exclude: readonly string[],
+  extensions: readonly string[],
+): boolean {
+  const filename = relativePath.split("/").pop() ?? relativePath;
+  if (!extensionAllowed(filename, extensions)) {
+    return false;
+  }
+  if (isExcludedPath(relativePath, exclude)) {
+    return false;
+  }
+  if (isSensitiveRelativePath(relativePath)) {
+    return false;
+  }
+  return true;
+}
+
+function sourceKind(relativePath: string): DurableSource["kind"] {
+  if (/^readme\.md$/i.test(relativePath)) {
+    return "readme";
+  }
+  if (/(^|\/)(adr|adrs|decisions)\//i.test(relativePath)) {
+    return "adr";
+  }
+  const filename = relativePath.split("/").pop() ?? relativePath;
+  if (!relativePath.includes("/") && /^adr.*\.(md|markdown|mdx)$/i.test(filename)) {
+    return "adr";
+  }
+  return "docs";
+}
+
+function toProjectRelative(projectRoot: string, absolutePath: string): string | undefined {
+  const relativePath = relative(projectRoot, absolutePath).split(/[/\\]/).join("/");
+  if (!relativePath || relativePath.startsWith("..") || relativePath.startsWith("/")) {
+    return undefined;
+  }
+  return relativePath;
+}
+
 async function collectMarkdown(
   dir: string,
   projectRoot: string,
   kind: DurableSource["kind"],
   found: DurableSource[],
   seen: Set<string>,
+  exclude: readonly string[],
+  extensions: readonly string[],
 ): Promise<void> {
   if (!(await pathExists(dir))) {
     return;
@@ -108,18 +236,22 @@ async function collectMarkdown(
       if (isSkippableTraversalDirectory(entry.name)) {
         continue;
       }
-      await collectMarkdown(absolutePath, projectRoot, kind, found, seen);
+      await collectMarkdown(
+        absolutePath,
+        projectRoot,
+        kind,
+        found,
+        seen,
+        exclude,
+        extensions,
+      );
       continue;
     }
     if (!entry.isFile()) {
       continue;
     }
-    const lower = entry.name.toLowerCase();
-    if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
-      continue;
-    }
-    const relativePath = relative(projectRoot, absolutePath);
-    if (isSensitiveRelativePath(relativePath)) {
+    const relativePath = toProjectRelative(projectRoot, absolutePath);
+    if (!relativePath || !acceptRelativePath(relativePath, exclude, extensions)) {
       continue;
     }
     if (seen.has(relativePath)) {

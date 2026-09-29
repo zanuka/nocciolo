@@ -14,4 +14,13 @@ describe("checkStoreDeny", () => {
     const result = checkStoreDeny("docs/architecture.md", "/tmp/project");
     expect(result.denied).toBe(false);
   });
+
+  it("allows MDX case studies", () => {
+    const result = checkStoreDeny(
+      "src/content/works/nike-snkrs-juno.mdx",
+      "/tmp/project",
+      { explicit: true },
+    );
+    expect(result.denied).toBe(false);
+  });
 });

@@ -89,8 +89,8 @@ flowchart TD
 | `src/cli.ts` | Commander entry: wires commands and flags |
 | `src/commands/` | Command orchestration + user-facing output |
 | `src/project/` | Project root detection, git commit lookup, worktree detection, captain-home registry |
-| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` (including `store.allowlist`) |
-| `src/scanner/` | Find durable docs (README, docs/**, ADRs); skip `AGENTS.md`; `store`'s stricter denylist |
+| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` (including `store.allowlist` and optional `scanner`) |
+| `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template types/generator + HTTP retain client |
 | `src/seeder/` | Prepare retain payload, incremental manifest (shared by `seed` and `store`) |
@@ -223,6 +223,14 @@ Conservative first pass looks for:
 
 `AGENTS.md` is **not** scanned for seed or store. It is agent harness wiring (integration emission via `nocciolo mcp --write-agents`), not bank seed material.
 
+Optional `.nocciolo/config.json` `scanner` policy:
+
+- `include`: when non-empty, replaces the default walk. `seed` bootstraps from that set. `store` discovers the same set, and `store.allowlist` still gates which new files are retained.
+- `exclude`: globs removed from either the default walk or `include` (directory trees, or draft names such as `**/_*.mdx`).
+- `extensions`: suffixes to accept. Default `.md` and `.markdown`. List `.mdx` to treat MDX as a durable source. The extractor drops leading YAML frontmatter before section scoring.
+
+The secrets denylist still wins over `include`.
+
 Ephemeral chat logs, lockfiles, and generated noise are out of scope for seeding.
 
 Sensitive paths are denied before extract/seed (`src/scanner/sensitive.ts`). Full policy and roadmap for ignore files / wizards: [sensitive-data.md](./sensitive-data.md).
@@ -240,6 +248,7 @@ Defense in depth: even if a future scanner widens file types, these paths stay e
 The extractor is **heuristic**, not an LLM:
 
 - Splits markdown on `#` / `##` / `###` headings (skips fenced code blocks so shell comments are not treated as headings)
+- Drops a leading YAML frontmatter block (`---` ... `---`) before scoring, so MDX collection fields are not retained
 - Scores sections with keyword signals (decision, architecture, standard, domain, overview, …)
 - Drops noisy headings (install, quick start, contributing, license, changelog, …)
 - Keeps **whole** ADR files as single high-value documents

@@ -18,7 +18,8 @@ Keep these concerns separated:
 2. Extraction of durable facts & decisions
 3. Bank template / configuration generation
 4. Seeding (retain) into the memory system
-5. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
+5. Pruning stale bank documents (path-gone / section-gone / explicit; local tombstones)
+6. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
 
 Do not collapse these into a single opaque pipeline.
 
@@ -48,13 +49,15 @@ Put logic in the matching layer; do not collapse stages into `commands/` or a si
 | MCP snippets + AGENTS / Cursor rules | `src/integration/` |
 | Local Hindsight Docker helper | `src/docker/` |
 
-Commands may call modules; modules must not depend on Commander. Integration emission must stay separate from scan / extract / seed.
+Commands may call modules; modules must not depend on Commander. Integration emission must stay separate from scan / extract / seed / prune.
 
 ### Happy Path Invariants
 
 - Mutating or network commands support `--dry-run` where practical
 - `seed --dry-run` previews candidates; it must not call Hindsight
+- `prune --dry-run` may list documents (read-only) but must not delete or write tombstones
 - Live `seed` uses stable `document_id`s and writes incremental state only under `.nocciolo/local/` (gitignored)
+- Live `prune` deletes selected documents and writes tombstones under `.nocciolo/local/` (gitignored)
 - Version-controlled config stays under `.nocciolo/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
 - `init` prompts for bank id + Docker container name in a TTY (flags/`--yes` skip prompts); bank id is not the Docker container name
 - Docker container/volume: CLI `--name` → `config.docker` → defaults `hindsight` / `hindsight-data`

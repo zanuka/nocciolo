@@ -287,6 +287,8 @@ pnpm build
 pnpm nocciolo docker status --name your-container-name
 pnpm nocciolo seed --dry-run
 NOCCIOLO_HINDSIGHT_API_KEY='…' pnpm nocciolo seed
+pnpm nocciolo store --dry-run
+pnpm nocciolo prune --dry-run
 pnpm nocciolo mcp --write --dry-run
 ```
 
@@ -301,9 +303,11 @@ Skip or use `--force` on `init` / `configure` unless you intend to reset templat
 | `docker` | print (no leak), status against `$HINDSIGHT_CONTAINER`, up-again error if already running |
 | `init` / `configure` | dry-run, write with `--container-name your-container-name`, duplicate error, force |
 | `seed` | dry-run, live, incremental skip, `--force`, auth failure |
+| `store` | dry-run buckets, `--yes` skips new, `--files` allowlists + retains |
+| `prune` | dry-run groups, refuse non-interactive without selection, `--document-id --yes` deletes + tombstone, false-positive check on live `nocciolo:` section ids |
 | `mcp` | print all, filter harness, write dry-run, write+agents+rules, merge `--force` |
 
-Unit tests (`pnpm test`) still cover pure modules (snippets, docker plan, extractor, client). This doc is for **sequence and product** behavior.
+Unit tests (`pnpm test`) still cover pure modules (snippets, docker plan, extractor, client, prune planner, tombstones). This doc is for **sequence and product** behavior.
 
 ---
 
@@ -316,6 +320,8 @@ Unit tests (`pnpm test`) still cover pure modules (snippets, docker plan, extrac
 | Docker up + UI ready | ~1 min after image present |
 | `seed --dry-run` | seconds |
 | Live `seed` (first, many candidates) | several minutes (LLM extract per item) |
+| `prune --dry-run` | seconds (list documents + local extract) |
+| Live `prune` (few ids) | seconds per delete |
 | `mcp` print/write | seconds |
 
 Do not treat sync seed “silence between progress lines” as a hang: watch `[i/N]` percent.
@@ -332,6 +338,8 @@ Fixture / dogfood:
 Docker: print / status (reuse `$HINDSIGHT_CONTAINER`; no live down of shared server):
 Init + configure (incl. dry-run + duplicate errors):
 Seed dry-run + live + incremental:
+Store dry-run (optional dogfood):
+Prune dry-run (+ optional explicit --document-id --yes):
 MCP print + write dry-run + write:
 Secret leakage check (docker print / mcp --write):
 Notes / bugs found:
@@ -339,7 +347,8 @@ Notes / bugs found:
 
 ## Related
 
-- [dev-workflow.md](./dev-workflow.md): build → seed → consolidation tips
+- [dev-workflow.md](./dev-workflow.md): build → retain → prune → consolidation tips
+- [nocciolo-cli-commands.md](./nocciolo-cli-commands.md): command and flag reference (incl. prune)
 - [cli-architecture.md](./cli-architecture.md): command and module map
 - [sensitive-data.md](./sensitive-data.md): what must never be retained
 - [ROADMAP.md](../ROADMAP.md): phase status

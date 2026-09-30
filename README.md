@@ -216,17 +216,36 @@ pnpm nocciolo seed --force            # re-retain all current candidates
 pnpm nocciolo seed --async            # submit + poll Hindsight operation progress
 ```
 
-There is no `nocciolo prune` yet.
 Seed is additive.
-The coming-soon command is specified in the [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon).
-It will ask what to remove.
-Optional Jev scores can recommend items that are outdated or irrelevant.
-Design: [Jev integration](./docs/jev-integration.md).
-Until that command exists, clean up by hand as below.
+Use `nocciolo prune` to remove path-gone / section-gone documents, or an explicit `--document-id` / `--source`.
+See the [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
+Optional `--judge jev` scoring for “still on disk but no longer true” is planned later: [Jev integration](./docs/jev-integration.md).
 
-If you **edit** a durable file in place, re-run `nocciolo seed`. That is enough: same path → same `document_id` → upsert.
+### Day-to-day sequence: retain, then prune
 
-If you **rename or delete** a source (for example `docs/foo.md` → `docs/bar.md`), re-run `nocciolo seed` to retain the new path. That does **not** remove memories from the old path. Those stay in the bank under the old ids (`nocciolo:docs/foo.md#…`). `--force` does not fix this. Invalidate or delete those stale documents in Hindsight (Control Plane or MCP `invalidate_memory` / `delete_document`) if the duplicates matter.
+Prefer retaining current truth before deleting leftovers:
+
+1. Edit durable docs (if needed).
+2. Run `nocciolo store` (or `seed` for a full bootstrap scan). Preview with `--dry-run` first.
+3. Run `nocciolo prune --dry-run`, then prune what is still orphaned.
+
+`store` and `seed` only add or upsert.
+They do not remove old `document_id`s.
+Pruning after retain means the candidate list is “still stale relative to today’s extract.”
+Pruning first can delete an id you were about to bring back on the next retain (for example a restored heading).
+
+If you **edit** a durable file in place, re-run `nocciolo store` or `seed`. That is enough: same path → same `document_id` → upsert.
+
+If you **rename or delete** a source (for example `docs/foo.md` → `docs/bar.md`), retain the new path first, then clean the old ids:
+
+```bash
+pnpm nocciolo store --dry-run
+pnpm nocciolo store --yes                 # or seed, if you are still bootstrapping
+pnpm nocciolo prune --dry-run
+pnpm nocciolo prune --document-id 'nocciolo:docs/foo.md#…' --yes
+```
+
+`--force` on seed/store does not remove old path ids. Prune deletes the selected documents and writes local tombstones so unchanged text is not re-retained.
 
 Here is the Nocciolo bank’s world-facts constellation in Hindsight after a `seed`: structured memories and links agents can recall, not a dump of raw markdown files:
 
@@ -250,12 +269,14 @@ More detail: [developer workflow](./docs/dev-workflow.md), [sync strategy](./doc
 | Retain path | `retainPreparedItems` (shared with `store`) | Same `retainPreparedItems`, same `document_id` upserts, manifest, auth, and progress handling: not a second implementation |
 
 Typical use: run `seed` once per project at the start, then run `store` whenever project docs change.
+After retain, run `prune --dry-run` when paths or headings may have gone stale (see [Day-to-day sequence](#day-to-day-sequence-retain-then-prune) above).
 
 ```bash
 pnpm nocciolo store --dry-run   # known / new / changed / unchanged, with explicit zero counts
 pnpm nocciolo store --yes       # store changed known files only; never adopts new files silently
 pnpm nocciolo store --files docs/architecture.md   # store exactly these; allowlists them
 pnpm nocciolo store --add-files docs/roadmap-notes.md        # allowlist only, no retain
+pnpm nocciolo prune --dry-run   # after retain: review path-gone / section-gone leftovers
 ```
 
 New markdown is never stored implicitly. Preview first: `--dry-run` prints the four buckets and suggested next commands with no API calls. In an interactive terminal (no `--yes`, no `--files`), `store` lets you multi-select which new files to adopt; changed files already on the allowlist are included by default.
@@ -396,13 +417,13 @@ Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tra
 Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
 
 Full design: [docs/jev-integration.md](./docs/jev-integration.md).
-`nocciolo prune` is specified there and as a coming-soon placeholder in the [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon).
-It is not in the CLI yet.
+`nocciolo prune` (path-gone / section-gone / explicit) is in the CLI today: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
+Optional `--judge jev` annotation on prune is not shipped yet.
 
 Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/19) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
 
 - Confidence-gated seed and retain decisions, plus `store` and seed-priority decisions.
-- `nocciolo prune` (coming soon): a prompt for memories that are stale, irrelevant, or left behind by a rename or delete. `--judge jev` recommends; you confirm; Nocciolo deletes. `--dry-run` prints the plan only. Placeholder flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon).
+- Optional `--judge jev` on `nocciolo prune`: annotate outdated / irrelevant / contradicted items (including when the file is still on disk); you confirm; Nocciolo deletes. Flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 - MCP recall guards.
 - Deployment-profile and share-safety checks, with Firstmate routing and escalation when confidence is low.
 
@@ -442,8 +463,8 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 ## Docs
 
-- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mcp`, `docker`), plus coming-soon [`prune`](./docs/nocciolo-cli-commands.md#nocciolo-prune-coming-soon)
-- [Jev integration](./docs/jev-integration.md): planned opt-in judge, including `nocciolo prune`
+- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `prune`, `mcp`, `docker`)
+- [Jev integration](./docs/jev-integration.md): planned opt-in judge, including optional `--judge jev` on prune
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
 - [CLI architecture](./docs/cli-architecture.md): module boundaries, seed pipeline, config, and env/auth for contributors
@@ -455,7 +476,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Hindsight upgrade](./docs/hindsight-upgrade.md): `nocciolo docker upgrade --to <version>` (manual Docker fallback)
 - [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md): Strumentario lessons: multi-repo MCP, template apply, shareable config
-- [Phase 5 dogfood gaps](./docs/phase-5-dogfood-gaps.md): zanuka-web lessons: `store` ops path; prune / list-bank-docs / delete-doc parity
+- [Phase 5 dogfood gaps](./docs/phase-5-dogfood-gaps.md): zanuka-web lessons: `store` ops path; prune shipped; optional bank-list helper / dogfood archive of Python seeder
 - [Sensitive data](./docs/sensitive-data.md): allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles

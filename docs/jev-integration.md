@@ -64,7 +64,8 @@ A low score goes to the captain instead of a silent apply.
 ## Where it sits
 
 Solid arrows are actions Nocciolo owns.
-The arrows into and out of `nocciolo prune` are planned, so they are not in the CLI yet.
+`nocciolo prune` path-gone / section-gone / explicit delete is in the CLI.
+The dotted Jev annotation into prune is planned and not shipped yet.
 Dotted arrows exist only with `--judge jev`.
 Jev never stores the bank and never writes the repo.
 It returns a typed choice and a confidence score.

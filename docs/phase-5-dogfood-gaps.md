@@ -22,17 +22,16 @@ There is no first-class CLI to list retained documents or delete a specific docu
 
 **Needed for ops parity:**
 
-1. **`nocciolo prune`** (already planned in Phase 4 / Jev): path-gone, section-gone, explicit `--source` / `--document-id`, tombstones, `--dry-run`
-2. **`list-bank-docs` (or equivalent)**: list documents in the configured bank with stable `document_id`s and provenance hints so operators can audit what Python used to list
-3. **`delete-doc` (or equivalent)**: delete or invalidate one document by id with `--dry-run`, without waiting for the full interactive prune UX
+1. **`nocciolo prune`** (shipped for path-gone / section-gone / explicit): `--dry-run`, `--source` / `--document-id` + `--yes`, local tombstones. See [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune).
+2. **`list-bank-docs` (or equivalent)**: still open if operators need a full bank inventory without prune candidate grouping (Python `--list-bank-docs` parity)
+3. **`delete-doc` (or equivalent)**: largely covered by `nocciolo prune --document-id <id> --yes` (and `--dry-run`); a thinner alias remains optional
 
-Until those exist, invalidate or delete via Hindsight Control Plane or MCP (`list_documents`, `delete_document`, `invalidate_memory`).
-That keeps the Python seeder alive as the only scripted path for list/delete.
+Until thin list helpers exist, use `nocciolo prune --dry-run` for candidate inventory, or Hindsight Control Plane / MCP `list_documents` for a full bank listing.
 
 **Product implications:**
 
-1. Ship prune as the primary hygiene command (confirm before delete; local tombstones)
-2. Add thin bank-doc list / delete helpers if prune alone is too heavy for scripted ops that today call Python
+1. Prune is the primary hygiene command (confirm before delete; local tombstones)
+2. Add thin bank-doc list helpers if prune grouping is too heavy for scripted inventory that today calls Python
 3. Keep generation/retain (`seed` / `store`) separate from delete/list (provider / seeder concern): do not fold deletes into `store`
 
 ## Gap 2: Firstmate `project-bank` (deferred, not a CLI bug)
@@ -47,8 +46,8 @@ When ready: set `FM_HOME`, re-run `--write-firstmate`, then crewmates can recall
 
 Ordered by what still blocks retiring the Python seeder:
 
-1. **`nocciolo prune`** plus tombstones (Phase 4 checklist)
-2. **Bank doc list / delete CLI** if scripted ops need parity sooner than full prune UX
+1. **Bank doc list CLI** (optional) if full inventory without prune grouping is still required for scripts
+2. **Dogfood** prune on zanuka-web (dry-run orphans / selective path-id delete) and archive Python prune/list/delete once that passes
 3. **Firstmate wiring** when `FM_HOME` is available (ops, not upstream)
 
 ## Non-goals (this pass)
@@ -60,5 +59,5 @@ Ordered by what still blocks retiring the Python seeder:
 ## Sign-off
 
 zanuka-web Phase 5 dogfood: day-to-day ops document `nocciolo store` (allowlist-gated).
-Remaining: prune / list-bank-docs / delete-doc parity so the Python seeder can be archived; optional Firstmate `project-bank` once `FM_HOME` is set.
+Remaining: dogfood prune on zanuka-web and optional full bank-list helper so the Python seeder can be archived; optional Firstmate `project-bank` once `FM_HOME` is set.
 No zanuka-web patch attempted.

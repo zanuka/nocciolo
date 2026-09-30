@@ -106,13 +106,14 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 
 Incremental state lives in `.nocciolo/local/seed-manifest.json` (gitignored).
 Stable `document_id`s upsert on re-seed.
-See [sync strategy](./nocciolo-sync-strategy.md).
+When `.nocciolo/config.json` has `scanner.include`, that glob set replaces the default README / docs / ADR walk for this command and for `store`. `scanner.exclude` and `scanner.extensions` apply either way. Omit `scanner` to keep the default. Secrets paths stay denied.
+See [sync strategy](./nocciolo-sync-strategy.md) and [knowledge-base configs](./nocciolo-configs.md).
 
 ---
 
 ## `nocciolo store`
 
-Retain operator-selected durable markdown into the configured bank, on an ongoing basis after durable project `.md` already exists on disk. `seed` bootstraps from a default scan; `store` is the incremental follow-up: preview first, and new files are never stored implicitly. It reuses `seed`'s retain path exactly (same `document_id` upserts, same seed manifest, same client, auth, and progress reporting): no second retain implementation.
+Retain operator-selected durable markdown into the configured bank, on an ongoing basis after durable project docs already exist on disk. `seed` bootstraps from the scanner set (default walk, or `scanner.include` when set); `store` is the incremental follow-up: preview first, and new files are never stored implicitly. It reuses `seed`'s retain path exactly (same `document_id` upserts, same seed manifest, same client, auth, and progress reporting): no second retain implementation.
 
 | Flag | Description |
 |------|-------------|
@@ -132,7 +133,7 @@ The allowlist is `store.allowlist` in `.nocciolo/config.json` (version-controlle
 
 `store` refuses to run from a disposable git worktree (detected via `git rev-parse --git-dir` vs. `--git-common-dir`, not path naming): it only operates on the durable clone that owns `.nocciolo/`. From a worktree it resolves the durable clone through the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, fallback `~/.nocciolo/projects.json`, installed by `nocciolo mcp --harness firstmate --write-firstmate`), or via an explicit `--project <durable-clone-path>`.
 
-Denylist (in addition to the seed scanner's secrets/credentials rules): `.stow-archive.md`, `.stow-notes.md` unless passed explicitly via `--files`, `.backpass/` paths, non-markdown files, and any path outside the project root.
+Denylist (in addition to the seed scanner's secrets/credentials rules): `.stow-archive.md`, `.stow-notes.md` unless passed explicitly via `--files`, `.backpass/` paths, files that are not `.md`, `.markdown`, or `.mdx`, paths the scanner did not select, and any path outside the project root. `--files` of an MDX case study works once `scanner.include` and `scanner.extensions` select it.
 
 ---
 

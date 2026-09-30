@@ -3,6 +3,7 @@ import { extractFromSource } from "../extractor/extract.js";
 import type { CandidateFact, ExtractedSource } from "../extractor/types.js";
 import type { RetainItem } from "../providers/hindsight/client.js";
 import { findDurableSources } from "../scanner/durable-sources.js";
+import type { ScannerPolicy } from "../scanner/policy.js";
 import { resolveGitCommit } from "../project/git.js";
 import {
   createEmptyManifest,
@@ -34,9 +35,10 @@ export async function prepareSeed(input: {
    * process everything the scanner finds, which is seed's default.
    */
   only?: ReadonlySet<string>;
+  scanner?: ScannerPolicy;
 }): Promise<PreparedSeed> {
   const commit = await resolveGitCommit(input.projectRoot);
-  const allSources = await findDurableSources(input.projectRoot);
+  const allSources = await findDurableSources(input.projectRoot, input.scanner);
   const sources =
     input.only === undefined
       ? allSources

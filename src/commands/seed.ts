@@ -73,6 +73,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     projectRoot,
     bankId: config.bankId,
     force,
+    ...(config.scanner !== undefined ? { scanner: config.scanner } : {}),
   });
 
   printSeedPlan({

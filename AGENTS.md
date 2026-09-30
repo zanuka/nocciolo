@@ -68,7 +68,9 @@ We are building this in public as open source.
 
 ## Current Focus
 
-See `ROADMAP.md`. Phase 3 added `nocciolo store` (ongoing, operator-selected retain after durable `.md` already exists; reuses `seed`'s retain path) and the Firstmate `project-bank` skill (`nocciolo mcp --harness firstmate --write-firstmate`). Phase 4 is underway: Strumentario dogfood gaps are captured in `docs/phase-4-dogfood-gaps.md` (multi-repo MCP DX, bank template apply, shareable config / deployment profiles).
+See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank` skill.
+Phase 4 is the optional Jev judgment layer (includes planned `nocciolo prune`).
+Phase 5 (team sharing) dogfood: Strumentario gaps in `docs/phase-4-dogfood-gaps.md`; zanuka-web gaps in `docs/phase-5-dogfood-gaps.md` (`store` adopted for day-to-day ops; still need prune / list-bank-docs / delete-doc parity to archive Python seeders; Firstmate wiring deferred until `FM_HOME` is set).
 
 <!-- nocciolo:hindsight-bank -->
 

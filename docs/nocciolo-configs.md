@@ -65,6 +65,23 @@ Written by `nocciolo init`. Portable project identity for this repo.
 | `root` | Project root relative to config (usually `"."`). |
 | `docker.containerName` / `volumeName` | Which **local Docker server** hosts banks: not 1:1 with `bankId`. |
 | `hindsightBaseUrl` | Optional default Hindsight URL (still overridable by env / CLI). |
+| `scanner.include` | Optional globs. When set, `seed` and `store` discover these paths instead of the default README / docs / ADR walk. |
+| `scanner.exclude` | Optional globs removed after discovery (default scan or `include`). |
+| `scanner.extensions` | Optional suffixes. Default is `.md` and `.markdown`. Add `.mdx` to retain MDX. |
+
+Example for a docs tree plus published MDX, with presentation workspaces and underscore drafts left out:
+
+```json
+{
+  "scanner": {
+    "include": ["docs/**/*.md", "src/content/works/**/*.mdx"],
+    "exclude": ["docs/interviews/panel-2/**", "**/_*.mdx"],
+    "extensions": [".md", ".markdown", ".mdx"]
+  }
+}
+```
+
+`seed` bootstraps from whatever that policy selects. `store` uses the same discovered set, then `store.allowlist` gates ongoing retain of new files. Secrets and credential paths are still denied even if an include glob matches them.
 
 Bank id defaults to a slug of the project directory name; it is never hardcoded to `nocciolo` for other projects. One Docker container is a Hindsight **server** that can hold many banks.
 
@@ -216,4 +233,5 @@ Update docs when the project evolves; re-seed when you want the bank to catch up
 - [CLI architecture](./cli-architecture.md): config layout and seed pipeline for contributors
 - [Sensitive data](./sensitive-data.md): what must never be retained
 - [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md): multi-repo MCP DX and template apply
+- [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md): zanuka-web `store` ops; bank-doc list/delete parity
 - [Hindsight bank templates](https://hindsight.vectorize.io/developer/api/bank-templates)

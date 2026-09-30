@@ -13,6 +13,7 @@ import {
   relativeToProjectRoot,
 } from "../scanner/store-policy.js";
 import { findDurableSources } from "../scanner/durable-sources.js";
+import type { ScannerPolicy } from "../scanner/policy.js";
 import {
   HindsightClient,
   resolveHindsightApiKey,
@@ -123,8 +124,9 @@ async function computeBuckets(
   projectRoot: string,
   allowlist: readonly string[],
   manifest: SeedManifest,
+  scanner?: ScannerPolicy,
 ): Promise<StoreBuckets> {
-  const sources = await findDurableSources(projectRoot);
+  const sources = await findDurableSources(projectRoot, scanner);
   const allowSet = new Set(allowlist);
   const buckets: StoreBuckets = {
     known: [],
@@ -220,7 +222,12 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
       dryRun,
     );
 
-    const buckets = await computeBuckets(projectRoot, nextAllowlist, manifest);
+    const buckets = await computeBuckets(
+      projectRoot,
+      nextAllowlist,
+      manifest,
+      config.scanner,
+    );
     printStorePlan({ projectRoot, bankId: config.bankId, baseUrl, dryRun, buckets });
     console.log("");
     console.log(
@@ -246,7 +253,12 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     };
   }
 
-  const buckets = await computeBuckets(projectRoot, allowlist, manifest);
+  const buckets = await computeBuckets(
+    projectRoot,
+    allowlist,
+    manifest,
+    config.scanner,
+  );
 
   let selected: string[] = [];
   let skippedNew: string[] = [];
@@ -292,9 +304,21 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     skippedNew = buckets.new.map((b) => b.relativePath);
   }
 
+  if (explicitFiles.length > 0) {
+    const discovered = await findDurableSources(projectRoot, config.scanner);
+    const known = new Set(discovered.map((source) => source.relativePath));
+    const missing = selected.filter((path) => !known.has(path));
+    if (missing.length > 0) {
+      throw new NoccioloError(
+        `Refusing to store ${missing.map((path) => `"${path}"`).join(", ")}: not in the durable scan.`,
+        "Update scanner.include, scanner.exclude, or scanner.extensions so the path is selected, then retry.",
+      );
+    }
+  }
+
   const finalBuckets =
     addedToAllowlist.length > 0
-      ? await computeBuckets(projectRoot, allowlist, manifest)
+      ? await computeBuckets(projectRoot, allowlist, manifest, config.scanner)
       : buckets;
 
   printStorePlan({
@@ -372,6 +396,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     bankId: config.bankId,
     force,
     only: new Set(selected),
+    ...(config.scanner !== undefined ? { scanner: config.scanner } : {}),
   });
 
   if (prepared.factsToRetain.length === 0) {

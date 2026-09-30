@@ -153,8 +153,8 @@ Full rationale for contributors: [docs/nocciolo-sync-strategy.md](./docs/nocciol
 
 What `seed` actually does:
 
-1. Scan durable sources locally (README, `docs/**`, ADRs: secrets like `.env` excluded)
-2. Extract scored candidate facts with provenance (source path + optional git commit)
+1. Scan durable sources locally (README, `docs/**`, ADRs: secrets like `.env` excluded). A `scanner` block in `.nocciolo/config.json` replaces that default walk with `include` globs, then applies `exclude` globs. Omit `scanner` to keep the conservative default. The secrets denylist still wins over `include`. `store.allowlist` stays separate: the scanner decides what can be discovered, and the allowlist decides which new files `store` retains.
+2. Extract scored candidate facts with provenance (source path + optional git commit). `.mdx` is extracted like markdown when `scanner.extensions` includes `.mdx`. Leading YAML frontmatter is dropped so title and status fields are not retained as sections. Draft filenames are skipped only when an `exclude` glob matches them (for example `**/_*.mdx`).
 3. **Retain** each candidate via Hindsight’s memories API (LLM extraction per item)
 4. Write incremental state to `.nocciolo/local/seed-manifest.json` (gitignored, machine-local)
 
@@ -455,6 +455,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Hindsight upgrade](./docs/hindsight-upgrade.md): `nocciolo docker upgrade --to <version>` (manual Docker fallback)
 - [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md): Strumentario lessons: multi-repo MCP, template apply, shareable config
+- [Phase 5 dogfood gaps](./docs/phase-5-dogfood-gaps.md): zanuka-web lessons: `store` ops path; prune / list-bank-docs / delete-doc parity
 - [Sensitive data](./docs/sensitive-data.md): allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles

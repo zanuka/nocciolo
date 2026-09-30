@@ -52,6 +52,40 @@ describe("NoccioloConfigSchema", () => {
     expect(parsed.docker).toBeUndefined();
   });
 
+  it("accepts an optional scanner policy", () => {
+    const parsed = NoccioloConfigSchema.parse({
+      version: 1,
+      name: "zanuka-web",
+      provider: "hindsight",
+      bankId: "zanuka-web",
+      root: ".",
+      createdAt: new Date().toISOString(),
+      scanner: {
+        include: ["docs/**/*.md", "src/content/works/**/*.mdx"],
+        exclude: ["docs/interviews/panel-2/**", "**/_*.mdx"],
+        extensions: [".md", ".markdown", ".mdx"],
+      },
+    });
+    expect(parsed.scanner?.include).toEqual([
+      "docs/**/*.md",
+      "src/content/works/**/*.mdx",
+    ]);
+  });
+
+  it("rejects scanner extensions that are not dotted suffixes", () => {
+    expect(() =>
+      NoccioloConfigSchema.parse({
+        version: 1,
+        name: "x",
+        provider: "hindsight",
+        bankId: "x",
+        root: ".",
+        createdAt: new Date().toISOString(),
+        scanner: { extensions: ["md"] },
+      }),
+    ).toThrow();
+  });
+
   it("rejects invalid provider", () => {
     expect(() =>
       NoccioloConfigSchema.parse({

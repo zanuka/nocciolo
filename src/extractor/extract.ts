@@ -57,7 +57,7 @@ export function extractFromSource(
   options: ExtractOptions = {},
 ): ExtractedSource {
   const contentHash = hashContent(content);
-  const trimmed = content.trim();
+  const trimmed = stripFrontmatter(content).trim();
 
   if (!trimmed) {
     return {
@@ -131,6 +131,14 @@ export function extractFromSource(
 interface Section {
   heading: string;
   body: string;
+}
+
+function stripFrontmatter(content: string): string {
+  const match = /^---\r?\n[\s\S]*?\r?\n---\r?\n?/.exec(content);
+  if (!match || match.index !== 0) {
+    return content;
+  }
+  return content.slice(match[0].length);
 }
 
 function splitMarkdownSections(content: string): Section[] {

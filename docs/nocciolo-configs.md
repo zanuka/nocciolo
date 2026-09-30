@@ -23,7 +23,8 @@ Docs stay authoritative. The bank is the agent-facing index of those docs: with 
   hindsight/
     bank-template.json        # Hindsight mission / directives / mental models (commit)
   local/
-    seed-manifest.json        # incremental seed state (gitignored; machine-local)
+    seed-manifest.json        # incremental seed / store state (gitignored; machine-local)
+    tombstones.json           # pruned document ids (gitignored; machine-local)
 ```
 
 Related agent wiring lives **outside** `.nocciolo/` and is emitted by `nocciolo mcp`:
@@ -36,7 +37,7 @@ Related agent wiring lives **outside** `.nocciolo/` and is emitted by `nocciolo 
 
 **Commit:** `config.json`, `hindsight/bank-template.json`, and the MCP / AGENTS / Cursor rule wiring you want teammates to inherit.
 
-**Do not commit:** `.nocciolo/local/` (seed manifest), API keys, or anything under secrets / credential paths. See [sensitive-data.md](./sensitive-data.md).
+**Do not commit:** `.nocciolo/local/` (seed manifest, tombstones), API keys, or anything under secrets / credential paths. See [sensitive-data.md](./sensitive-data.md).
 
 ---
 
@@ -137,7 +138,7 @@ The template is the *personality and policy* of the bank. Retained facts are the
 
 ## `local/seed-manifest.json`
 
-Written by live `nocciolo seed`. Tracks **what was already retained** so re-seeds are incremental.
+Written by live `nocciolo seed` and `nocciolo store`. Tracks **what was already retained** so re-seeds are incremental.
 
 - Per source path: content hash, list of stable fact / `document_id`s, last seeded time
 - Unchanged files are skipped on the next `seed` unless you pass `--force`
@@ -171,6 +172,39 @@ Illustrative shape (from a dogfood project):
 ```
 
 `seed --dry-run` previews candidates without writing the manifest or calling Hindsight.
+
+---
+
+## `local/tombstones.json`
+
+Written by live `nocciolo prune` after a successful document delete.
+Tracks **which `document_id`s must not be re-retained** while the source content is unchanged.
+
+- Per document id: optional `sourcePath`, optional `contentHash`, and `prunedAt`
+- `prepareSeed` (shared by `seed` and `store`) skips tombstoned facts when the current hash still matches (or when the tombstone has no hash)
+- `--force` on seed/store, or a content hash change, allows retain again
+- After a successful re-retain of that id, the matching tombstone entry is cleared
+
+This is **machine-local prune state**, not documentation.
+Keep it out of git with the rest of `.nocciolo/local/`.
+Details: [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune).
+
+Illustrative shape:
+
+```json
+{
+  "version": 1,
+  "bankId": "nocciolo",
+  "updatedAt": "2026-09-30T20:00:00.000Z",
+  "entries": {
+    "nocciolo:docs/old.md#removed-heading": {
+      "sourcePath": "docs/old.md",
+      "contentHash": "…",
+      "prunedAt": "2026-09-30T20:00:00.000Z"
+    }
+  }
+}
+```
 
 ---
 
@@ -219,19 +253,24 @@ nocciolo configure
 nocciolo seed --dry-run
 NOCCIOLO_HINDSIGHT_API_KEY='…' nocciolo seed
 
+nocciolo store --dry-run
+nocciolo prune --dry-run
+
 nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
-Update docs when the project evolves; re-seed when you want the bank to catch up. Prefer missing a weak section over injecting noise.
+Update docs when the project evolves; re-seed when you want the bank to catch up; prune after renames or heading drift.
+Prefer missing a weak section over injecting noise.
 
 ---
 
 ## Related
 
 - [README](../README.md): quick start and MCP flags
-- [Developer workflow](./dev-workflow.md): first seed, re-seed, retain tips
-- [CLI architecture](./cli-architecture.md): config layout and seed pipeline for contributors
+- [CLI commands](./nocciolo-cli-commands.md): full flag reference (incl. store / prune)
+- [Developer workflow](./dev-workflow.md): first seed, re-seed, retain-then-prune tips
+- [CLI architecture](./cli-architecture.md): config layout and seed / prune pipeline for contributors
 - [Sensitive data](./sensitive-data.md): what must never be retained
 - [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md): multi-repo MCP DX and template apply
-- [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md): zanuka-web `store` ops; bank-doc list/delete parity
+- [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md): zanuka-web `store` ops; prune shipped; optional bank-list helper
 - [Hindsight bank templates](https://hindsight.vectorize.io/developer/api/bank-templates)

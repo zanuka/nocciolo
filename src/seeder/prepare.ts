@@ -10,6 +10,7 @@ import {
   loadSeedManifest,
   type SeedManifest,
 } from "./manifest.js";
+import { filterTombstonedFacts, loadTombstones } from "./tombstones.js";
 
 export interface PreparedSeed {
   projectRoot: string;
@@ -19,6 +20,7 @@ export interface PreparedSeed {
   factsToRetain: CandidateFact[];
   skippedUnchanged: number;
   skippedEmpty: number;
+  skippedTombstoned: number;
 }
 
 export interface PreparedSource extends ExtractedSource {
@@ -47,10 +49,13 @@ export async function prepareSeed(input: {
     (await loadSeedManifest(input.projectRoot)) ??
     createEmptyManifest(input.bankId);
 
+  const tombstones = await loadTombstones(input.projectRoot);
+  const force = input.force ?? false;
   const prepared: PreparedSource[] = [];
   const factsToRetain: CandidateFact[] = [];
   let skippedUnchanged = 0;
   let skippedEmpty = 0;
+  let skippedTombstoned = 0;
 
   for (const source of sources) {
     const content = await readFile(source.absolutePath, "utf8");
@@ -62,7 +67,7 @@ export async function prepareSeed(input: {
 
     const previous = manifest.sources[source.relativePath];
     const unchanged =
-      !input.force &&
+      !force &&
       previous !== undefined &&
       previous.contentHash === extracted.contentHash;
 
@@ -72,14 +77,22 @@ export async function prepareSeed(input: {
       continue;
     }
 
-    if (extracted.facts.length === 0) {
+    const { kept, skipped } = filterTombstonedFacts(
+      extracted.facts,
+      extracted.contentHash,
+      tombstones,
+      force,
+    );
+    skippedTombstoned += skipped;
+
+    if (kept.length === 0) {
       skippedEmpty += 1;
-      prepared.push({ ...extracted, unchanged: false });
+      prepared.push({ ...extracted, facts: kept, unchanged: false });
       continue;
     }
 
-    prepared.push({ ...extracted, unchanged: false });
-    factsToRetain.push(...extracted.facts);
+    prepared.push({ ...extracted, facts: kept, unchanged: false });
+    factsToRetain.push(...kept);
   }
 
   const result: PreparedSeed = {
@@ -89,6 +102,7 @@ export async function prepareSeed(input: {
     factsToRetain,
     skippedUnchanged,
     skippedEmpty,
+    skippedTombstoned,
   };
   if (commit !== undefined) {
     result.commit = commit;

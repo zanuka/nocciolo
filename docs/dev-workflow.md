@@ -203,13 +203,19 @@ flowchart LR
 
 ## Re-seeding after doc changes
 
+Prefer **retain, then prune** for day-to-day hygiene (same order as [CLI reference](./nocciolo-cli-commands.md#day-to-day-bank-hygiene)):
+
 ```bash
 pnpm build
-pnpm nocciolo seed --dry-run   # see what changed
-NOCCIOLO_HINDSIGHT_API_KEY='…' pnpm nocciolo seed
+pnpm nocciolo store --dry-run   # or seed --dry-run while bootstrapping
+NOCCIOLO_HINDSIGHT_API_KEY='…' pnpm nocciolo store --yes
+pnpm nocciolo prune --dry-run
+pnpm nocciolo prune             # TTY multi-select, or --document-id / --source with --yes
 ```
 
-Unchanged sources (same content hash) are skipped. Use `--force` to re-retain everything.
+Unchanged sources (same content hash) are skipped on retain. Use `--force` to re-retain everything, including tombstoned ids.
+`store` / `seed` only add or upsert.
+Prune removes path-gone / section-gone (or explicit) bank documents and writes `.nocciolo/local/tombstones.json`.
 
 ## Dogfooding this repository
 
@@ -219,9 +225,10 @@ Typical loop:
 
 1. Change code or docs
 2. `pnpm build && pnpm test`
-3. `pnpm nocciolo seed --dry-run`
-4. Live `seed` when you want the bank updated
-5. Confirm in the Hindsight UI for bank `nocciolo`
+3. `pnpm nocciolo store --dry-run` (or `seed --dry-run`)
+4. Live `store` / `seed` when you want the bank updated
+5. `pnpm nocciolo prune --dry-run` after renames, deletes, or heading drift; prune selected leftovers
+6. Confirm in the Hindsight UI for bank `nocciolo`
 
 Empty placeholders such as `docs/dev-workflow.md` (before content landed) are skipped as “no high-signal sections” / empty: expected.
 
@@ -236,20 +243,25 @@ Empty placeholders such as `docs/dev-workflow.md` (before content landed) are sk
 | Dashboard shows 0 mid-run | Refresh after items complete; consolidation may still be running |
 | `Bank template already exists` | Use `configure --force` or skip if template is fine |
 | Already initialized | Use `init --force` only if you intend to reset config |
+| Stale bank docs after rename/delete | Retain does not remove old ids; run `prune --dry-run` then selective prune |
+| Prune lists a live `nocciolo:path#section` | Current extract no longer emits that id (heading renamed, filtered, or removed): review before delete |
 
 ## Current phase checklist
 
-**Done (Phase 0-3)**
+**Done (Phase 0-3, plus prune v1)**
 
 - [x] TypeScript CLI skeleton
 - [x] `init` / `configure` / `seed --dry-run` / live `seed`
 - [x] Incremental manifest under `.nocciolo/local/`
+- [x] `nocciolo store` (allowlist-gated ongoing retain)
+- [x] `nocciolo prune` (path-gone / section-gone / explicit + tombstones)
 - [x] `nocciolo docker` local Hindsight helper
 - [x] `nocciolo mcp` snippets + optional AGENTS / Cursor rules writes
 - [x] Architecture + this workflow doc
 
 **Next**
 
+- [ ] Phase 4 remainder: optional Jev judgment layer (including `--judge jev` on prune)
 - [ ] Phase 5: multi-repo MCP DX, template apply, shareable configs & deployment profiles ([Strumentario gaps](./phase-4-dogfood-gaps.md); [zanuka-web gaps](./phase-5-dogfood-gaps.md))
 - [ ] Phase 6: mental models (Hindsight curated reflect): design: [hindsight-mental-models.md](./hindsight-mental-models.md)
 - [ ] Phase 6: reliability & DX
@@ -258,7 +270,8 @@ Update this file when a new command becomes part of the daily loop.
 
 ## Related
 
-- [cli-architecture.md](./cli-architecture.md): modules, env resolution, seed pipeline
+- [cli-architecture.md](./cli-architecture.md): modules, env resolution, seed / prune pipeline
+- [nocciolo-cli-commands.md](./nocciolo-cli-commands.md): command and flag reference
 - [hindsight-cloud.md](./hindsight-cloud.md): Hindsight Cloud vs local Docker
 - [dev-testing.md](./dev-testing.md): end-user command sequence and E2E checklist
 - [sensitive-data.md](./sensitive-data.md): secrets allowlist/denylist policy

@@ -12,7 +12,8 @@ It is **not** a general multi-agent orchestrator. It is a local-first config + c
 2. Extract high-signal candidates (extractor)
 3. Generate bank templates (provider template)
 4. Retain into the memory system (seeder), driven by `seed` (bootstrap scan) or `store` (ongoing operator-selected subset; same retain path)
-5. Emit agent integration snippets (MCP configs, optional AGENTS.md / Cursor rules, Firstmate `project-bank` skill)
+5. Prune stale bank documents (`prune`: path-gone / section-gone / explicit; local tombstones)
+6. Emit agent integration snippets (MCP configs, optional AGENTS.md / Cursor rules, Firstmate `project-bank` skill)
 
 Prefer missing a weak fact over injecting noise.
 
@@ -24,6 +25,8 @@ flowchart LR
     initCmd[init]
     configureCmd[configure]
     seedCmd[seed]
+    storeCmd[store]
+    pruneCmd[prune]
     dockerCmd[docker]
     mcpCmd[mcp]
   end
@@ -34,7 +37,7 @@ flowchart LR
     scanner[scanner]
     extractor[extractor]
     template[Hindsight template]
-    seeder[seeder plus manifest]
+    seeder[seeder manifest prune tombstones]
     client[Hindsight HTTP client]
     integration[integration snippets]
     dockerHelper[docker helper]
@@ -54,11 +57,14 @@ flowchart LR
   configureCmd --> config
   configureCmd --> template --> noccioloDir
   seedCmd --> scanner --> sources
+  storeCmd --> scanner
   scanner --> extractor
   extractor --> seeder
   seeder -->|dry-run| seedCmd
   seeder -->|live retain| client --> bank
   seeder --> noccioloDir
+  pruneCmd --> seeder
+  pruneCmd -->|list delete docs| client
   dockerCmd --> dockerHelper
   dockerHelper -->|local instance| bank
   mcpCmd --> config
@@ -92,8 +98,8 @@ flowchart TD
 | `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` (including `store.allowlist` and optional `scanner`) |
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
-| `src/providers/hindsight/` | Bank template types/generator + HTTP retain client |
-| `src/seeder/` | Prepare retain payload, incremental manifest (shared by `seed` and `store`) |
+| `src/providers/hindsight/` | Bank template types/generator + HTTP retain / list / delete client |
+| `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
 | `src/utils/` | Shared FS helpers and actionable errors |
@@ -111,6 +117,7 @@ node dist/cli.js seed --dry-run
 node dist/cli.js seed
 node dist/cli.js store --dry-run
 node dist/cli.js store --yes
+node dist/cli.js prune --dry-run
 node dist/cli.js mcp
 node dist/cli.js mcp --write --dry-run
 ```
@@ -124,17 +131,19 @@ node dist/cli.js mcp --write --dry-run
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
 | `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
 | `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path |
+| `prune --dry-run` | List path-gone / section-gone / explicit candidates (read-only document list); no deletes |
+| `prune` | Delete selected bank documents; write local tombstones under `.nocciolo/local/` |
 | `mcp` | Print ready-to-paste MCP snippets; optional `--write` / AGENTS / Cursor rules / Firstmate `project-bank` skill |
 
 Common flags:
 
-- `--dry-run`: preview without mutating (or without calling Hindsight for seed)
-- `--force`: overwrite config/template/MCP entry, or re-seed unchanged sources
-- `--yes` / `-y`: on `init`, accept defaults without interactive prompts
+- `--dry-run`: preview without mutating (seed never calls Hindsight; prune may list documents read-only)
+- `--force`: overwrite config/template/MCP entry, or re-seed unchanged / tombstoned sources
+- `--yes` / `-y`: on `init`, accept defaults; on `prune`, apply an explicit `--source` / `--document-id` selection
 - `--bank-id <id>`: Hindsight bank id on `init` (project-specific; many banks can share one server)
 - `--container-name <name>`: local Docker container on `init` (shared Hindsight server)
 - `--hindsight-url <url>`: override Hindsight base URL for this run
-- `--api-key <key>`: override API key for this run (seed) or enable tenant auth (docker) / print auth snippets (mcp)
+- `--api-key <key>`: override API key for this run (seed / store / prune) or enable tenant auth (docker) / print auth snippets (mcp)
 - `--async`: submit retain asynchronously to Hindsight
 
 ## Config and generated files
@@ -154,6 +163,7 @@ Local / gitignored state (do **not** commit secrets or machine-local seed state)
 .nocciolo/
   local/
     seed-manifest.json        # content hashes + fact ids for incremental seed
+    tombstones.json           # pruned document ids so seed/store skip unchanged re-retain
   cache/
 ```
 
@@ -283,12 +293,31 @@ Flow: `store` resolves the project root (refusing a disposable git worktree via 
 
 `--files` and `--add-files` both persist onto `store.allowlist`; `--add-files` never retains. `--yes` stores changed known files only and prints skipped new files. Interactively (TTY, no `--yes`/`--files`), `store` multi-selects new files via `src/utils/prompt.ts`'s `promptMultiSelect`, and always includes changed known files by default. `src/scanner/store-policy.ts` adds a stricter denylist on top of `sensitive.ts`: non-markdown paths, paths outside the project root, `.backpass/`, and Firstmate's `.stow-archive.md` / `.stow-notes.md` disk-pref files (allowed only via explicit `--files`).
 
+## Prune: bank hygiene
+
+`seed` and `store` only add or upsert.
+`nocciolo prune` (`src/commands/prune.ts`) removes bank documents that are no longer backed by durable sources, or that the operator names explicitly.
+
+Flow:
+
+1. List bank documents via `HindsightClient.listAllDocuments` (`GET .../documents`, paginated).
+2. Build a plan in `src/seeder/prune-plan.ts`: path-gone, section-gone, or explicit (`--source` / `--document-id`).
+3. `--dry-run` prints groups only (list is read-only; no deletes, no tombstones).
+4. TTY multi-select + confirm, or non-interactive `--document-id` / `--source` with `--yes`.
+5. `DELETE .../documents/{documentId}` for each selected id; write `.nocciolo/local/tombstones.json`.
+6. Later `prepareSeed` skips tombstoned unchanged facts; `--force` or a content hash change can retain again.
+
+Day-to-day order: retain (`store` / `seed`), then prune.
+Details: [nocciolo-cli-commands.md](./nocciolo-cli-commands.md#nocciolo-prune).
+
 ## Hindsight integration
 
 | Concern | Implementation |
 |---------|----------------|
 | Bank template | `src/providers/hindsight/template.ts` → `.nocciolo/hindsight/bank-template.json` |
 | Retain API | `POST {baseUrl}/v1/default/banks/{bankId}/memories` |
+| List documents | `GET {baseUrl}/v1/default/banks/{bankId}/documents` |
+| Delete document | `DELETE {baseUrl}/v1/default/banks/{bankId}/documents/{documentId}` |
 | Client | `src/providers/hindsight/client.ts` |
 | Timeless docs | `timestamp: "unset"` so reference docs are not treated as events |
 

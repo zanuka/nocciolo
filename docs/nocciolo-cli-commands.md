@@ -1,7 +1,7 @@
 # Nocciolo CLI commands
 
 Reference for the `nocciolo` command surface.
-Flags and behavior match `src/cli.ts`, except the coming-soon `prune` section below.
+Flags and behavior match `src/cli.ts`.
 Run `nocciolo --help` or `nocciolo <command> --help` for the live list.
 
 Related: [README](../README.md), [CLI architecture](./cli-architecture.md), [developer workflow](./dev-workflow.md), [sync strategy](./nocciolo-sync-strategy.md).
@@ -17,8 +17,22 @@ nocciolo seed --dry-run
 nocciolo seed
 nocciolo store --dry-run
 nocciolo store --yes
+nocciolo prune --dry-run
 nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
+
+### Day-to-day bank hygiene
+
+Prefer **retain, then prune**:
+
+1. Edit durable docs (if needed).
+2. `nocciolo store --dry-run`, then `nocciolo store` (or `seed` when bootstrapping).
+3. `nocciolo prune --dry-run`, then prune what is still orphaned.
+
+`store` and `seed` only add or upsert.
+They do not remove old `document_id`s.
+Pruning after retain means candidates are “still stale relative to today’s extract.”
+Pruning first can delete an id you were about to bring back on the next retain (for example a restored heading).
 
 Local Hindsight (optional Docker helper):
 
@@ -32,9 +46,7 @@ nocciolo docker down
 
 Mutating or network commands support `--dry-run` where practical.
 `seed --dry-run` previews candidates and never calls Hindsight.
-
-`nocciolo prune` is coming soon and is not in this build.
-The placeholder is [below](#nocciolo-prune-coming-soon).
+`prune --dry-run` lists bank candidates (read-only list) and never deletes or writes tombstones.
 
 ---
 
@@ -45,7 +57,7 @@ The placeholder is [below](#nocciolo-prune-coming-soon).
 | `nocciolo --help` | Top-level help |
 | `nocciolo --version` | Package version |
 
-Hindsight connection (for `seed`, `mcp`, `docker upgrade`):
+Hindsight connection (for `seed`, `store`, `prune`, `mcp`, `docker upgrade`):
 
 | Source | URL | API key |
 |--------|-----|---------|
@@ -137,44 +149,69 @@ Denylist (in addition to the seed scanner's secrets/credentials rules): `.stow-a
 
 ---
 
-## `nocciolo prune` (coming soon)
+## `nocciolo prune`
 
-Not in `src/cli.ts`.
-`nocciolo --help` does not list this command yet.
-`seed` and `store` only add or upsert, so a deleted doc, a renamed path, a removed section, or a detail that later becomes irrelevant stays in the bank.
+Remove bank documents that are no longer backed by durable sources, or that you name explicitly.
+`seed` and `store` only add or upsert, so a deleted doc, a renamed path, or a removed section stays in the bank until you prune.
 
-When it ships, a TTY run will group candidates and ask you to pick:
+For day-to-day use, retain first (`store` or `seed`), then prune.
+See [Day-to-day bank hygiene](#day-to-day-bank-hygiene).
 
-- source path no longer in the repo
-- section no longer in the file
-- a path or `document_id` you name
-- with `--judge jev`, items scored as outdated, irrelevant, or contradicted, including when the file is still on disk
+```bash
+nocciolo store --dry-run
+nocciolo store --yes
+nocciolo prune --dry-run
+nocciolo prune
+nocciolo prune --document-id 'docs/dev/foo.md' --yes
+nocciolo prune --source docs/dev/foo.md --yes
+nocciolo prune --document-id 'nocciolo:docs/dev/foo.md#some-section' --yes
+```
 
-Jev annotates the prompt.
-It does not delete.
-A low score is shown and left unchecked.
-`--dry-run` prints the groups and does not mutate the bank.
-Apply invalidates or deletes the chosen documents in Hindsight and writes a local tombstone so an unchanged source is not re-retained on the next `seed` or `store`.
-A later edit, or `--force` on `seed` or `store`, can retain it again.
-Non-interactive runs require `--source` or `--document-id` plus `--yes`.
-Path-gone and section-gone groups do not need a TypeSafe key.
+### Candidate groups (v1)
 
-Planned flags:
+| Group | Meaning |
+|-------|---------|
+| Source path gone | Bank doc / section whose source file is no longer on disk |
+| Section gone | Source still exists, but extraction no longer emits that `nocciolo:<path>#<section>` id |
+| Explicit | `--source` / `--document-id` supplied by the operator |
+
+Legacy bare path ids (for example `docs/foo.md`) that still exist on disk are **not** auto-candidates.
+Use `--document-id` or `--source` to retire them after section coverage.
+Do not treat all `nocciolo:` ids as stale merely because they are not bare paths.
+
+### Safety
+
+- `--dry-run` lists groups with stable `document_id`s and provenance. It may call Hindsight list APIs. It never deletes or writes tombstones.
+- Non-interactive runs require `--source` or `--document-id` plus `--yes`.
+- TTY runs multi-select candidates, then confirm before delete.
+- Apply deletes the chosen documents (and linked memories) via Hindsight `DELETE .../documents/{document_id}`.
+- Apply writes `.nocciolo/local/tombstones.json` so an unchanged source is not re-retained on the next `seed` or `store`.
+- A later edit, or `--force` on `seed` / `store`, can retain again (and clears matching tombstones after a successful retain).
+- Mental-model refresh may be recommended in the output. It is a separate confirmation (not auto-run).
+- Optional `--judge jev` annotation is not shipped yet. Path-gone and section-gone work with no TypeSafe key.
 
 | Flag | Description |
 |------|-------------|
 | `--dry-run` | Print the groups. Do not delete. |
-| `--judge jev` | Score items that are still on disk but no longer true. Requires `NOCCIOLO_TYPESAFE_API_KEY`. Jev does not delete. |
-| `--source <path>` | Limit the selection to this repo path |
+| `--source <path>` | Limit the selection to bank documents for this repo path |
 | `--document-id <id>` | Limit the selection to this Hindsight `document_id` |
 | `-y, --yes` | Apply an explicit `--source` or `--document-id` selection without a second prompt. Refused when nothing is selected. |
 | `--hindsight-url <url>` | Override Hindsight base URL |
 | `--api-key <key>` | Hindsight API key (or set env vars above) |
 
-Until the command exists, invalidate or delete stale documents in Hindsight (Control Plane or MCP `invalidate_memory` / `delete_document`).
+### Retiring a custom seeder
 
-Design: [Jev integration](./jev-integration.md).
-Tracked in [Phase 4](../ROADMAP.md).
+When a project still has a legacy path-id seeder alongside Nocciolo section ids:
+
+1. Keep day-to-day retain on `nocciolo store` (allowlist-gated).
+2. After store covers the current sections, run `nocciolo prune --dry-run` and review path-gone / section-gone groups.
+3. Retire stale path ids **per file** with `--document-id` or `--source` plus `--yes` after section coverage and a recall smoke check.
+4. Do not mass-wipe path ids, and do not prune with a `nocciolo:` prefix as if those ids were bare paths on disk.
+
+Thin `nocciolo docs list` / `docs delete` helpers are still optional follow-ups for scripted inventory. Explicit prune covers selective delete today.
+
+Design (optional Jev annotation later): [Jev integration](./jev-integration.md).
+Tracked in [Phase 4](../ROADMAP.md) and [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md).
 
 ---
 
@@ -260,5 +297,5 @@ Full procedure: [hindsight-upgrade.md](./hindsight-upgrade.md).
 - [Sync strategy](./nocciolo-sync-strategy.md): curated retain vs file upload
 - [Knowledge-base configs](./nocciolo-configs.md): `.nocciolo/` layout and seed manifest
 - [Sensitive data](./sensitive-data.md): what the scanner denies before retain
-- [Jev integration](./jev-integration.md): planned judge, including coming-soon `nocciolo prune`
+- [Jev integration](./jev-integration.md): planned judge, including optional `--judge jev` on prune
 - [Hindsight Cloud](./hindsight-cloud.md): managed hosting instead of local Docker

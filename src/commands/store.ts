@@ -26,6 +26,7 @@ import {
   type SeedManifest,
 } from "../seeder/manifest.js";
 import { nextManifest, prepareSeed, toRetainItems } from "../seeder/prepare.js";
+import { clearTombstonesForIds } from "../seeder/tombstones.js";
 import { retainPreparedItems } from "./seed.js";
 import { NoccioloError } from "../utils/errors.js";
 import { isInteractive, promptMultiSelect } from "../utils/prompt.js";
@@ -438,6 +439,9 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
 
   manifest = nextManifest(manifest, config.bankId, prepared, retainedIds);
   await saveSeedManifest(projectRoot, manifest);
+  if (retainedIds.size > 0) {
+    await clearTombstonesForIds(projectRoot, retainedIds);
+  }
 
   console.log("");
   if (retainedIds.size > 0) {

@@ -173,7 +173,7 @@ If every source is retained again on a second run with no edits:
 
 - **Edit in place** → re-run `seed`; same ids → upsert
 - **Rename or delete a file** → re-run `seed` for the new path; **old memories remain** under old ids (`nocciolo:docs/foo.md#…`)
-- There is no `nocciolo prune` today: invalidate or delete stale documents in Hindsight (Control Plane or MCP) if duplicates matter. [Phase 4](../ROADMAP.md) plans that command: a prompt for what to remove, optional Jev scores, and a Nocciolo delete only after you confirm
+- Use `nocciolo prune` for path-gone / section-gone / explicit cleanup (tombstones prevent unchanged re-retain). Optional `--judge jev` scores for “still on disk but no longer true” are planned in [Phase 4](../ROADMAP.md). Details: [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune)
 
 ---
 

@@ -101,17 +101,17 @@ A monorepo change can touch dozens of markdown files and contain only a few deci
 
 **User-visible result:** incremental `seed` and `store` spend the budget on ADRs and standards first, not on every touched doc.
 
-### 3.4 Remove knowledge that is no longer true — with a plan, not a guess
+### 3.4 Remove knowledge that is no longer true: with a plan, not a guess
 
-`seed` and `store` add or upsert. Months later a path is gone, a section is gone, or the file is still on disk but the claim is false. `nocciolo prune` / `audit --judge jev` groups those cases:
+`seed` and `store` add or upsert. Months later a path is gone, a section is gone, or the file is still on disk but the claim is false. `nocciolo prune` already groups path-gone and section-gone without a TypeSafe key (plus explicit `--source` / `--document-id`). Optional `audit --judge jev` / `--judge jev` on prune is planned to annotate:
 
-- source path no longer in the repo (no TypeSafe key required)
-- section no longer in the file (no key required)
-- Jev-scored outdated / irrelevant / contradicted (key + `--judge jev`)
+- source path no longer in the repo (shipped today; no TypeSafe key required)
+- section no longer in the file (shipped today; no key required)
+- Jev-scored outdated / irrelevant / contradicted (key + `--judge jev`; not shipped yet)
 
-Jev annotates the prompt with a choice and a confidence score. Low score is shown and left unchecked. `--dry-run` prints groups and does not delete. After you confirm, Nocciolo invalidates or deletes and tombstones so the next seed does not put the same unchanged text back.
+Jev annotates the prompt with a choice and a confidence score. Low score is shown and left unchecked. `--dry-run` prints groups and does not delete. After you confirm, Nocciolo deletes and tombstones so the next seed does not put the same unchanged text back.
 
-**User-visible result:** audit is a reviewable plan instead of manual Hindsight cleanup. Path-gone / section-gone work offline.
+**User-visible result:** prune is a reviewable plan instead of manual Hindsight cleanup. Path-gone / section-gone work offline today.
 
 ### 3.5 Stop agents from retaining session junk
 

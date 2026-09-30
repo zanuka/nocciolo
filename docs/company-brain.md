@@ -79,14 +79,12 @@ Applying the template is still an import.
 `configure` does not call Hindsight.
 A bank you seed before that import runs with whatever mission is already on the server.
 
-There is no `nocciolo prune` yet.
 `seed` and `store` are additive.
 Editing a file in place and re-running updates that section.
-Renaming or deleting a source retains the new path and leaves the old `document_id`s in the bank until you invalidate or delete them in Hindsight (Control Plane or MCP).
-[Phase 4](../ROADMAP.md) plans `nocciolo prune` for that cleanup, and for a detail that is still on disk but no longer true.
-The command will ask what to remove.
-Jev can recommend.
-Nocciolo deletes only after you confirm.
+Renaming or deleting a source retains the new path and leaves the old `document_id`s in the bank until you run `nocciolo prune` (path-gone / section-gone / explicit selection).
+See the [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune).
+Optional `--judge jev` for “still on disk but no longer true” is planned later ([Jev integration](./jev-integration.md)).
+Nocciolo deletes only after you confirm (or after `--yes` with an explicit selection).
 
 The same `seed` / `mcp` flow targets a local server or Hindsight Cloud.
 Cloud is opt-in.
@@ -207,7 +205,7 @@ A low score stays a preview until someone confirms.
 | What to spend retain on | Every candidate that passes is eligible. | Candidates are ranked under a retain budget, so a large diff retains the durable sections first. |
 | What `store` adopts | You pick every new file. The command never adopts one on its own. | Jev can propose allowlist entries, and it can hold an edit that does not look durable. You still confirm before anything is retained. |
 | Whether the template fits the repo | `configure` writes mission, directives, and starter mental models for you to review in git. | Jev scores that draft, suggests how aggressive extraction should be, proposes mental-model questions, and assigns tags the same way across sections. The prose stays in the template you commit. |
-| Whether the bank is still current | `seed` and `store` are additive. Renames, deletes, and details that later become irrelevant stay in the bank. | `nocciolo prune` lists those candidates and asks you to pick. `--judge jev` scores what is outdated, irrelevant, or contradicted, including when the file is still on disk. You confirm before Nocciolo deletes anything. A mental-model refresh is a separate confirmation. |
+| Whether the bank is still current | `seed` and `store` are additive. `nocciolo prune` lists path-gone / section-gone candidates (and explicit selections) and deletes after you confirm. | Optional `--judge jev` also scores what is outdated, irrelevant, or contradicted when the file is still on disk. Low confidence stays unchecked. A mental-model refresh is a separate confirmation. |
 | What an agent should trust | MCP exposes `recall`, `reflect`, and `retain` on the project bank. | An unsafe `retain` from the agent is refused. Recalled passages can be reranked before they fill a prompt. A still-true check can flag a memory the docs no longer support. The route picks `reflect`, `recall`, or a mental model for the question. |
 | When Firstmate should use the bank | The `project-bank` skill is recall-only. Crewmates do not seed or store. | Jev can say whether the task needs this bank, which bank, and whether the outcome is a doc update, a pull request, or both. Low confidence goes to the captain. A scout report is judged for seedability before anyone retains it. |
 | Before the bank is shared | You choose local, LAN, VPN, public self-host, or Hindsight Cloud. | A safety check runs before a public or Cloud share. The destination stays a Nocciolo choice, with Hindsight first. |

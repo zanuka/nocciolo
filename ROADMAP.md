@@ -93,10 +93,15 @@ Deferred: the watcher high-signal gate (JEV-13) lands with event-driven re-seed,
 
 ## Phase 5: Team Sharing & Deployment Profiles
 
-**Dogfood target:** [Strumentario](https://github.com/zanuka/strumentario): first external repo to run the full `init` → `configure` → `seed` → `mcp` path on a shared local Hindsight server (same Docker container as the nocciolo bank, distinct `bankId`). Lessons from this pass drive shareable configs and deployment profiles.
+**Dogfood targets:**
+
+- [Strumentario](https://github.com/zanuka/strumentario): first external repo to run the full `init` → `configure` → `seed` → `mcp` path on a shared local Hindsight server (same Docker container as the nocciolo bank, distinct `bankId`). Lessons from this pass drive shareable configs and deployment profiles.
 
 - [x] Dogfood: create and seed a Hindsight bank for Strumentario via the Nocciolo CLI (shared container, bank id `strumentario`)
 - [x] Capture dogfood gaps (multi-repo DX, bank template apply, shareable config shape) back into this phase: see [docs/phase-4-dogfood-gaps.md](./docs/phase-4-dogfood-gaps.md)
+- [x] Dogfood: zanuka-web day-to-day ops document `nocciolo store` (allowlist-gated); no zanuka-web patch attempted
+- [x] Capture zanuka-web gaps (prune / list-bank-docs / delete-doc parity; deferred Firstmate `project-bank`) : see [docs/phase-5-dogfood-gaps.md](./docs/phase-5-dogfood-gaps.md)
+- [ ] Bank document ops parity: CLI list / delete (or prune-covered equivalents) so dogfood projects can archive Python seeders; complements Phase 4 `nocciolo prune`
 - [ ] Multi-repo MCP DX: bank-scoped MCP server names (e.g. `hindsight-<bankId>`), optional `--server-name`, Cursor auth/env guidance (and optional MCP connectivity check)
 - [ ] Bank template apply: `configure --apply` or `bank apply` to create/update the Hindsight bank from `.nocciolo/hindsight/bank-template.json` (`--dry-run`)
 - [ ] Shareable knowledgebase configs: split portable project identity from environment/profile (base URL strategy, no secrets in git)

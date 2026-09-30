@@ -250,8 +250,8 @@ Empty placeholders such as `docs/dev-workflow.md` (before content landed) are sk
 
 **Next**
 
-- [ ] Phase 4: multi-repo MCP DX, template apply, shareable configs & deployment profiles ([dogfood gaps](./phase-4-dogfood-gaps.md))
-- [ ] Phase 5: mental models (Hindsight curated reflect): design: [hindsight-mental-models.md](./hindsight-mental-models.md)
+- [ ] Phase 5: multi-repo MCP DX, template apply, shareable configs & deployment profiles ([Strumentario gaps](./phase-4-dogfood-gaps.md); [zanuka-web gaps](./phase-5-dogfood-gaps.md))
+- [ ] Phase 6: mental models (Hindsight curated reflect): design: [hindsight-mental-models.md](./hindsight-mental-models.md)
 - [ ] Phase 6: reliability & DX
 
 Update this file when a new command becomes part of the daily loop.

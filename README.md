@@ -455,6 +455,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Hindsight upgrade](./docs/hindsight-upgrade.md): `nocciolo docker upgrade --to <version>` (manual Docker fallback)
 - [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md): Strumentario lessons: multi-repo MCP, template apply, shareable config
+- [Phase 5 dogfood gaps](./docs/phase-5-dogfood-gaps.md): zanuka-web lessons: `store` ops path; prune / list-bank-docs / delete-doc parity
 - [Sensitive data](./docs/sensitive-data.md): allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles

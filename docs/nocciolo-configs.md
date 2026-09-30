@@ -233,4 +233,5 @@ Update docs when the project evolves; re-seed when you want the bank to catch up
 - [CLI architecture](./cli-architecture.md): config layout and seed pipeline for contributors
 - [Sensitive data](./sensitive-data.md): what must never be retained
 - [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md): multi-repo MCP DX and template apply
+- [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md): zanuka-web `store` ops; bank-doc list/delete parity
 - [Hindsight bank templates](https://hindsight.vectorize.io/developer/api/bank-templates)

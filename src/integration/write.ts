@@ -58,7 +58,7 @@ export function mergeMcpServers(
     if (name in merged && !force) {
       throw new NoccioloError(
         `MCP server "${name}" already exists in the target config`,
-        "Use --force to overwrite the hindsight entry, or edit the file manually.",
+        `Use --force to overwrite the "${name}" entry, or edit the file manually.`,
       );
     }
     merged[name] = server;

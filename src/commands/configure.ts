@@ -4,12 +4,20 @@ import { detectProjectRoot } from "../project/detect-root.js";
 import { generateHindsightBankTemplate } from "../providers/hindsight/template.js";
 import type { HindsightBankTemplate } from "../providers/hindsight/types.js";
 import { NoccioloError } from "../utils/errors.js";
-import { ensureDir, pathExists, writeJsonFile } from "../utils/fs.js";
+import { ensureDir, pathExists, readJsonFile, writeJsonFile } from "../utils/fs.js";
+import {
+  printBankApplyResult,
+  runBankApply,
+  type BankApplyResult,
+} from "./bank.js";
 
 export interface ConfigureOptions {
   cwd?: string;
   dryRun?: boolean;
   force?: boolean;
+  apply?: boolean;
+  hindsightUrl?: string;
+  apiKey?: string;
 }
 
 export interface ConfigureResult {
@@ -19,6 +27,7 @@ export interface ConfigureResult {
   template: HindsightBankTemplate;
   dryRun: boolean;
   wrote: boolean;
+  apply?: BankApplyResult;
 }
 
 export async function runConfigure(
@@ -27,29 +36,49 @@ export async function runConfigure(
   const cwd = options.cwd ?? process.cwd();
   const dryRun = options.dryRun ?? false;
   const force = options.force ?? false;
+  const apply = options.apply ?? false;
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
   const templatePath = bankTemplatePath(projectRoot);
   const exists = await pathExists(templatePath);
 
-  if (exists && !force && !dryRun) {
-    throw new NoccioloError(
-      `Bank template already exists at ${templatePath}`,
-      "Use --force to overwrite, or `nocciolo configure --dry-run` to preview.",
-    );
+  let template: HindsightBankTemplate;
+  let wrote = false;
+
+  if (apply && exists && !force) {
+    template = await readJsonFile<HindsightBankTemplate>(templatePath);
+  } else {
+    if (exists && !force && !dryRun) {
+      throw new NoccioloError(
+        `Bank template already exists at ${templatePath}`,
+        "Use --force to overwrite, `nocciolo configure --apply` to apply the existing template, or `nocciolo configure --dry-run` to preview.",
+      );
+    }
+
+    template = generateHindsightBankTemplate({
+      projectName: config.name,
+      bankId: config.bankId,
+    });
+
+    if (!dryRun) {
+      await ensureDir(hindsightDir(projectRoot));
+    }
+    await writeJsonFile(templatePath, template, dryRun);
+    wrote = !dryRun;
   }
 
-  const template = generateHindsightBankTemplate({
-    projectName: config.name,
-    bankId: config.bankId,
-  });
-
-  if (!dryRun) {
-    await ensureDir(hindsightDir(projectRoot));
+  let applyResult: BankApplyResult | undefined;
+  if (apply) {
+    applyResult = await runBankApply({
+      cwd: projectRoot,
+      dryRun,
+      ...(options.hindsightUrl !== undefined
+        ? { hindsightUrl: options.hindsightUrl }
+        : {}),
+      ...(options.apiKey !== undefined ? { apiKey: options.apiKey } : {}),
+    });
   }
-
-  await writeJsonFile(templatePath, template, dryRun);
 
   return {
     projectRoot,
@@ -57,30 +86,39 @@ export async function runConfigure(
     templatePath,
     template,
     dryRun,
-    wrote: !dryRun,
+    wrote,
+    ...(applyResult !== undefined ? { apply: applyResult } : {}),
   };
 }
 
 export function printConfigureResult(result: ConfigureResult): void {
   const prefix = result.dryRun ? "[dry-run] " : "";
 
-  if (result.dryRun) {
+  if (result.wrote) {
+    console.log(`${prefix}Wrote bank template for bank "${result.bankId}"`);
+    console.log(`${prefix}Path: ${result.templatePath}`);
+    console.log(
+      `Extraction mode: ${result.template.bank.retain_extraction_mode}; observations: ${result.template.bank.enable_observations ? "on" : "off"}`,
+    );
+    console.log(
+      `Mental models: ${result.template.mental_models.length}, directives: ${result.template.directives.length}`,
+    );
+  } else if (result.dryRun && !result.apply) {
     console.log(`${prefix}Would write bank template for bank "${result.bankId}"`);
     console.log(`${prefix}Path: ${result.templatePath}`);
     console.log(JSON.stringify(result.template, null, 2));
     console.log("No files were written.");
+  } else if (result.apply) {
+    console.log(`${prefix}Using existing bank template at ${result.templatePath}`);
+  }
+
+  if (result.apply) {
+    console.log("");
+    printBankApplyResult(result.apply);
     return;
   }
 
-  console.log(`${prefix}Wrote bank template for bank "${result.bankId}"`);
-  console.log(`${prefix}Path: ${result.templatePath}`);
   console.log(
-    `Extraction mode: ${result.template.bank.retain_extraction_mode}; observations: ${result.template.bank.enable_observations ? "on" : "off"}`,
-  );
-  console.log(
-    `Mental models: ${result.template.mental_models.length}, directives: ${result.template.directives.length}`,
-  );
-  console.log(
-    "Next: run `nocciolo seed --dry-run` to preview durable sources, or import the template into Hindsight.",
+    "Next: run `nocciolo bank apply --dry-run` (or `configure --apply`) then `nocciolo seed --dry-run`.",
   );
 }

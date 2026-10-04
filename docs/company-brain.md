@@ -16,6 +16,7 @@ It explains what the CLI adds compared with setting that bank up by hand, and co
 Command flags live in the [CLI reference](./nocciolo-cli-commands.md).
 The retain model is in the [sync strategy](./nocciolo-sync-strategy.md).
 File layout is in [knowledge-base configs](./nocciolo-configs.md).
+Sharing a bank across a team (deployment profiles, apply, multi-repo MCP) is in [team sharing](./team-sharing.md).
 
 ---
 
@@ -27,9 +28,10 @@ Syncing the bank means running `seed` or `store` again after the docs change.
 | Job | Command | What you get |
 |-----|---------|----------------|
 | Set up the project | `init` | `.nocciolo/config.json` with a project bank id and the Docker container that hosts it. Bank id and container name are different: one Hindsight server can hold many banks. |
-| Set up the bank profile | `configure` | `.nocciolo/hindsight/bank-template.json`: mission, directives, mental models, and extraction settings shaped for a software project. Import that file into Hindsight (Control Plane or import API). The CLI writes the template. It does not apply it yet. |
-| Set up the server | `docker print` / `docker up` | A local Hindsight container when you self-host. Skip this if you already have a server, or point `seed` and `mcp` at [Hindsight Cloud](./hindsight-cloud.md). |
-| Set up agent wiring | `mcp` | Snippets, or written files, so Cursor, Claude Code, Roo, Codex, Kiro, and Firstmate call this bank. API keys stay in the environment. |
+| Set up the bank profile | `configure` then `bank apply` | `.nocciolo/hindsight/bank-template.json`: mission, directives, mental models, and extraction settings. `configure` writes the template; `bank apply` (or `configure --apply`) creates/updates the bank in Hindsight. |
+| Choose how teammates reach it | `share` | `.nocciolo/share.json` deployment profile: local, LAN, VPN, public, or [Hindsight Cloud](./hindsight-cloud.md). See [team sharing](./team-sharing.md). |
+| Set up the server | `docker print` / `docker up` | A local Hindsight container when you self-host. Skip under Cloud profile, or point `seed` and `mcp` at an existing host. |
+| Set up agent wiring | `mcp` | Snippets, or written files, so Cursor, Claude Code, Roo, Codex, Kiro, and Firstmate call this bank (bank-scoped server names). API keys stay in the environment. |
 | Seed the bank | `seed --dry-run`, then `seed` | A first retain of high-signal sections. Dry-run lists candidates and skips. It does not call Hindsight. |
 | Sync after edits | `seed` again, or `store` | Unchanged sources are skipped by content hash. Changed sections upsert on a stable `document_id`. |
 | Maintain the selection | `store` | Ongoing retain of files you have allowlisted in `.nocciolo/config.json`. New markdown is never stored unless you pick it. |

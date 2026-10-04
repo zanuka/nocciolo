@@ -1,6 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
-import { loadConfig, saveConfig } from "../config/load.js";
+import { loadConfig, loadShareConfig, saveConfig } from "../config/load.js";
+import {
+  assertApiKeyForConnection,
+  resolveProjectConnection,
+} from "../config/connection.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import { isGitWorktree } from "../project/worktree.js";
 import {
@@ -17,7 +21,6 @@ import type { ScannerPolicy } from "../scanner/policy.js";
 import {
   HindsightClient,
   resolveHindsightApiKey,
-  resolveHindsightBaseUrl,
 } from "../providers/hindsight/client.js";
 import {
   createEmptyManifest,
@@ -175,17 +178,21 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
 
   const projectRoot = await resolveStoreProjectRoot(options);
   const config = await loadConfig(projectRoot);
-  const baseUrl = resolveHindsightBaseUrl({
+  const share = await loadShareConfig(projectRoot);
+  const connection = resolveProjectConnection({
+    config,
+    share,
     ...(options.hindsightUrl !== undefined
       ? { cliUrl: options.hindsightUrl }
       : {}),
-    ...(config.hindsightBaseUrl !== undefined
-      ? { configUrl: config.hindsightBaseUrl }
-      : {}),
   });
+  const baseUrl = connection.baseUrl;
   const apiKey = resolveHindsightApiKey({
     ...(options.apiKey !== undefined ? { cliKey: options.apiKey } : {}),
   });
+  if (!dryRun) {
+    assertApiKeyForConnection({ connection, ...(apiKey ? { apiKey } : {}) });
+  }
 
   let manifest =
     (await loadSeedManifest(projectRoot)) ?? createEmptyManifest(config.bankId);

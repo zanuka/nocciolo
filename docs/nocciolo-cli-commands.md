@@ -13,11 +13,14 @@ Related: [README](../README.md), [CLI architecture](./cli-architecture.md), [dev
 ```bash
 nocciolo init
 nocciolo configure
+nocciolo bank apply --dry-run
+nocciolo bank apply
 nocciolo seed --dry-run
 nocciolo seed
 nocciolo store --dry-run
 nocciolo store --yes
 nocciolo prune --dry-run
+nocciolo share --profile local
 nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
@@ -98,9 +101,60 @@ Generate a Hindsight bank template under `.nocciolo/hindsight/`.
 |------|-------------|
 | `--dry-run` | Print the template without writing files |
 | `--force` | Overwrite an existing bank template |
+| `--apply` | Apply the existing (or newly written) template to Hindsight |
+| `--hindsight-url <url>` | Override Hindsight base URL when using `--apply` |
+| `--api-key <key>` | API key when using `--apply` |
 
 The template holds mission, directives, mental models, and extraction policy.
 It is separate from project content retained by `seed`.
+Prefer `nocciolo bank apply` when you only want to apply an existing template.
+
+---
+
+## `nocciolo bank apply`
+
+Create or update the Hindsight bank from `.nocciolo/hindsight/bank-template.json`.
+Idempotent for bank profile/config, directives (matched by name), and declared mental models (matched by stable `id`).
+
+| Flag | Description |
+|------|-------------|
+| `--dry-run` | Preview apply steps without mutating Hindsight |
+| `--hindsight-url <url>` | Override Hindsight base URL |
+| `--api-key <key>` | Hindsight API key (required for Cloud) |
+
+Mental-model create may start an async reflect; refresh again after `seed` if the bank was empty.
+
+---
+
+## `nocciolo share`
+
+Generate or validate a deployment profile share artifact (`.nocciolo/share.json`).
+Portable project identity stays in `config.json`; host strategy lives in the share profile (no secrets).
+
+| Flag | Description |
+|------|-------------|
+| `--profile <name>` | `local`, `lan`, `vpn`, `public`, or `hindsight-cloud` |
+| `--base-url <url>` | Non-secret base URL (required for `lan` / `vpn` / `public`) |
+| `--mcp-auth <mode>` | Cloud MCP mode: `api-key` (default) or `oauth` |
+| `--validate` | Validate the active profile without writing |
+| `--dry-run` | Preview `share.json` / `deploymentProfile` updates |
+
+Prints security defaults and trade-offs for the chosen profile.
+Cloud skips local Docker; see [hindsight-cloud.md](./hindsight-cloud.md).
+
+---
+
+## `nocciolo docs list`
+
+Thin bank inventory helper for scripts when `prune --dry-run` grouping is too heavy.
+Delete remains on `nocciolo prune --document-id <id> --yes`.
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Machine-readable JSON |
+| `--limit <n>` | Cap printed rows (API still pages) |
+| `--hindsight-url <url>` | Override Hindsight base URL |
+| `--api-key <key>` | Hindsight API key |
 
 ---
 
@@ -208,10 +262,10 @@ When a project still has a legacy path-id seeder alongside Nocciolo section ids:
 3. Retire stale path ids **per file** with `--document-id` or `--source` plus `--yes` after section coverage and a recall smoke check.
 4. Do not mass-wipe path ids, and do not prune with a `nocciolo:` prefix as if those ids were bare paths on disk.
 
-Thin `nocciolo docs list` / `docs delete` helpers are still optional follow-ups for scripted inventory. Explicit prune covers selective delete today.
+`nocciolo docs list` covers flat inventory for scripts. Explicit prune covers selective delete.
 
 Design (optional Jev annotation later): [Jev integration](./jev-integration.md).
-Tracked in [Phase 4](../ROADMAP.md) and [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md).
+Tracked in [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md).
 
 ---
 
@@ -220,6 +274,8 @@ Tracked in [Phase 4](../ROADMAP.md) and [Phase 5 dogfood gaps](./phase-5-dogfood
 Emit MCP and agent wiring for the project bank.
 By default prints snippets.
 It does not detect your IDE: use write flags for the files you want.
+Default MCP server name is bank-scoped (`hindsight-<bankId>`) so multi-root workspaces can attach multiple banks.
+Emission follows the active deployment profile from `nocciolo share` / `config.deploymentProfile`.
 
 | Flag | Description |
 |------|-------------|
@@ -231,12 +287,16 @@ It does not detect your IDE: use write flags for the files you want.
 | `--write-cursor-rules` | Write `.cursor/rules/hindsight-bank.mdc` (`alwaysApply: true`) |
 | `--write-firstmate` | Install the `project-bank` skill under `$FM_HOME/.agents/skills/project-bank/` and record this project's `bankId` + `hindsightBaseUrl` in `$FM_HOME/.nocciolo/projects.json` (fallback `~/.nocciolo/projects.json`); prints install steps instead of writing when `$FM_HOME` is unset |
 | `--dry-run` | Preview writes without touching the filesystem (requires at least one `--write*` flag) |
-| `--force` | Overwrite an existing `hindsight` MCP entry, Cursor rule file, or `project-bank` skill |
+| `--force` | Overwrite an existing bank-scoped MCP entry, Cursor rule file, or `project-bank` skill |
 | `--hindsight-url <url>` | Override Hindsight base URL for the MCP endpoint |
+| `--server-name <name>` | Override MCP server name (default: `hindsight-<bankId>`) |
+| `--check` | Probe the MCP endpoint with resolved auth (never prints secrets) |
 | `--include-auth` | Add `Authorization` headers; written files use env placeholders |
 | `--api-key <key>` | Include this key literally in printed snippets only; file writes still use env placeholders |
 
-Single-bank MCP URL shape: `http://localhost:8888/mcp/<bankId>/`.
+Single-bank MCP URL shape: `{base}/mcp/<bankId>/` (Cloud: `https://api.hindsight.vectorize.io/mcp/<bankId>/`).
+
+Cursor must see `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` in the **Cursor process** environment (login shell / desktop env), not only an integrated terminal.
 
 `--harness firstmate` still prints a `cd` into the Firstmate home followed by a `claude mcp add --transport http …` command wired to this project's single-bank Hindsight URL. The wiring itself stays captain-only (do not wire scouts or ships) and is never written into this product repo. `--write-firstmate` adds one more write path alongside that: the on-demand `project-bank` skill (see [Firstmate `project-bank` skill](../docs/firstmate/project-bank/SKILL.md)), plus the project-to-bank map Firstmate reads before a crewmate spawn. That skill is on-demand, not an always-on persona, and a crewmate that reads its bank card recalls from Hindsight only: it does not seed or store.
 
@@ -296,6 +356,7 @@ Full procedure: [hindsight-upgrade.md](./hindsight-upgrade.md).
 
 - [Sync strategy](./nocciolo-sync-strategy.md): curated retain vs file upload
 - [Knowledge-base configs](./nocciolo-configs.md): `.nocciolo/` layout and seed manifest
+- [Team sharing](./team-sharing.md): deployment profiles, share artifact, bank apply, multi-repo MCP
 - [Sensitive data](./sensitive-data.md): what the scanner denies before retain
 - [Jev integration](./jev-integration.md): planned judge, including optional `--judge jev` on prune
 - [Hindsight Cloud](./hindsight-cloud.md): managed hosting instead of local Docker

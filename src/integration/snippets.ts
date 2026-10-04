@@ -1,4 +1,4 @@
-import { buildSingleBankMcpUrl } from "./mcp-url.js";
+import { buildSingleBankMcpUrl, defaultMcpServerName } from "./mcp-url.js";
 
 export type McpHarness =
   | "cursor"
@@ -24,6 +24,7 @@ export interface McpSnippetInput {
   bankId: string;
   projectName: string;
   serverName?: string;
+  mcpUrl?: string;
   includeAuth?: boolean;
   apiKeyEnvVar?: string;
   apiKeyLiteral?: string;
@@ -64,8 +65,9 @@ function isMcpHarness(value: string): value is McpHarness {
 }
 
 export function generateMcpSnippets(input: McpSnippetInput): McpSnippet[] {
-  const mcpUrl = buildSingleBankMcpUrl(input.baseUrl, input.bankId);
-  const serverName = input.serverName ?? "hindsight";
+  const mcpUrl =
+    input.mcpUrl ?? buildSingleBankMcpUrl(input.baseUrl, input.bankId);
+  const serverName = input.serverName ?? defaultMcpServerName(input.bankId);
   const headers = buildHeaders(input);
   const cursorHeaders = buildCursorHeaders(input);
 
@@ -90,6 +92,8 @@ export function generateMcpSnippets(input: McpSnippetInput): McpSnippet[] {
       notes: [
         "Project file: .cursor/mcp.json (merge with existing servers if present).",
         "Reload MCP servers in Cursor Settings after writing.",
+        "API keys must be in the Cursor process environment (login shell / desktop env), not only an integrated terminal.",
+        "Accepted env vars: NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY.",
       ],
     },
     {

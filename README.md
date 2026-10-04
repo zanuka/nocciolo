@@ -400,7 +400,7 @@ nocciolo seed
 nocciolo mcp --hindsight-url https://api.hindsight.vectorize.io --include-auth --write
 ```
 
-Interactive IDEs can also use Cloud’s OAuth MCP host (`https://mcp.hindsight.vectorize.io`) instead of pasting a key: details and trade-offs in [docs/hindsight-cloud.md](./docs/hindsight-cloud.md). First-class `hindsight-cloud` deployment profile lands in Phase 4 ([ROADMAP](./ROADMAP.md)).
+Interactive IDEs can also use Cloud’s OAuth MCP host (`https://mcp.hindsight.vectorize.io`) instead of pasting a key: details and trade-offs in [docs/hindsight-cloud.md](./docs/hindsight-cloud.md). Choose Cloud with `nocciolo share --profile hindsight-cloud` (API key required; Docker skipped).
 
 ### Graphiti (planned)
 
@@ -467,6 +467,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Jev integration](./docs/jev-integration.md): planned opt-in judge, including optional `--judge jev` on prune
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
+- [Team sharing](./docs/team-sharing.md): deployment profiles, `nocciolo share`, bank apply, multi-repo MCP for teams
 - [CLI architecture](./docs/cli-architecture.md): module boundaries, seed pipeline, config, and env/auth for contributors
 - [Developer workflow](./docs/dev-workflow.md): build, first seed, re-seed, and Hindsight retain/consolidation tips
 - [Developer testing](./docs/dev-testing.md): end-user command sequence and E2E regression checklist

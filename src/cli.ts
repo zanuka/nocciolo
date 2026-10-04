@@ -17,6 +17,9 @@ import { printMcpResult, runMcp } from "./commands/mcp.js";
 import { runPruneCommand } from "./commands/prune.js";
 import { runSeedCommand } from "./commands/seed.js";
 import { runStoreCommand } from "./commands/store.js";
+import { printBankApplyResult, runBankApply } from "./commands/bank.js";
+import { printShareResult, runShare } from "./commands/share.js";
+import { printDocsListResult, runDocsList } from "./commands/docs.js";
 import { formatError } from "./utils/errors.js";
 
 function readPackageVersion(): string {
@@ -84,13 +87,149 @@ async function main(): Promise<void> {
     .description("Generate a Hindsight bank template into .nocciolo/")
     .option("--dry-run", "Print the template without writing files")
     .option("--force", "Overwrite an existing bank template")
-    .action(async (opts: { dryRun?: boolean; force?: boolean }) => {
-      const result = await runConfigure({
-        dryRun: Boolean(opts.dryRun),
-        force: Boolean(opts.force),
-      });
-      printConfigureResult(result);
-    });
+    .option(
+      "--apply",
+      "Apply the bank template to Hindsight (create/update bank, directives, mental models)",
+    )
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL when using --apply",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key when using --apply (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .action(
+      async (opts: {
+        dryRun?: boolean;
+        force?: boolean;
+        apply?: boolean;
+        hindsightUrl?: string;
+        apiKey?: string;
+      }) => {
+        const result = await runConfigure({
+          dryRun: Boolean(opts.dryRun),
+          force: Boolean(opts.force),
+          apply: Boolean(opts.apply),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+        printConfigureResult(result);
+      },
+    );
+
+  const bank = program
+    .command("bank")
+    .description("Hindsight bank operations from the project template");
+
+  bank
+    .command("apply")
+    .description(
+      "Create or update the Hindsight bank from .nocciolo/hindsight/bank-template.json",
+    )
+    .option("--dry-run", "Preview apply steps without calling Hindsight mutations")
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, share profile, env, or http://localhost:8888)",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .action(
+      async (opts: {
+        dryRun?: boolean;
+        hindsightUrl?: string;
+        apiKey?: string;
+      }) => {
+        const result = await runBankApply({
+          dryRun: Boolean(opts.dryRun),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+        printBankApplyResult(result);
+      },
+    );
+
+  program
+    .command("share")
+    .description(
+      "Generate or validate a deployment profile share artifact (.nocciolo/share.json)",
+    )
+    .option(
+      "--profile <name>",
+      "Deployment profile: local, lan, vpn, public, hindsight-cloud",
+    )
+    .option(
+      "--base-url <url>",
+      "Non-secret Hindsight base URL for lan/vpn/public profiles",
+    )
+    .option(
+      "--mcp-auth <mode>",
+      "Cloud MCP auth mode: api-key (default) or oauth",
+    )
+    .option("--validate", "Validate the active share/profile without writing")
+    .option("--dry-run", "Preview share.json / config updates without writing")
+    .action(
+      async (opts: {
+        profile?: string;
+        baseUrl?: string;
+        mcpAuth?: string;
+        validate?: boolean;
+        dryRun?: boolean;
+      }) => {
+        const result = await runShare({
+          dryRun: Boolean(opts.dryRun),
+          validate: Boolean(opts.validate),
+          ...(opts.profile !== undefined ? { profile: opts.profile } : {}),
+          ...(opts.baseUrl !== undefined ? { baseUrl: opts.baseUrl } : {}),
+          ...(opts.mcpAuth !== undefined ? { mcpAuth: opts.mcpAuth } : {}),
+        });
+        printShareResult(result);
+      },
+    );
+
+  const docs = program
+    .command("docs")
+    .description("List bank documents (thin inventory helper for scripts)");
+
+  docs
+    .command("list")
+    .description("List retained documents in the configured bank")
+    .option("--json", "Emit machine-readable JSON")
+    .option("--limit <n>", "Maximum documents to print (still pages the API)")
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, share profile, env, or http://localhost:8888)",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .action(
+      async (opts: {
+        json?: boolean;
+        limit?: string;
+        hindsightUrl?: string;
+        apiKey?: string;
+      }) => {
+        const result = await runDocsList({
+          json: Boolean(opts.json),
+          ...(opts.limit !== undefined
+            ? { limit: Number(opts.limit) }
+            : {}),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+        printDocsListResult(result);
+      },
+    );
 
   program
     .command("seed")
@@ -281,6 +420,14 @@ async function main(): Promise<void> {
       "--api-key <key>",
       "Include this API key literally in printed snippets (writes still use env placeholders)",
     )
+    .option(
+      "--server-name <name>",
+      "MCP server name (default: hindsight-<bankId>)",
+    )
+    .option(
+      "--check",
+      "Probe the MCP endpoint with resolved auth (never prints secrets)",
+    )
     .action(
       async (opts: {
         harness?: string;
@@ -295,6 +442,8 @@ async function main(): Promise<void> {
         hindsightUrl?: string;
         includeAuth?: boolean;
         apiKey?: string;
+        serverName?: string;
+        check?: boolean;
       }) => {
         const result = await runMcp({
           dryRun: Boolean(opts.dryRun),
@@ -306,11 +455,15 @@ async function main(): Promise<void> {
           writeCursorRules: Boolean(opts.writeCursorRules),
           writeFirstmate: Boolean(opts.writeFirstmate),
           includeAuth: Boolean(opts.includeAuth),
+          check: Boolean(opts.check),
           ...(opts.harness !== undefined ? { harness: opts.harness } : {}),
           ...(opts.hindsightUrl !== undefined
             ? { hindsightUrl: opts.hindsightUrl }
             : {}),
           ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+          ...(opts.serverName !== undefined
+            ? { serverName: opts.serverName }
+            : {}),
         });
         printMcpResult(result);
       },

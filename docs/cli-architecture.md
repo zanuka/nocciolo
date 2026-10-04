@@ -95,10 +95,10 @@ flowchart TD
 | `src/cli.ts` | Commander entry: wires commands and flags |
 | `src/commands/` | Command orchestration + user-facing output |
 | `src/project/` | Project root detection, git commit lookup, worktree detection, captain-home registry |
-| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` (including `store.allowlist` and optional `scanner`) |
+| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` + `share.json`, deployment profiles, connection resolution |
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
-| `src/providers/hindsight/` | Bank template types/generator + HTTP retain / list / delete client |
+| `src/providers/hindsight/` | Bank template types/generator + HTTP retain / list / delete / bank-apply client |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
@@ -112,12 +112,14 @@ Keep these boundaries. Do not collapse scan → extract → retain into one opaq
 pnpm install && pnpm build
 node dist/cli.js init
 node dist/cli.js configure
+node dist/cli.js bank apply --dry-run
 node dist/cli.js docker print
 node dist/cli.js seed --dry-run
 node dist/cli.js seed
 node dist/cli.js store --dry-run
 node dist/cli.js store --yes
 node dist/cli.js prune --dry-run
+node dist/cli.js share --profile local
 node dist/cli.js mcp
 node dist/cli.js mcp --write --dry-run
 ```
@@ -125,15 +127,18 @@ node dist/cli.js mcp --write --dry-run
 | Command | What it does |
 |---------|----------------|
 | `init` | Detect project root; prompt (or flags) for bank id + Docker container; write `.nocciolo/config.json` |
-| `configure` | Generate Hindsight bank template under `.nocciolo/hindsight/` |
-| `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`) |
+| `configure` | Generate Hindsight bank template under `.nocciolo/hindsight/`; optional `--apply` |
+| `bank apply` | Create/update bank + directives + mental models from the template (`--dry-run`) |
+| `share` | Write/validate `.nocciolo/share.json` deployment profile (local/LAN/VPN/public/cloud) |
+| `docs list` | Flat bank document inventory for scripts |
+| `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`); skipped under Cloud profile |
 | `seed --dry-run` | Scan + extract; print candidates; **no** API calls |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
 | `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
 | `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path |
 | `prune --dry-run` | List path-gone / section-gone / explicit candidates (read-only document list); no deletes |
 | `prune` | Delete selected bank documents; write local tombstones under `.nocciolo/local/` |
-| `mcp` | Print ready-to-paste MCP snippets; optional `--write` / AGENTS / Cursor rules / Firstmate `project-bank` skill |
+| `mcp` | Print ready-to-paste MCP snippets (bank-scoped server names); optional `--write` / `--check` / AGENTS / Cursor rules / Firstmate |
 
 Common flags:
 
@@ -152,7 +157,8 @@ Version-controlled (commit these):
 
 ```text
 .nocciolo/
-  config.json                 # project name, bankId, provider, optional hindsightBaseUrl + docker
+  config.json                 # project name, bankId, provider, optional deploymentProfile + hindsightBaseUrl + docker
+  share.json                  # deployment profile + non-secret base URL (commit)
   hindsight/
     bank-template.json        # importable Hindsight bank template (version "1")
 ```
@@ -171,7 +177,8 @@ Local / gitignored state (do **not** commit secrets or machine-local seed state)
 
 Optional config fields:
 
-- `hindsightBaseUrl`: default Hindsight server for this project (still overridable by env/CLI)
+- `deploymentProfile`: `local` / `lan` / `vpn` / `public` / `hindsight-cloud` (also in `share.json`)
+- `hindsightBaseUrl`: default Hindsight server for this project (still overridable by env/CLI/share)
 - `docker.containerName` / `docker.volumeName`: local Docker helper defaults (shared server; not 1:1 with `bankId`)
 
 **Never** put API keys in version-controlled config. Use env vars or `--api-key`.
@@ -386,6 +393,7 @@ node dist/cli.js --help
 - [README](../README.md): product overview and quick start
 - [Developer workflow](./dev-workflow.md): build, first seed, re-seed, retain vs consolidation
 - [Developer testing](./dev-testing.md): end-user command sequence and E2E regression checklist
+- [Team sharing](./team-sharing.md): deployment profiles and team bootstrap (user guide)
 - [Phase 4 dogfood gaps](./phase-4-dogfood-gaps.md): Strumentario multi-repo / template apply / shareable config lessons
 - [Phase 5 dogfood gaps](./phase-5-dogfood-gaps.md): zanuka-web `store` ops path; bank-doc list/delete parity
 - [Sensitive data](./sensitive-data.md): allowlist/denylist so secrets and noise stay out of banks

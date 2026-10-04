@@ -15,6 +15,20 @@ describe("NoccioloConfigSchema", () => {
     });
     expect(NoccioloConfigSchema.parse(config).bankId).toBe("my-app");
     expect(config.root).toBe(".");
+    expect(config.deploymentProfile).toBe("local");
+  });
+
+  it("accepts an optional deploymentProfile", () => {
+    const parsed = NoccioloConfigSchema.parse({
+      version: 1,
+      name: "cloud-app",
+      provider: "hindsight",
+      bankId: "cloud-app",
+      root: ".",
+      createdAt: new Date().toISOString(),
+      deploymentProfile: "hindsight-cloud",
+    });
+    expect(parsed.deploymentProfile).toBe("hindsight-cloud");
   });
 
   it("slugifies bank ids", () => {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEPLOYMENT_PROFILES, type DeploymentProfile } from "./profiles.js";
 
 export const DockerConfigSchema = z.object({
   containerName: z.string().min(1),
@@ -25,6 +26,7 @@ export const NoccioloConfigSchema = z.object({
   root: z.string().min(1),
   createdAt: z.string().datetime(),
   hindsightBaseUrl: z.string().url().optional(),
+  deploymentProfile: z.enum(DEPLOYMENT_PROFILES).optional(),
   docker: DockerConfigSchema.optional(),
   store: StoreConfigSchema.optional(),
   scanner: ScannerConfigSchema.optional(),
@@ -40,6 +42,7 @@ export function createDefaultConfig(input: {
   root?: string;
   bankId?: string;
   hindsightBaseUrl?: string;
+  deploymentProfile?: DeploymentProfile;
   docker?: DockerConfig;
 }): NoccioloConfig {
   const bankId = input.bankId ?? slugify(input.name);
@@ -50,6 +53,7 @@ export function createDefaultConfig(input: {
     bankId,
     root: input.root ?? ".",
     createdAt: new Date().toISOString(),
+    deploymentProfile: input.deploymentProfile ?? "local",
   };
   if (input.hindsightBaseUrl !== undefined) {
     config.hindsightBaseUrl = input.hindsightBaseUrl;

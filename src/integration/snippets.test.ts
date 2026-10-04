@@ -33,13 +33,13 @@ describe("generateMcpSnippets", () => {
     projectName: "Nocciolo",
   };
 
-  it("emits Cursor JSON with the single-bank URL", () => {
+  it("emits Cursor JSON with the single-bank URL and bank-scoped server name", () => {
     const cursor = generateMcpSnippets(input).find((s) => s.harness === "cursor");
     expect(cursor).toBeDefined();
     const parsed = JSON.parse(cursor!.body) as {
-      mcpServers: { hindsight: { url: string } };
+      mcpServers: { "hindsight-nocciolo": { url: string } };
     };
-    expect(parsed.mcpServers.hindsight.url).toBe(
+    expect(parsed.mcpServers["hindsight-nocciolo"].url).toBe(
       "http://localhost:8888/mcp/nocciolo/",
     );
   });
@@ -47,9 +47,9 @@ describe("generateMcpSnippets", () => {
   it("emits Roo with streamable-http type", () => {
     const roo = generateMcpSnippets(input).find((s) => s.harness === "roo");
     const parsed = JSON.parse(roo!.body) as {
-      mcpServers: { hindsight: { type: string; url: string } };
+      mcpServers: { "hindsight-nocciolo": { type: string; url: string } };
     };
-    expect(parsed.mcpServers.hindsight.type).toBe("streamable-http");
+    expect(parsed.mcpServers["hindsight-nocciolo"].type).toBe("streamable-http");
   });
 
   it("emits Claude Code shell with http transport", () => {
@@ -62,8 +62,19 @@ describe("generateMcpSnippets", () => {
 
   it("emits Codex TOML with mcp_servers", () => {
     const codex = generateMcpSnippets(input).find((s) => s.harness === "codex");
-    expect(codex!.body).toContain("[mcp_servers.hindsight]");
+    expect(codex!.body).toContain("[mcp_servers.hindsight-nocciolo]");
     expect(codex!.body).toContain('url = "http://localhost:8888/mcp/nocciolo/"');
+  });
+
+  it("honors an explicit --server-name override", () => {
+    const cursor = generateMcpSnippets({
+      ...input,
+      serverName: "custom-bank",
+    }).find((s) => s.harness === "cursor");
+    const parsed = JSON.parse(cursor!.body) as {
+      mcpServers: { "custom-bank": { url: string } };
+    };
+    expect(parsed.mcpServers["custom-bank"].url).toContain("/mcp/nocciolo/");
   });
 
   it("uses env placeholders for auth when writing-safe", () => {
@@ -72,9 +83,11 @@ describe("generateMcpSnippets", () => {
       includeAuth: true,
     }).find((s) => s.harness === "cursor");
     const parsed = JSON.parse(cursor!.body) as {
-      mcpServers: { hindsight: { headers: { Authorization: string } } };
+      mcpServers: {
+        "hindsight-nocciolo": { headers: { Authorization: string } };
+      };
     };
-    expect(parsed.mcpServers.hindsight.headers.Authorization).toBe(
+    expect(parsed.mcpServers["hindsight-nocciolo"].headers.Authorization).toBe(
       "Bearer ${env:NOCCIOLO_HINDSIGHT_API_KEY}",
     );
   });

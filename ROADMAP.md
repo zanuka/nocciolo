@@ -93,19 +93,21 @@ Deferred: the watcher high-signal gate (JEV-13) lands with event-driven re-seed,
 - [x] Capture dogfood gaps (multi-repo DX, bank template apply, shareable config shape) back into this phase: see [docs/phase-4-dogfood-gaps.md](./docs/phase-4-dogfood-gaps.md)
 - [x] Dogfood: zanuka-web day-to-day ops document `nocciolo store` (allowlist-gated); no zanuka-web patch attempted
 - [x] Capture zanuka-web gaps (prune / list-bank-docs / delete-doc parity; deferred Firstmate `project-bank`) : see [docs/phase-5-dogfood-gaps.md](./docs/phase-5-dogfood-gaps.md)
-- [ ] Bank document ops parity: thin bank-list helper (and dogfood archive of Python seeders) where `prune --document-id --yes` is not enough inventory; complements shipped Phase 4 `nocciolo prune`
-- [ ] Multi-repo MCP DX: bank-scoped MCP server names (e.g. `hindsight-<bankId>`), optional `--server-name`, Cursor auth/env guidance (and optional MCP connectivity check)
-- [ ] Bank template apply: `configure --apply` or `bank apply` to create/update the Hindsight bank from `.nocciolo/hindsight/bank-template.json` (`--dry-run`)
-- [ ] Shareable knowledgebase configs: split portable project identity from environment/profile (base URL strategy, no secrets in git)
-- [ ] Deployment profile: **local / LAN**: single machine or trusted network, minimal exposure
-- [ ] Deployment profile: **VPN**: bank reachable only inside a private network for closed teams
-- [ ] Deployment profile: **public**: intentionally exposed self-hosted Hindsight when knowledge is meant to be open
-- [ ] Deployment profile: **hindsight-cloud**: managed [Hindsight Cloud](https://docs.hindsight.vectorize.io/) (`https://api.hindsight.vectorize.io`); API key for seed/apply; bank-scoped MCP and/or OAuth MCP; skip local Docker: see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)
-- [ ] Documented security defaults and trade-offs per profile (auth, TLS, network binding, Cloud credits / data residency)
-- [ ] CLI helpers to generate and validate the chosen profile (`nocciolo share` or equivalent, with `--dry-run`)
-- [ ] Profile-aware MCP / harness emission (URLs and server names follow the active deployment profile; Cloud emits `api.hindsight.vectorize.io` + env key placeholders)
+- [x] Bank document ops parity: thin `nocciolo docs list` inventory helper (JSON optional); delete stays on `prune --document-id --yes`; dogfood archive of Python list/delete helpers after zanuka-web prune pass
+- [x] Multi-repo MCP DX: bank-scoped MCP server names (`hindsight-<bankId>`), optional `--server-name`, Cursor auth/env guidance, optional `mcp --check`
+- [x] Bank template apply: `configure --apply` and `bank apply` create/update the Hindsight bank from `.nocciolo/hindsight/bank-template.json` (`--dry-run`)
+- [x] Shareable knowledgebase configs: portable project identity in `config.json` plus `.nocciolo/share.json` deployment profile (base URL strategy, no secrets in git)
+- [x] Deployment profile: **local / LAN**: single machine or trusted network, minimal exposure
+- [x] Deployment profile: **VPN**: bank reachable only inside a private network for closed teams
+- [x] Deployment profile: **public**: intentionally exposed self-hosted Hindsight when knowledge is meant to be open
+- [x] Deployment profile: **hindsight-cloud**: managed [Hindsight Cloud](https://docs.hindsight.vectorize.io/) (`https://api.hindsight.vectorize.io`); API key for seed/apply; bank-scoped MCP and/or OAuth MCP; skip local Docker: see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)
+- [x] Documented security defaults and trade-offs per profile (auth, TLS, network binding, Cloud credits / data residency)
+- [x] CLI helpers to generate and validate the chosen profile (`nocciolo share`, with `--dry-run` / `--validate`)
+- [x] Profile-aware MCP / harness emission (URLs and server names follow the active deployment profile; Cloud emits `api.hindsight.vectorize.io` + env key placeholders)
 
 **Goal:** A team can publish one durable bank and let agents across the org inherit it: local/self-host by default, [Hindsight Cloud](https://docs.hindsight.vectorize.io/) opt-in, never a forced cloud path.
+
+User guide: [docs/team-sharing.md](./docs/team-sharing.md).
 
 ## Phase 6: Mental Models (Hindsight-native curated reflect)
 

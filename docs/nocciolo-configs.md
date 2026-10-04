@@ -19,7 +19,8 @@ Docs stay authoritative. The bank is the agent-facing index of those docs: with 
 
 ```text
 .nocciolo/
-  config.json                 # project identity + bank id (commit)
+  config.json                 # project identity + bank id + optional deploymentProfile (commit)
+  share.json                  # deployment profile + non-secret base URL strategy (commit)
   hindsight/
     bank-template.json        # Hindsight mission / directives / mental models (commit)
   local/
@@ -64,11 +65,35 @@ Written by `nocciolo init`. Portable project identity for this repo.
 | `bankId` | Hindsight bank name: **project-specific**. Many banks can share one server. |
 | `provider` | Memory backend (`hindsight` today). |
 | `root` | Project root relative to config (usually `"."`). |
-| `docker.containerName` / `volumeName` | Which **local Docker server** hosts banks: not 1:1 with `bankId`. |
-| `hindsightBaseUrl` | Optional default Hindsight URL (still overridable by env / CLI). |
+| `deploymentProfile` | Optional share profile hint: `local` (default), `lan`, `vpn`, `public`, `hindsight-cloud`. |
+| `docker.containerName` / `volumeName` | Which **local Docker server** hosts banks: not 1:1 with `bankId`. Skip under Cloud. |
+| `hindsightBaseUrl` | Optional default Hindsight URL (still overridable by env / CLI / share). |
 | `scanner.include` | Optional globs. When set, `seed` and `store` discover these paths instead of the default README / docs / ADR walk. |
 | `scanner.exclude` | Optional globs removed after discovery (default scan or `include`). |
 | `scanner.extensions` | Optional suffixes. Default is `.md` and `.markdown`. Add `.mdx` to retain MDX. |
+
+### `share.json`
+
+Written by `nocciolo share`. Commit this file. It names how teammates reach the bank without embedding secrets.
+
+```json
+{
+  "version": 1,
+  "profile": "lan",
+  "baseUrl": "http://192.168.1.10:8888"
+}
+```
+
+| Profile | Base URL strategy | Notes |
+|---------|-------------------|-------|
+| `local` | `http://localhost:8888` | Minimal exposure; Docker helper OK |
+| `lan` / `vpn` / `public` | Required `baseUrl` in share.json | Network auth differs; API keys still recommended |
+| `hindsight-cloud` | `https://api.hindsight.vectorize.io` | API key required; optional `--mcp-auth oauth` |
+
+Never put API keys in `share.json`.
+Use env vars.
+Team workflows and profile trade-offs: [team-sharing.md](./team-sharing.md).
+Cloud specifics: [hindsight-cloud.md](./hindsight-cloud.md).
 
 Example for a docs tree plus published MDX, with presentation workspaces and underscore drafts left out:
 
@@ -130,7 +155,7 @@ Example (abbreviated from this repo’s template):
 }
 ```
 
-Commit this file. Import it into Hindsight (Control Plane or API) so mission and directives match the project before or alongside seeding. Applying the template from the CLI (`configure --apply` / `bank apply`) is on the [roadmap](../ROADMAP.md).
+Commit this file. Apply it with `nocciolo bank apply` (or `nocciolo configure --apply`) so mission and directives match the project before or alongside seeding.
 
 The template is the *personality and policy* of the bank. Retained facts are the *content*. Both matter for useful MCP recall.
 
@@ -268,6 +293,7 @@ Prefer missing a weak section over injecting noise.
 
 - [README](../README.md): quick start and MCP flags
 - [CLI commands](./nocciolo-cli-commands.md): full flag reference (incl. store / prune)
+- [Team sharing](./team-sharing.md): deployment profiles, share artifact, bank apply, multi-repo MCP
 - [Developer workflow](./dev-workflow.md): first seed, re-seed, retain-then-prune tips
 - [CLI architecture](./cli-architecture.md): config layout and seed / prune pipeline for contributors
 - [Sensitive data](./sensitive-data.md): what must never be retained

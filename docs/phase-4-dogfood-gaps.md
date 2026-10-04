@@ -91,4 +91,4 @@ Ordered by dogfood pain → sharing readiness:
 
 ## Sign-off
 
-Strumentario dogfood (seed + HTTP recall) completed. Gaps above captured into Phase 4 roadmap items. Next implementation slice should start with MCP naming / multi-repo DX unless sharing work unblocks on template apply first.
+Strumentario dogfood (seed + HTTP recall) completed. Gaps above captured into Phase 5 and are now implemented: bank-scoped MCP names (`--server-name`, `--check`), `bank apply` / `configure --apply`, and `nocciolo share` deployment profiles with profile-aware MCP emission.

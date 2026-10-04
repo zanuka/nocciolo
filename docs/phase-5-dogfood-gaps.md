@@ -46,18 +46,18 @@ When ready: set `FM_HOME`, re-run `--write-firstmate`, then crewmates can recall
 
 Ordered by what still blocks retiring the Python seeder:
 
-1. **Bank doc list CLI** (optional) if full inventory without prune grouping is still required for scripts
+1. **Bank doc list CLI**: shipped as `nocciolo docs list` (optional `--json`)
 2. **Dogfood** prune on zanuka-web (dry-run orphans / selective path-id delete) and archive Python prune/list/delete once that passes
 3. **Firstmate wiring** when `FM_HOME` is available (ops, not upstream)
 
 ## Non-goals (this pass)
 
 - Patching zanuka-web itself
-- Multi-repo MCP naming or deployment profiles (Strumentario / Phase 5 sharing checklist)
 - Mental-model lifecycle CLI (Phase 6)
 
 ## Sign-off
 
 zanuka-web Phase 5 dogfood: day-to-day ops document `nocciolo store` (allowlist-gated).
-Remaining: dogfood prune on zanuka-web and optional full bank-list helper so the Python seeder can be archived; optional Firstmate `project-bank` once `FM_HOME` is set.
+Upstream now has `nocciolo prune`, `nocciolo docs list`, bank-scoped MCP, `bank apply`, and `nocciolo share` profiles.
+Remaining ops: dogfood prune on zanuka-web and archive the Python seeder; optional Firstmate `project-bank` once `FM_HOME` is set.
 No zanuka-web patch attempted.

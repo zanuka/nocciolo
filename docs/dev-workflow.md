@@ -86,7 +86,7 @@ pnpm nocciolo configure
 pnpm nocciolo configure --dry-run
 ```
 
-Writes `.nocciolo/hindsight/bank-template.json`. Import that template into Hindsight (Control Plane or import API) so mission/directives match the project, or create an empty bank with the same `bankId` and refine later.
+Writes `.nocciolo/hindsight/bank-template.json`. Apply it with `nocciolo bank apply` (or `nocciolo configure --apply`) so mission/directives match the project, or create an empty bank with the same `bankId` and refine later.
 
 ### 3. Local Hindsight (optional helper)
 

@@ -1,9 +1,12 @@
-import { loadConfig } from "../config/load.js";
+import { loadConfig, loadShareConfig } from "../config/load.js";
+import {
+  assertApiKeyForConnection,
+  resolveProjectConnection,
+} from "../config/connection.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
   HindsightClient,
   resolveHindsightApiKey,
-  resolveHindsightBaseUrl,
 } from "../providers/hindsight/client.js";
 import {
   buildPrunePlan,
@@ -46,17 +49,19 @@ export async function runPrune(options: PruneOptions = {}): Promise<PruneResult>
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
-  const baseUrl = resolveHindsightBaseUrl({
+  const share = await loadShareConfig(projectRoot);
+  const connection = resolveProjectConnection({
+    config,
+    share,
     ...(options.hindsightUrl !== undefined
       ? { cliUrl: options.hindsightUrl }
       : {}),
-    ...(config.hindsightBaseUrl !== undefined
-      ? { configUrl: config.hindsightBaseUrl }
-      : {}),
   });
+  const baseUrl = connection.baseUrl;
   const apiKey = resolveHindsightApiKey({
     ...(options.apiKey !== undefined ? { cliKey: options.apiKey } : {}),
   });
+  assertApiKeyForConnection({ connection, ...(apiKey ? { apiKey } : {}) });
 
   const hasExplicitSelection =
     (options.documentId !== undefined && options.documentId.length > 0) ||

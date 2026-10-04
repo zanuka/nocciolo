@@ -70,7 +70,7 @@ We are building this in public as open source.
 
 See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank` skill.
 Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones); remaining Phase 4 work is the optional Jev judgment layer (including `--judge jev` on prune).
-Phase 5 (team sharing) dogfood: Strumentario gaps in `docs/phase-4-dogfood-gaps.md`; zanuka-web gaps in `docs/phase-5-dogfood-gaps.md` (`store` adopted; prune shipped; dogfood archive of Python seeder / optional bank-list helper still open; Firstmate wiring deferred until `FM_HOME` is set).
+Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `nocciolo share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `nocciolo docs list`. Remaining dogfood: archive Python list/delete helpers after zanuka-web prune pass; Firstmate wiring when `FM_HOME` is set.
 
 <!-- nocciolo:hindsight-bank -->
 

@@ -1,4 +1,5 @@
-import { loadConfig } from "../config/load.js";
+import { loadConfig, loadShareConfig } from "../config/load.js";
+import { resolveDeploymentProfile } from "../config/connection.js";
 import { defaultVolumeName } from "../config/schema.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
@@ -85,6 +86,29 @@ export async function runDockerHelper(
 ): Promise<DockerCommandResult> {
   const action = options.action ?? "print";
   const dryRun = options.dryRun ?? action === "print";
+
+  {
+    try {
+      const projectRoot = await detectProjectRoot(options.cwd ?? process.cwd());
+      const config = await loadConfig(projectRoot);
+      const share = await loadShareConfig(projectRoot);
+      const profile = resolveDeploymentProfile({ config, share });
+      if (profile === "hindsight-cloud") {
+        throw new NoccioloError(
+          "Deployment profile is hindsight-cloud: no local Docker container",
+          "Skip `nocciolo docker`. Set NOCCIOLO_HINDSIGHT_URL=https://api.hindsight.vectorize.io and NOCCIOLO_HINDSIGHT_API_KEY, then use seed/mcp against Cloud. See docs/hindsight-cloud.md.",
+        );
+      }
+    } catch (error) {
+      if (
+        error instanceof NoccioloError &&
+        error.message.startsWith("Deployment profile is hindsight-cloud")
+      ) {
+        throw error;
+      }
+    }
+  }
+
   const { containerName, volumeName } = await resolveDockerNames({
     ...(options.cwd !== undefined ? { cwd: options.cwd } : {}),
     ...(options.containerName !== undefined

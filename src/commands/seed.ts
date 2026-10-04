@@ -1,11 +1,14 @@
 import { setTimeout as delay } from "node:timers/promises";
-import { loadConfig } from "../config/load.js";
+import { loadConfig, loadShareConfig } from "../config/load.js";
+import {
+  assertApiKeyForConnection,
+  resolveProjectConnection,
+} from "../config/connection.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
   formatPercent,
   HindsightClient,
   resolveHindsightApiKey,
-  resolveHindsightBaseUrl,
   type RetainItem,
 } from "../providers/hindsight/client.js";
 import { formatOperationProgressLine } from "../providers/hindsight/progress.js";
@@ -49,19 +52,24 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
-  const baseUrl = resolveHindsightBaseUrl({
+  const share = await loadShareConfig(projectRoot);
+  const connection = resolveProjectConnection({
+    config,
+    share,
     ...(options.hindsightUrl !== undefined
       ? { cliUrl: options.hindsightUrl }
       : {}),
-    ...(config.hindsightBaseUrl !== undefined
-      ? { configUrl: config.hindsightBaseUrl }
-      : {}),
   });
+  const baseUrl = connection.baseUrl;
   const apiKey = resolveHindsightApiKey({
     ...(options.apiKey !== undefined ? { cliKey: options.apiKey } : {}),
   });
 
-  if (!dryRun && !apiKey) {
+  if (!dryRun) {
+    assertApiKeyForConnection({ connection, ...(apiKey ? { apiKey } : {}) });
+  }
+
+  if (!dryRun && !apiKey && !connection.requiresApiKey) {
     console.log(
       "Warning: no API key resolved (NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
     );

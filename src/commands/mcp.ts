@@ -1,7 +1,10 @@
-import { loadConfig } from "../config/load.js";
-import { resolveHindsightBaseUrl } from "../providers/hindsight/client.js";
+import { loadConfig, loadShareConfig } from "../config/load.js";
+import {
+  assertApiKeyForConnection,
+  resolveProjectConnection,
+} from "../config/connection.js";
+import { resolveHindsightApiKey } from "../providers/hindsight/client.js";
 import { detectProjectRoot } from "../project/detect-root.js";
-import { buildSingleBankMcpUrl } from "../integration/mcp-url.js";
 import {
   filterSnippets,
   generateMcpSnippets,
@@ -9,6 +12,7 @@ import {
   type McpHarness,
   type McpSnippet,
 } from "../integration/snippets.js";
+import { checkMcpConnectivity } from "../integration/mcp-check.js";
 import {
   cursorBankRulePath,
   cursorMcpPath,
@@ -38,6 +42,8 @@ export interface McpOptions {
   hindsightUrl?: string;
   apiKey?: string;
   includeAuth?: boolean;
+  serverName?: string;
+  check?: boolean;
 }
 
 export interface McpResult {
@@ -45,10 +51,13 @@ export interface McpResult {
   bankId: string;
   baseUrl: string;
   mcpUrl: string;
+  serverName: string;
+  profile: string;
   snippets: McpSnippet[];
   dryRun: boolean;
   writes: Array<{ path: string; wrote: boolean; dryRun: boolean }>;
   firstmateSkill?: InstallProjectBankSkillResult;
+  check?: { ok: boolean; status: number; detail: string };
 }
 
 export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
@@ -61,6 +70,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
   const writeRoo = options.writeRoo ?? false;
   const writeKiro = options.writeKiro ?? false;
   const writeFirstmate = options.writeFirstmate ?? false;
+  const check = options.check ?? false;
 
   if (
     dryRun &&
@@ -89,34 +99,48 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
-  const baseUrl = resolveHindsightBaseUrl({
+  const share = await loadShareConfig(projectRoot);
+  const connection = resolveProjectConnection({
+    config,
+    share,
     ...(options.hindsightUrl !== undefined
       ? { cliUrl: options.hindsightUrl }
       : {}),
-    ...(config.hindsightBaseUrl !== undefined
-      ? { configUrl: config.hindsightBaseUrl }
+    ...(options.serverName !== undefined
+      ? { serverName: options.serverName }
       : {}),
   });
-  const includeAuth =
-    options.includeAuth === true || options.apiKey !== undefined;
+  const apiKey = resolveHindsightApiKey({
+    ...(options.apiKey !== undefined ? { cliKey: options.apiKey } : {}),
+  });
+  if (connection.requiresApiKey && (options.includeAuth || check)) {
+    assertApiKeyForConnection({ connection, ...(apiKey ? { apiKey } : {}) });
+  }
 
-  const printSnippets = generateMcpSnippets({
-    baseUrl,
+  const includeAuth =
+    options.includeAuth === true ||
+    options.apiKey !== undefined ||
+    connection.profile === "hindsight-cloud";
+
+  const snippetInput = {
+    baseUrl: connection.baseUrl,
     bankId: config.bankId,
     projectName: config.name,
-    includeAuth,
+    serverName: connection.serverName,
+    mcpUrl: connection.mcpUrl,
+    includeAuth:
+      includeAuth &&
+      !(connection.profile === "hindsight-cloud" && connection.mcpAuth === "oauth"),
+  };
+
+  const printSnippets = generateMcpSnippets({
+    ...snippetInput,
     ...(options.apiKey !== undefined ? { apiKeyLiteral: options.apiKey } : {}),
   });
 
-  const writeSnippets = generateMcpSnippets({
-    baseUrl,
-    bankId: config.bankId,
-    projectName: config.name,
-    includeAuth,
-  });
+  const writeSnippets = generateMcpSnippets(snippetInput);
 
   const snippets = filterSnippets(printSnippets, harnesses);
-  const mcpUrl = buildSingleBankMcpUrl(baseUrl, config.bankId);
   const writes: McpResult["writes"] = [];
 
   if (write) {
@@ -165,7 +189,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
         {
           projectName: config.name,
           bankId: config.bankId,
-          baseUrl,
+          baseUrl: connection.baseUrl,
         },
         { dryRun },
       ),
@@ -179,7 +203,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
         {
           projectName: config.name,
           bankId: config.bankId,
-          baseUrl,
+          baseUrl: connection.baseUrl,
         },
         { dryRun, force },
       ),
@@ -191,29 +215,49 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
     firstmateSkill = await installFirstmateProjectBank({
       projectRoot,
       bankId: config.bankId,
-      hindsightBaseUrl: baseUrl,
+      hindsightBaseUrl: connection.baseUrl,
       dryRun,
       force,
+    });
+  }
+
+  let checkResult: McpResult["check"];
+  if (check) {
+    checkResult = await checkMcpConnectivity({
+      mcpUrl: connection.mcpUrl,
+      ...(apiKey !== undefined ? { apiKey } : {}),
     });
   }
 
   return {
     projectRoot,
     bankId: config.bankId,
-    baseUrl,
-    mcpUrl,
+    baseUrl: connection.baseUrl,
+    mcpUrl: connection.mcpUrl,
+    serverName: connection.serverName,
+    profile: connection.profile,
     snippets,
     dryRun,
     writes,
     ...(firstmateSkill !== undefined ? { firstmateSkill } : {}),
+    ...(checkResult !== undefined ? { check: checkResult } : {}),
   };
 }
 
 export function printMcpResult(result: McpResult): void {
   console.log(`Project bank: ${result.bankId}`);
+  console.log(`Profile:      ${result.profile}`);
   console.log(`Hindsight:    ${result.baseUrl}`);
   console.log(`MCP URL:      ${result.mcpUrl}`);
+  console.log(`Server name:  ${result.serverName}`);
   console.log("");
+
+  if (result.check) {
+    const label = result.check.ok ? "ok" : "failed";
+    console.log(`MCP check: ${label} (HTTP ${result.check.status})`);
+    console.log(result.check.detail);
+    console.log("");
+  }
 
   for (const snippet of result.snippets) {
     console.log(`--- ${snippet.title} → ${snippet.targetPath} ---`);
@@ -256,12 +300,15 @@ export function printMcpResult(result: McpResult): void {
     if (result.dryRun) {
       console.log("No files were written.");
     }
-  } else if (!result.firstmateSkill) {
+  } else if (!result.firstmateSkill && !result.check) {
     console.log(
       "Tip: `nocciolo mcp --write` writes .cursor/mcp.json; add --write-agents / --write-cursor-rules for agent preference text.",
     );
     console.log(
       "Use --include-auth to add Authorization headers (env placeholders when writing files).",
+    );
+    console.log(
+      "Default server name is bank-scoped (hindsight-<bankId>); override with --server-name.",
     );
   }
 }

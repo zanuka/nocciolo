@@ -11,3 +11,7 @@ export function buildSingleBankMcpUrl(baseUrl: string, bankId: string): string {
 export function buildMultiBankMcpUrl(baseUrl: string): string {
   return `${normalizeBaseUrl(baseUrl)}/mcp/`;
 }
+
+export function defaultMcpServerName(bankId: string): string {
+  return `hindsight-${bankId}`;
+}

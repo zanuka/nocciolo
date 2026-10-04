@@ -213,16 +213,16 @@ Recommendation: **default Cloud MCP emission = bank-scoped API URL + env API key
 
 ---
 
-## Implementation checklist (Phase 4+)
+## Implementation checklist (Phase 5)
 
-- [ ] Documented profile `hindsight-cloud` alongside local / LAN / VPN / public
-- [ ] `init` / `share` / profile helper: choose Cloud, print dashboard + Academy links, skip Docker when Cloud
-- [ ] Validate live commands require API key when base URL is Cloud (or profile is Cloud)
-- [ ] `mcp` emission: bank-scoped Cloud URL + env auth; optional OAuth snippet
-- [ ] `docker` commands: friendly skip under Cloud profile
-- [ ] README / quick start: “Local Docker (default)” vs “Hindsight Cloud (opt-in)”
-- [ ] Errors: 401/403 → “create key at ui.hindsight.vectorize.io → Connect”; credit exhaustion → link Cloud billing docs
-- [ ] Tests: URL builders for `https://api.hindsight.vectorize.io` + MCP path; no secrets in fixtures
+- [x] Documented profile `hindsight-cloud` alongside local / LAN / VPN / public
+- [x] `share` / profile helper: choose Cloud, print dashboard + Academy links, skip Docker when Cloud
+- [x] Validate live commands require API key when profile is Cloud
+- [x] `mcp` emission: bank-scoped Cloud URL + env auth; optional OAuth via `--mcp-auth oauth`
+- [x] `docker` commands: friendly skip under Cloud profile
+- [x] README / quick start: Local Docker (default) vs Hindsight Cloud (opt-in)
+- [x] Errors: 401/403 point at Cloud key creation / env setup
+- [x] Tests: Cloud URL + MCP path resolution; no secrets in fixtures
 
 CLI already resolves custom base URLs and Bearer keys: much of Cloud works today with:
 
@@ -249,7 +249,8 @@ First-class support is naming the profile, tightening UX, and teaching the Cloud
 
 ## Related
 
-- [ROADMAP.md](../ROADMAP.md): Phase 4 deployment profiles
+- [team-sharing.md](./team-sharing.md): all deployment profiles, `nocciolo share`, team bootstrap
+- [ROADMAP.md](../ROADMAP.md): Phase 5 team sharing status
 - [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md): shareable config / MCP naming
 - [nocciolo-configs.md](./nocciolo-configs.md): `.nocciolo/` layout
 - [cli-architecture.md](./cli-architecture.md): URL / API key resolution

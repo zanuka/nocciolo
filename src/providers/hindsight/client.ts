@@ -79,6 +79,46 @@ export interface DeleteDocumentResponse {
   memory_units_deleted: number;
 }
 
+export interface BankProfileResponse {
+  bank_id: string;
+  name: string;
+  mission?: string;
+  disposition?: {
+    skepticism?: number;
+    literalism?: number;
+    empathy?: number;
+  };
+}
+
+export interface DirectiveRecord {
+  id: string;
+  bank_id?: string;
+  name: string;
+  content: string;
+  priority?: number;
+  is_active?: boolean;
+  tags?: string[];
+}
+
+export interface MentalModelRecord {
+  id: string;
+  bank_id?: string;
+  name: string;
+  source_query?: string | null;
+  max_tokens?: number | null;
+  tags?: string[];
+  trigger?: {
+    refresh_after_consolidation?: boolean;
+    tags_match?: string;
+  } | null;
+}
+
+export interface CreateMentalModelResponse {
+  id?: string;
+  operation_id?: string;
+  [key: string]: unknown;
+}
+
 export interface HindsightClientOptions {
   baseUrl: string;
   apiKey?: string;
@@ -315,6 +355,260 @@ export class HindsightClient {
     return (await response.json()) as DeleteDocumentResponse;
   }
 
+  async createOrUpdateBank(
+    bankId: string,
+    body: Record<string, unknown>,
+  ): Promise<BankProfileResponse> {
+    return this.requestJson<BankProfileResponse>(
+      "PUT",
+      `/v1/default/banks/${encodeURIComponent(bankId)}`,
+      body,
+      `create or update bank "${bankId}"`,
+    );
+  }
+
+  async updateBankConfig(
+    bankId: string,
+    updates: Record<string, unknown>,
+  ): Promise<unknown> {
+    return this.requestJson<unknown>(
+      "PATCH",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/config`,
+      { updates },
+      `update bank config for "${bankId}"`,
+    );
+  }
+
+  async listDirectives(
+    bankId: string,
+    options: { activeOnly?: boolean; limit?: number; offset?: number } = {},
+  ): Promise<{ items: DirectiveRecord[]; total: number }> {
+    const params = new URLSearchParams();
+    if (options.activeOnly !== undefined) {
+      params.set("active_only", String(options.activeOnly));
+    }
+    if (options.limit !== undefined) {
+      params.set("limit", String(options.limit));
+    }
+    if (options.offset !== undefined) {
+      params.set("offset", String(options.offset));
+    }
+    const query = params.toString();
+    const raw = await this.requestJson<{
+      items?: DirectiveRecord[];
+      total?: number;
+    }>(
+      "GET",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/directives${query ? `?${query}` : ""}`,
+      undefined,
+      `list directives for "${bankId}"`,
+    );
+    return {
+      items: Array.isArray(raw.items) ? raw.items : [],
+      total: typeof raw.total === "number" ? raw.total : 0,
+    };
+  }
+
+  async listAllDirectives(bankId: string): Promise<DirectiveRecord[]> {
+    const items: DirectiveRecord[] = [];
+    let offset = 0;
+    let total = Number.POSITIVE_INFINITY;
+    const pageSize = 100;
+    while (offset < total) {
+      const page = await this.listDirectives(bankId, {
+        activeOnly: false,
+        limit: pageSize,
+        offset,
+      });
+      items.push(...page.items);
+      total = page.total;
+      if (page.items.length === 0) {
+        break;
+      }
+      offset += page.items.length;
+      if (page.items.length < pageSize) {
+        break;
+      }
+    }
+    return items;
+  }
+
+  async createDirective(
+    bankId: string,
+    body: {
+      name: string;
+      content: string;
+      priority?: number;
+      is_active?: boolean;
+      tags?: string[];
+    },
+  ): Promise<DirectiveRecord> {
+    return this.requestJson<DirectiveRecord>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/directives`,
+      body,
+      `create directive "${body.name}"`,
+    );
+  }
+
+  async updateDirective(
+    bankId: string,
+    directiveId: string,
+    body: {
+      name?: string;
+      content?: string;
+      priority?: number;
+      is_active?: boolean;
+      tags?: string[];
+    },
+  ): Promise<DirectiveRecord> {
+    return this.requestJson<DirectiveRecord>(
+      "PATCH",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/directives/${encodeURIComponent(directiveId)}`,
+      body,
+      `update directive "${directiveId}"`,
+    );
+  }
+
+  async listMentalModels(
+    bankId: string,
+    options: { detail?: string; limit?: number; offset?: number } = {},
+  ): Promise<{ items: MentalModelRecord[]; total: number }> {
+    const params = new URLSearchParams();
+    if (options.detail !== undefined) {
+      params.set("detail", options.detail);
+    }
+    if (options.limit !== undefined) {
+      params.set("limit", String(options.limit));
+    }
+    if (options.offset !== undefined) {
+      params.set("offset", String(options.offset));
+    }
+    const query = params.toString();
+    const raw = await this.requestJson<{
+      items?: MentalModelRecord[];
+      total?: number;
+    }>(
+      "GET",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models${query ? `?${query}` : ""}`,
+      undefined,
+      `list mental models for "${bankId}"`,
+    );
+    return {
+      items: Array.isArray(raw.items) ? raw.items : [],
+      total: typeof raw.total === "number" ? raw.total : 0,
+    };
+  }
+
+  async listAllMentalModels(bankId: string): Promise<MentalModelRecord[]> {
+    const items: MentalModelRecord[] = [];
+    let offset = 0;
+    let total = Number.POSITIVE_INFINITY;
+    const pageSize = 100;
+    while (offset < total) {
+      const page = await this.listMentalModels(bankId, {
+        detail: "metadata",
+        limit: pageSize,
+        offset,
+      });
+      items.push(...page.items);
+      total = page.total;
+      if (page.items.length === 0) {
+        break;
+      }
+      offset += page.items.length;
+      if (page.items.length < pageSize) {
+        break;
+      }
+    }
+    return items;
+  }
+
+  async createMentalModel(
+    bankId: string,
+    body: {
+      id?: string;
+      name: string;
+      source_query: string;
+      tags?: string[];
+      max_tokens?: number;
+      trigger?: { refresh_after_consolidation?: boolean };
+    },
+  ): Promise<CreateMentalModelResponse> {
+    return this.requestJson<CreateMentalModelResponse>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models`,
+      body,
+      `create mental model "${body.name}"`,
+    );
+  }
+
+  async updateMentalModel(
+    bankId: string,
+    mentalModelId: string,
+    body: {
+      name?: string;
+      source_query?: string;
+      tags?: string[];
+      max_tokens?: number;
+      trigger?: { refresh_after_consolidation?: boolean };
+    },
+  ): Promise<MentalModelRecord> {
+    return this.requestJson<MentalModelRecord>(
+      "PATCH",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models/${encodeURIComponent(mentalModelId)}`,
+      body,
+      `update mental model "${mentalModelId}"`,
+    );
+  }
+
+  private async requestJson<T>(
+    method: string,
+    path: string,
+    body: unknown,
+    action: string,
+  ): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    let response: Response;
+    try {
+      response = await this.fetchImpl(url, {
+        method,
+        headers: this.headers(),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch (error) {
+      throw new NoccioloError(
+        `Failed to reach Hindsight at ${this.baseUrl}`,
+        `Could not ${action}. (${error instanceof Error ? error.message : String(error)})`,
+      );
+    }
+
+    if (!response.ok) {
+      const text = await safeReadText(response);
+      const authHint =
+        response.status === 401 || response.status === 403
+          ? " Set NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY, or pass --api-key. For Cloud, create a key at https://ui.hindsight.vectorize.io."
+          : "";
+      const missingHint =
+        response.status === 404
+          ? " Verify the bank id exists (run `nocciolo bank apply` to create it from the template)."
+          : "";
+      throw new NoccioloError(
+        `Hindsight ${action} failed (${response.status} ${response.statusText})`,
+        text
+          ? `Response: ${text.slice(0, 500)}.${authHint}${missingHint}`
+          : `Request failed.${authHint}${missingHint}`,
+        response.status,
+      );
+    }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return (await response.json()) as T;
+  }
+
   private headers(): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -330,6 +624,8 @@ export class HindsightClient {
 export function resolveHindsightBaseUrl(input: {
   cliUrl?: string;
   configUrl?: string;
+  shareUrl?: string;
+  profileDefaultUrl?: string;
   env?: NodeJS.ProcessEnv;
 }): string {
   const env = input.env ?? process.env;
@@ -339,6 +635,8 @@ export function resolveHindsightBaseUrl(input: {
     input.cliUrl?.trim() ||
     input.configUrl?.trim() ||
     fromEnv ||
+    input.shareUrl?.trim() ||
+    input.profileDefaultUrl?.trim() ||
     "http://localhost:8888"
   );
 }

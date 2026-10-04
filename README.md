@@ -420,7 +420,7 @@ Full design: [docs/jev-integration.md](./docs/jev-integration.md).
 `nocciolo prune` (path-gone / section-gone / explicit) is in the CLI today: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 Optional `--judge jev` annotation on prune is not shipped yet.
 
-Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/19) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
+Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
 
 - Confidence-gated seed and retain decisions, plus `store` and seed-priority decisions.
 - Optional `--judge jev` on `nocciolo prune`: annotate outdated / irrelevant / contradicted items (including when the file is still on disk); you confirm; Nocciolo deletes. Flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).

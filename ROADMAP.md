@@ -65,21 +65,70 @@ See [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 Optional `--judge jev` annotation on prune remains in this phase.
 
 Tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
-The checklist groups those tickets.
-Individual issues stay on GitHub.
+The checklist groups those tickets; the [issue index](#jev-issue-index) lists every open GitHub issue.
 
-- [ ] Product rule and judge port: `docs/jev.md`, a `Judge` interface (`off` / `heuristic` / `jev`), `--judge` and `--confidence`, and state sanitization (secrets, denylist, size). A missing key or API failure falls back to heuristics. The default path makes no TypeSafe calls. (JEV-1, JEV-2, JEV-3)
-- [ ] Seed keep/skip: section-level relevance, knowledge-kind, contradiction against existing observations, citation support, and a PII or secret second pass. `seed --dry-run --judge jev` shows keep/skip plus scores. (JEV-4 through JEV-9)
-- [ ] Store and retain budget: propose allowlist adoption for new durable files, rank candidates under a retain budget, and gate `store` edits on durability. The operator still confirms. (JEV-10, JEV-11, JEV-12)
+- [ ] Product rule and judge port: `docs/jev.md`, a `Judge` interface (`off` / `heuristic` / `jev`), `--judge` and `--confidence`, and state sanitization (secrets, denylist, size). A missing key or API failure falls back to heuristics. The default path makes no TypeSafe calls. ([JEV-1](https://github.com/zanuka/nocciolo/issues/20), [JEV-2](https://github.com/zanuka/nocciolo/issues/21), [JEV-3](https://github.com/zanuka/nocciolo/issues/22))
+- [ ] Seed keep/skip: section-level relevance, knowledge-kind, contradiction against existing observations, citation support, and a PII or secret second pass. `seed --dry-run --judge jev` shows keep/skip plus scores. ([JEV-4](https://github.com/zanuka/nocciolo/issues/30), [JEV-5](https://github.com/zanuka/nocciolo/issues/36), [JEV-6](https://github.com/zanuka/nocciolo/issues/37), [JEV-7](https://github.com/zanuka/nocciolo/issues/38), [JEV-8](https://github.com/zanuka/nocciolo/issues/39), [JEV-9](https://github.com/zanuka/nocciolo/issues/40))
+- [ ] Store and retain budget: propose allowlist adoption for new durable files, rank candidates under a retain budget, and gate `store` edits on durability. The operator still confirms. ([JEV-10](https://github.com/zanuka/nocciolo/issues/41), [JEV-11](https://github.com/zanuka/nocciolo/issues/50), [JEV-12](https://github.com/zanuka/nocciolo/issues/31))
 - [x] `nocciolo prune` (v1): path-gone / section-gone / explicit `--source` or `--document-id`, `--dry-run`, TTY multi-select, non-interactive `--yes` with explicit selection, Hindsight document delete, local `.nocciolo/local/tombstones.json` so unchanged sources are not re-retained on the next `seed` / `store` (`--force` or content change can retain again). Mental-model refresh is recommended in copy only.
-- [ ] Optional `--judge jev` prune annotation: score items that are still on disk but no longer true (outdated / irrelevant / contradicted). Jev annotates only; Nocciolo deletes after confirm. Low confidence is listed and left unchecked. (JEV-14 through JEV-17, JEV-35)
-- [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. (JEV-18 through JEV-21)
-- [ ] Recall and MCP guards: block unsafe MCP `retain`, rerank recalled passages, check whether a memory is still true, and route `reflect` vs `recall` vs mental-model lookup. (JEV-22 through JEV-25)
-- [ ] Firstmate routing: whether a task needs the project bank, which bank, knowledge update vs PR vs both, escalate vs dispatch, and whether a scout report is seedable. Low confidence escalates to the captain. (JEV-26 through JEV-30)
-- [ ] Share safety and destination kind: route by destination kind (Hindsight remains first-class) and gate a public or Cloud share on a safety check before anything is exposed. (JEV-31, JEV-33)
-- [ ] Heuristic eval: a golden-set judge that scores the offline heuristics so the default path improves without requiring Jev at runtime. (JEV-34)
+- [ ] Optional `--judge jev` prune annotation: score items that are still on disk but no longer true (outdated / irrelevant / contradicted). Jev annotates only; Nocciolo deletes after confirm. Low confidence is listed and left unchecked. ([JEV-14](https://github.com/zanuka/nocciolo/issues/32), [JEV-15](https://github.com/zanuka/nocciolo/issues/43), [JEV-16](https://github.com/zanuka/nocciolo/issues/51), [JEV-17](https://github.com/zanuka/nocciolo/issues/52), [JEV-35](https://github.com/zanuka/nocciolo/issues/49))
+- [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. ([JEV-18](https://github.com/zanuka/nocciolo/issues/23), [JEV-19](https://github.com/zanuka/nocciolo/issues/24), [JEV-20](https://github.com/zanuka/nocciolo/issues/53), [JEV-21](https://github.com/zanuka/nocciolo/issues/54))
+- [ ] Recall and MCP guards: block unsafe MCP `retain`, rerank recalled passages, check whether a memory is still true, and route `reflect` vs `recall` vs mental-model lookup. ([JEV-22](https://github.com/zanuka/nocciolo/issues/44), [JEV-23](https://github.com/zanuka/nocciolo/issues/25), [JEV-24](https://github.com/zanuka/nocciolo/issues/45), [JEV-25](https://github.com/zanuka/nocciolo/issues/26))
+- [ ] Firstmate routing: whether a task needs the project bank, which bank, knowledge update vs PR vs both, escalate vs dispatch, and whether a scout report is seedable. Low confidence escalates to the captain. ([JEV-26](https://github.com/zanuka/nocciolo/issues/27), [JEV-27](https://github.com/zanuka/nocciolo/issues/33), [JEV-28](https://github.com/zanuka/nocciolo/issues/34), [JEV-29](https://github.com/zanuka/nocciolo/issues/35), [JEV-30](https://github.com/zanuka/nocciolo/issues/46))
+- [ ] Share safety and destination kind: route by destination kind (Hindsight remains first-class) and gate a public or Cloud share on a safety check before anything is exposed. ([JEV-31](https://github.com/zanuka/nocciolo/issues/55), [JEV-33](https://github.com/zanuka/nocciolo/issues/56))
+- [ ] Heuristic eval: a golden-set judge that scores the offline heuristics so the default path improves without requiring Jev at runtime. ([JEV-34](https://github.com/zanuka/nocciolo/issues/48))
 
-Deferred: the watcher high-signal gate (JEV-13) lands with event-driven re-seed, multi-bank fact routing (JEV-32) lands with multi-bank support, and the Maglio and Strumentario product judges (JEV-36, JEV-37) stay adjacent dogfood.
+Deferred (still tracked under the Jev epic; land with later phases):
+
+- Watcher high-signal gate ([JEV-13](https://github.com/zanuka/nocciolo/issues/42)): with event-driven re-seed in Phase 8
+- Multi-bank fact routing ([JEV-32](https://github.com/zanuka/nocciolo/issues/47)): with multi-bank support in Phase 8
+- Maglio and Strumentario product judges ([JEV-36](https://github.com/zanuka/nocciolo/issues/28), [JEV-37](https://github.com/zanuka/nocciolo/issues/29)): adjacent dogfood
+
+### Jev issue index
+
+Open [`jev`-labeled issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) as of 3 October 2026.
+Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is superseded by [#58](https://github.com/zanuka/nocciolo/issues/58).
+
+| ID | Issue | Title |
+|----|-------|-------|
+| JEV-0 | [#58](https://github.com/zanuka/nocciolo/issues/58) | Optional Jev judgment layer for Nocciolo (epic) |
+| JEV-1 | [#20](https://github.com/zanuka/nocciolo/issues/20) | Product rule: Jev is a judge, not a backend |
+| JEV-2 | [#21](https://github.com/zanuka/nocciolo/issues/21) | Judge interface, CLI flags, and offline fallback |
+| JEV-3 | [#22](https://github.com/zanuka/nocciolo/issues/22) | Sanitize Jev state (secrets, denylist, size) |
+| JEV-4 | [#30](https://github.com/zanuka/nocciolo/issues/30) | Relevance gate before retain |
+| JEV-5 | [#36](https://github.com/zanuka/nocciolo/issues/36) | Section-level keep/skip (not file-level) |
+| JEV-6 | [#37](https://github.com/zanuka/nocciolo/issues/37) | Knowledge-kind taxonomy |
+| JEV-7 | [#38](https://github.com/zanuka/nocciolo/issues/38) | Contradiction check against existing observations |
+| JEV-8 | [#39](https://github.com/zanuka/nocciolo/issues/39) | PII / secret second pass |
+| JEV-9 | [#40](https://github.com/zanuka/nocciolo/issues/40) | Citation support check after retain / extract |
+| JEV-10 | [#41](https://github.com/zanuka/nocciolo/issues/41) | Propose `store` allowlist adoption for new durable files |
+| JEV-11 | [#50](https://github.com/zanuka/nocciolo/issues/50) | Composite seed priority + retain budget |
+| JEV-12 | [#31](https://github.com/zanuka/nocciolo/issues/31) | `store` edit durability gate |
+| JEV-13 | [#42](https://github.com/zanuka/nocciolo/issues/42) | Watcher / event-driven re-seed: high-signal gate (Phase 8) |
+| JEV-14 | [#32](https://github.com/zanuka/nocciolo/issues/32) | `nocciolo audit --judge jev` writes a prune/refresh plan |
+| JEV-15 | [#43](https://github.com/zanuka/nocciolo/issues/43) | Layer-specific aging policy |
+| JEV-16 | [#51](https://github.com/zanuka/nocciolo/issues/51) | Mental-model freshness: refresh vs leave |
+| JEV-17 | [#52](https://github.com/zanuka/nocciolo/issues/52) | Apply audit plan with explicit confirmation |
+| JEV-18 | [#23](https://github.com/zanuka/nocciolo/issues/23) | Score generated bank mission / directives |
+| JEV-19 | [#24](https://github.com/zanuka/nocciolo/issues/24) | Choose extraction aggressiveness from repo shape |
+| JEV-20 | [#53](https://github.com/zanuka/nocciolo/issues/53) | Propose mental-model catalog questions |
+| JEV-21 | [#54](https://github.com/zanuka/nocciolo/issues/54) | Consistent tag assignment |
+| JEV-22 | [#44](https://github.com/zanuka/nocciolo/issues/44) | MCP `retain` guardrail (highest-priority runtime use) |
+| JEV-23 | [#25](https://github.com/zanuka/nocciolo/issues/25) | Rerank recalled passages before context stuffing |
+| JEV-24 | [#45](https://github.com/zanuka/nocciolo/issues/45) | Still-true check at recall time |
+| JEV-25 | [#26](https://github.com/zanuka/nocciolo/issues/26) | Route `reflect` vs `recall` vs mental-model lookup |
+| JEV-26 | [#27](https://github.com/zanuka/nocciolo/issues/27) | Firstmate: does this task need the project bank? |
+| JEV-27 | [#33](https://github.com/zanuka/nocciolo/issues/33) | Firstmate: which Nocciolo project bank? |
+| JEV-28 | [#34](https://github.com/zanuka/nocciolo/issues/34) | Firstmate: knowledge update vs PR-only vs both |
+| JEV-29 | [#35](https://github.com/zanuka/nocciolo/issues/35) | Firstmate: escalate vs dispatch, and which crewmate |
+| JEV-30 | [#46](https://github.com/zanuka/nocciolo/issues/46) | Firstmate: scout report seedability + official TypeSafe skill pointer |
+| JEV-31 | [#55](https://github.com/zanuka/nocciolo/issues/55) | Destination-kind router (not vendor lock-in) |
+| JEV-32 | [#47](https://github.com/zanuka/nocciolo/issues/47) | Multi-bank fact routing (Phase 8) |
+| JEV-33 | [#56](https://github.com/zanuka/nocciolo/issues/56) | Deployment-profile safety gate before public share |
+| JEV-34 | [#48](https://github.com/zanuka/nocciolo/issues/48) | Golden-set judge to tune heuristics |
+| JEV-35 | [#49](https://github.com/zanuka/nocciolo/issues/49) | Bank drift metric (`nocciolo status` / audit summary) |
+| JEV-36 | [#28](https://github.com/zanuka/nocciolo/issues/28) | Maglio: work order vs bank invariant (adjacent dogfood) |
+| JEV-37 | [#29](https://github.com/zanuka/nocciolo/issues/29) | Strumentario: instrument output vs bank standard (adjacent dogfood) |
 
 **Goal:** An operator can preview keep/skip scores with `seed --dry-run --judge jev`, and every retain, prune, and share still happens only in Nocciolo, behind a confidence gate.
 
@@ -130,15 +179,15 @@ Do **not** fold mental-model curation into `init` prompts. Keep generation in `c
 - [ ] `nocciolo mental-model`: list / create / update / refresh / clear / tags against the configured bank (`--dry-run`; poll async operations like seed)
 - [ ] Idempotent apply of declared models from the bank template (stable `id`s; create-or-update; complements Phase 5 bank apply)
 - [ ] Optional post-seed hook: refresh declared models after retain + consolidation (opt-in flag, not default magic)
-- [ ] Refresh policy presets in template: auto after consolidation for evolving summaries; manual / no auto for curated policy FAQs; optional `delta` mode for long playbooks
-- [ ] Agent integration hint: MCP / AGENTS snippet that agents should `reflect` (or read mental models) for architecture / standards / “how we work” questions, not only `recall`
+- [ ] Refresh policy presets in template: auto after consolidation for evolving summaries; manual / no auto for curated policy FAQs; optional `delta` mode for long playbooks (Jev freshness judge: [JEV-16](https://github.com/zanuka/nocciolo/issues/51); catalog questions: [JEV-20](https://github.com/zanuka/nocciolo/issues/53))
+- [ ] Agent integration hint: MCP / AGENTS snippet that agents should `reflect` (or read mental models) for architecture / standards / “how we work” questions, not only `recall` ([JEV-25](https://github.com/zanuka/nocciolo/issues/26))
 - [ ] Provider boundary: Hindsight mental-model module; portable “curated context pack” shape only if a future Mem0 (or other) path has a real counterpart
 
 **Goal:** After seed, agents get consistent, high-priority answers to the project’s recurring questions: not just a bag of retained facts.
 
 ## Phase 7: Reliability & Developer Experience
 
-- [ ] Status / health commands
+- [ ] Status / health commands (bank drift summary: [JEV-35](https://github.com/zanuka/nocciolo/issues/49))
 - [ ] Better error messages and recovery paths
 - [ ] Bank rename / re-id: when the repo (or desired bank id) changes, keep the same retained knowledge under the new name; update `.nocciolo/` config, bank template, seed manifest, and MCP/agent wiring (`--dry-run`). Do not require a full re-seed into an empty bank
 - [ ] Config schema + validation
@@ -149,9 +198,9 @@ Do **not** fold mental-model curation into `init` prompts. Keep generation in `c
 
 ## Phase 8: Advanced & Extensibility
 
-- [ ] File watcher / event-driven re-seeding
+- [ ] File watcher / event-driven re-seeding (high-signal Jev gate: [JEV-13](https://github.com/zanuka/nocciolo/issues/42))
 - [ ] Multi-provider support: Hindsight remains first-class and the default; other backends are opt-in CLI options
-  - [ ] Multi-provider foundation (extract `HindsightProvider`, `--provider` dispatch)
+  - [ ] Multi-provider foundation (extract `HindsightProvider`, `--provider` dispatch; destination-kind router: [JEV-31](https://github.com/zanuka/nocciolo/issues/55))
   - [ ] Mem0 adapter
   - [ ] Graphiti / Zep adapter: **seed destination only** (see [docs/graphiti-integration.md](./docs/graphiti-integration.md))
     - [ ] OSS HTTP transport spike (`add_episode` + `group_id`)
@@ -160,7 +209,7 @@ Do **not** fold mental-model curation into `init` prompts. Keep generation in `c
     - [ ] Optional Zep Cloud runtime (`--provider zep`)
     - [ ] `mcp` / `docker print` point at official Graphiti docs (do not vendor compose)
   - [ ] Cognee adapter (later)
-- [ ] Multi-bank and multi-repo company brains
+- [ ] Multi-bank and multi-repo company brains (fact routing: [JEV-32](https://github.com/zanuka/nocciolo/issues/47))
 - [ ] Lightweight inspection UI (optional, later)
 - [ ] Deeper ADR and decision-record parsers
 

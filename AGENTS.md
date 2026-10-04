@@ -33,7 +33,7 @@ We are building this in public as open source.
 ## Architecture Expectations
 
 - TypeScript CLI (Node.js)
-- Clean separation: scanner → extractor → bank template → seeder → integration emitters
+- Clean separation: scanner → extractor → bank template → seeder → prune → integration emitters
 - Config lives in `.nocciolo/` (or equivalent) and is version-controlled
 - Prefer explicit configuration over magic
 - Every retained fact should carry provenance (source file + optional commit)
@@ -69,8 +69,8 @@ We are building this in public as open source.
 ## Current Focus
 
 See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank` skill.
-Phase 4 is the optional Jev judgment layer (includes planned `nocciolo prune`).
-Phase 5 (team sharing) dogfood: Strumentario gaps in `docs/phase-4-dogfood-gaps.md`; zanuka-web gaps in `docs/phase-5-dogfood-gaps.md` (`store` adopted for day-to-day ops; still need prune / list-bank-docs / delete-doc parity to archive Python seeders; Firstmate wiring deferred until `FM_HOME` is set).
+Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones); remaining Phase 4 work is the optional Jev judgment layer (including `--judge jev` on prune).
+Phase 5 (team sharing) dogfood: Strumentario gaps in `docs/phase-4-dogfood-gaps.md`; zanuka-web gaps in `docs/phase-5-dogfood-gaps.md` (`store` adopted; prune shipped; dogfood archive of Python seeder / optional bank-list helper still open; Firstmate wiring deferred until `FM_HOME` is set).
 
 <!-- nocciolo:hindsight-bank -->
 

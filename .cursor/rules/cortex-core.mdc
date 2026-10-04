@@ -24,7 +24,8 @@ Keep these concerns separated:
 2. Extraction of durable facts & decisions
 3. Bank template / configuration generation
 4. Seeding (retain) into the memory system
-5. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
+5. Pruning stale bank documents (path-gone / section-gone / explicit; local tombstones)
+6. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
 
 Do not collapse these into a single opaque pipeline.
 

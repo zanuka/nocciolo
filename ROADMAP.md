@@ -60,6 +60,10 @@ Jev returns typed choices and scores.
 Low confidence queues a dry-run or a confirmation.
 Secrets and denylisted paths stay on the machine.
 
+`nocciolo prune` v1 (path-gone / section-gone / explicit delete + local tombstones) shipped without Jev.
+See [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
+Optional `--judge jev` annotation on prune remains in this phase.
+
 Tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
 The checklist groups those tickets.
 Individual issues stay on GitHub.
@@ -67,20 +71,8 @@ Individual issues stay on GitHub.
 - [ ] Product rule and judge port: `docs/jev.md`, a `Judge` interface (`off` / `heuristic` / `jev`), `--judge` and `--confidence`, and state sanitization (secrets, denylist, size). A missing key or API failure falls back to heuristics. The default path makes no TypeSafe calls. (JEV-1, JEV-2, JEV-3)
 - [ ] Seed keep/skip: section-level relevance, knowledge-kind, contradiction against existing observations, citation support, and a PII or secret second pass. `seed --dry-run --judge jev` shows keep/skip plus scores. (JEV-4 through JEV-9)
 - [ ] Store and retain budget: propose allowlist adoption for new durable files, rank candidates under a retain budget, and gate `store` edits on durability. The operator still confirms. (JEV-10, JEV-11, JEV-12)
-- [ ] `nocciolo prune`: remove memories that are no longer true.
-  `seed` and `store` only add or upsert, so a deleted doc, a renamed path, a removed section, or a detail that becomes irrelevant months later stays in the bank.
-  In a TTY the command groups candidates and asks you to pick.
-  Groups: source path gone, section gone, a path or `document_id` you pass, and (with `--judge jev`) items Jev scores as outdated, irrelevant, or contradicted by the current docs, including when the file is still on disk.
-  Jev annotates the prompt with a choice and a confidence score.
-  Low confidence is listed and left unchecked.
-  Jev does not delete.
-  `--dry-run` prints the groups and does not mutate the bank.
-  Apply invalidates or deletes the chosen documents in Hindsight and writes a local tombstone so an unchanged source is not re-retained on the next `seed` or `store`.
-  A later edit, or `--force`, can retain it again.
-  Non-interactive runs require an explicit selection (`--source` or `--document-id`) and `--yes`.
-  Mental-model refresh can be recommended in the same plan and is a separate confirmation.
-  Path-gone and section-gone groups work with no TypeSafe key.
-  `--judge jev` is what adds the "still on disk, but no longer true" scores. (JEV-14 through JEV-17, JEV-35)
+- [x] `nocciolo prune` (v1): path-gone / section-gone / explicit `--source` or `--document-id`, `--dry-run`, TTY multi-select, non-interactive `--yes` with explicit selection, Hindsight document delete, local `.nocciolo/local/tombstones.json` so unchanged sources are not re-retained on the next `seed` / `store` (`--force` or content change can retain again). Mental-model refresh is recommended in copy only.
+- [ ] Optional `--judge jev` prune annotation: score items that are still on disk but no longer true (outdated / irrelevant / contradicted). Jev annotates only; Nocciolo deletes after confirm. Low confidence is listed and left unchecked. (JEV-14 through JEV-17, JEV-35)
 - [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. (JEV-18 through JEV-21)
 - [ ] Recall and MCP guards: block unsafe MCP `retain`, rerank recalled passages, check whether a memory is still true, and route `reflect` vs `recall` vs mental-model lookup. (JEV-22 through JEV-25)
 - [ ] Firstmate routing: whether a task needs the project bank, which bank, knowledge update vs PR vs both, escalate vs dispatch, and whether a scout report is seedable. Low confidence escalates to the captain. (JEV-26 through JEV-30)
@@ -101,7 +93,7 @@ Deferred: the watcher high-signal gate (JEV-13) lands with event-driven re-seed,
 - [x] Capture dogfood gaps (multi-repo DX, bank template apply, shareable config shape) back into this phase: see [docs/phase-4-dogfood-gaps.md](./docs/phase-4-dogfood-gaps.md)
 - [x] Dogfood: zanuka-web day-to-day ops document `nocciolo store` (allowlist-gated); no zanuka-web patch attempted
 - [x] Capture zanuka-web gaps (prune / list-bank-docs / delete-doc parity; deferred Firstmate `project-bank`) : see [docs/phase-5-dogfood-gaps.md](./docs/phase-5-dogfood-gaps.md)
-- [ ] Bank document ops parity: CLI list / delete (or prune-covered equivalents) so dogfood projects can archive Python seeders; complements Phase 4 `nocciolo prune`
+- [ ] Bank document ops parity: thin bank-list helper (and dogfood archive of Python seeders) where `prune --document-id --yes` is not enough inventory; complements shipped Phase 4 `nocciolo prune`
 - [ ] Multi-repo MCP DX: bank-scoped MCP server names (e.g. `hindsight-<bankId>`), optional `--server-name`, Cursor auth/env guidance (and optional MCP connectivity check)
 - [ ] Bank template apply: `configure --apply` or `bank apply` to create/update the Hindsight bank from `.nocciolo/hindsight/bank-template.json` (`--dry-run`)
 - [ ] Shareable knowledgebase configs: split portable project identity from environment/profile (base URL strategy, no secrets in git)

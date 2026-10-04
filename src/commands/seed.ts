@@ -20,6 +20,7 @@ import {
   toRetainItems,
   type PreparedSeed,
 } from "../seeder/prepare.js";
+import { clearTombstonesForIds } from "../seeder/tombstones.js";
 import { formatError, isAuthError } from "../utils/errors.js";
 
 export interface SeedOptions {
@@ -131,6 +132,9 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     retainedIds,
   );
   await saveSeedManifest(projectRoot, manifest);
+  if (retainedIds.size > 0) {
+    await clearTombstonesForIds(projectRoot, retainedIds);
+  }
 
   console.log("");
   if (retainedIds.size > 0) {
@@ -369,6 +373,13 @@ function printSeedPlan(input: {
     for (const source of unchanged) {
       console.log(`  ${source.relativePath}`);
     }
+    console.log("");
+  }
+
+  if (prepared.skippedTombstoned > 0) {
+    console.log(
+      `${prefix}Skipped ${prepared.skippedTombstoned} tombstoned fact(s) (use --force or change the source to retain again).`,
+    );
     console.log("");
   }
 

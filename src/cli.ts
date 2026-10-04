@@ -14,6 +14,7 @@ import {
 } from "./commands/docker-upgrade.js";
 import { printInitResult, runInit } from "./commands/init.js";
 import { printMcpResult, runMcp } from "./commands/mcp.js";
+import { runPruneCommand } from "./commands/prune.js";
 import { runSeedCommand } from "./commands/seed.js";
 import { runStoreCommand } from "./commands/store.js";
 import { formatError } from "./utils/errors.js";
@@ -183,6 +184,59 @@ async function main(): Promise<void> {
           ...(opts.files !== undefined ? { files: opts.files } : {}),
           ...(opts.addFiles !== undefined ? { addFiles: opts.addFiles } : {}),
           ...(opts.project !== undefined ? { project: opts.project } : {}),
+          ...(opts.hindsightUrl !== undefined
+            ? { hindsightUrl: opts.hindsightUrl }
+            : {}),
+          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        });
+      },
+    );
+
+  program
+    .command("prune")
+    .description(
+      "Remove bank documents that are path-gone, section-gone, or explicitly selected",
+    )
+    .option(
+      "--dry-run",
+      "List prune candidates without deleting or writing tombstones",
+    )
+    .option(
+      "--source <path>",
+      "Limit selection to bank documents for this repo path",
+    )
+    .option(
+      "--document-id <id>",
+      "Limit selection to this Hindsight document_id",
+    )
+    .option(
+      "-y, --yes",
+      "Apply an explicit --source or --document-id selection without a second prompt",
+    )
+    .option(
+      "--hindsight-url <url>",
+      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+    )
+    .option(
+      "--api-key <key>",
+      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+    )
+    .action(
+      async (opts: {
+        dryRun?: boolean;
+        source?: string;
+        documentId?: string;
+        yes?: boolean;
+        hindsightUrl?: string;
+        apiKey?: string;
+      }) => {
+        await runPruneCommand({
+          dryRun: Boolean(opts.dryRun),
+          yes: Boolean(opts.yes),
+          ...(opts.source !== undefined ? { source: opts.source } : {}),
+          ...(opts.documentId !== undefined
+            ? { documentId: opts.documentId }
+            : {}),
           ...(opts.hindsightUrl !== undefined
             ? { hindsightUrl: opts.hindsightUrl }
             : {}),

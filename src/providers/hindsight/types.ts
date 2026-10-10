@@ -28,15 +28,29 @@ export interface HindsightBankConfig {
   entity_labels: HindsightEntityLabel[];
 }
 
+export type MentalModelTagsMatch =
+  | "any"
+  | "all"
+  | "any_strict"
+  | "all_strict"
+  | "exact";
+
+export type MentalModelRefreshMode = "full" | "delta";
+
+export interface HindsightMentalModelTrigger {
+  refresh_after_consolidation: boolean;
+  tags_match?: MentalModelTagsMatch;
+  mode?: MentalModelRefreshMode;
+  min_refresh_interval_seconds?: number;
+}
+
 export interface HindsightMentalModel {
   id: string;
   name: string;
   source_query: string;
   max_tokens: number;
   tags: string[];
-  trigger: {
-    refresh_after_consolidation: boolean;
-  };
+  trigger: HindsightMentalModelTrigger;
 }
 
 export interface HindsightDirective {
@@ -54,7 +68,21 @@ export interface HindsightBankTemplate {
   directives: HindsightDirective[];
 }
 
+export type MentalModelTaggingMode =
+  | "project-wide"
+  | "topic-scoped"
+  | "custom";
+
+export type MentalModelRefreshPolicy =
+  | "auto"
+  | "manual"
+  | "differentiated";
+
 export interface BankTemplateInput {
   projectName: string;
   bankId: string;
+  mentalModelIds?: string[];
+  taggingMode?: MentalModelTaggingMode;
+  customTagsByModelId?: Record<string, string[]>;
+  refreshPolicy?: MentalModelRefreshPolicy;
 }

@@ -106,8 +106,19 @@ export function printBankApplyResult(result: BankApplyResult): void {
     console.log("No Hindsight mutations were made.");
   } else {
     console.log("");
+    const createdModels = result.steps.filter(
+      (s) => s.kind === "mental_model" && s.action === "create",
+    ).length;
+    const hasModels = result.steps.some((s) => s.kind === "mental_model");
     console.log(
       "Next: `nocciolo seed --dry-run` then `nocciolo seed` to retain durable docs.",
     );
+    if (hasModels) {
+      console.log(
+        createdModels > 0
+          ? "Then refresh models after the bank has content: `nocciolo mental-model refresh --all` (or `seed --refresh-mental-models`)."
+          : "If model content is empty or stale: `nocciolo mental-model refresh --all`.",
+      );
+    }
   }
 }

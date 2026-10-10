@@ -59,7 +59,7 @@
       "source_query": "What is nocciolo's purpose, tech stack, architecture, and key conventions? What are the main components and how do they fit together?",
       "max_tokens": 2048,
       "tags": [
-        "project"
+        "nocciolo"
       ],
       "trigger": {
         "refresh_after_consolidation": true
@@ -71,11 +71,12 @@
       "source_query": "What architectural decisions have been made for nocciolo, including trade-offs and rationale?",
       "max_tokens": 2048,
       "tags": [
-        "architecture",
-        "decisions"
+        "knowledge:architecture",
+        "knowledge:decision"
       ],
       "trigger": {
-        "refresh_after_consolidation": true
+        "refresh_after_consolidation": true,
+        "tags_match": "any"
       }
     },
     {
@@ -84,10 +85,10 @@
       "source_query": "What coding standards, style rules, and engineering practices should agents follow in nocciolo?",
       "max_tokens": 1536,
       "tags": [
-        "standards"
+        "knowledge:standard"
       ],
       "trigger": {
-        "refresh_after_consolidation": true
+        "refresh_after_consolidation": false
       }
     }
   ],

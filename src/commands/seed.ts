@@ -1,9 +1,9 @@
-import { setTimeout as delay } from "node:timers/promises";
 import { loadConfig, loadShareConfig } from "../config/load.js";
 import {
   assertApiKeyForConnection,
   resolveProjectConnection,
 } from "../config/connection.js";
+import { bankTemplatePath } from "../config/paths.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
   formatPercent,
@@ -11,7 +11,12 @@ import {
   resolveHindsightApiKey,
   type RetainItem,
 } from "../providers/hindsight/client.js";
-import { formatOperationProgressLine } from "../providers/hindsight/progress.js";
+import {
+  collectOperationIds,
+  pollOperationUntilDone,
+} from "../providers/hindsight/operations.js";
+import { refreshDeclaredMentalModels } from "../providers/hindsight/refresh-models.js";
+import type { HindsightBankTemplate } from "../providers/hindsight/types.js";
 import {
   createEmptyManifest,
   loadSeedManifest,
@@ -25,6 +30,7 @@ import {
 } from "../seeder/prepare.js";
 import { clearTombstonesForIds } from "../seeder/tombstones.js";
 import { formatError, isAuthError } from "../utils/errors.js";
+import { pathExists, readJsonFile } from "../utils/fs.js";
 
 export interface SeedOptions {
   cwd?: string;
@@ -33,6 +39,7 @@ export interface SeedOptions {
   hindsightUrl?: string;
   apiKey?: string;
   async?: boolean;
+  refreshMentalModels?: boolean;
 }
 
 export interface SeedResult {
@@ -49,6 +56,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   const dryRun = options.dryRun ?? false;
   const force = options.force ?? false;
   const asyncRetain = options.async ?? false;
+  const refreshMentalModels = options.refreshMentalModels ?? false;
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
@@ -96,6 +104,15 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     console.log(
       "No memories were retained. Re-run without --dry-run to call Hindsight.",
     );
+    if (refreshMentalModels) {
+      console.log("");
+      console.log(
+        "[dry-run] --refresh-mental-models: would refresh declared models after retain.",
+      );
+      console.log(
+        "Models with refresh_after_consolidation may also queue after Hindsight consolidates; this flag waits for retain then refreshes explicitly.",
+      );
+    }
     return {
       prepared,
       baseUrl,
@@ -106,57 +123,63 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     };
   }
 
-  if (prepared.factsToRetain.length === 0) {
-    console.log("Nothing was sent to Hindsight.");
-    return {
-      prepared,
-      baseUrl,
-      dryRun: false,
-      retained: 0,
-      async: asyncRetain,
-      failed: 0,
-    };
-  }
-
   const client = new HindsightClient({
     baseUrl,
     ...(apiKey !== undefined ? { apiKey } : {}),
   });
-  const { retainedIds, failed } = await retainPreparedItems({
-    client,
-    bankId: config.bankId,
-    items: toRetainItems(prepared.factsToRetain),
-    asyncRetain,
-    retryHint: "NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed",
-  });
 
-  const previous =
-    (await loadSeedManifest(projectRoot)) ??
-    createEmptyManifest(config.bankId);
-  const manifest = nextManifest(
-    previous,
-    config.bankId,
-    prepared,
-    retainedIds,
-  );
-  await saveSeedManifest(projectRoot, manifest);
-  if (retainedIds.size > 0) {
-    await clearTombstonesForIds(projectRoot, retainedIds);
+  let retainedIds = new Set<string>();
+  let failed = 0;
+
+  if (prepared.factsToRetain.length === 0) {
+    console.log("Nothing was sent to Hindsight.");
+  } else {
+    const retainResult = await retainPreparedItems({
+      client,
+      bankId: config.bankId,
+      items: toRetainItems(prepared.factsToRetain),
+      asyncRetain,
+      retryHint: "NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed",
+    });
+    retainedIds = retainResult.retainedIds;
+    failed = retainResult.failed;
+
+    const previous =
+      (await loadSeedManifest(projectRoot)) ??
+      createEmptyManifest(config.bankId);
+    const manifest = nextManifest(
+      previous,
+      config.bankId,
+      prepared,
+      retainedIds,
+    );
+    await saveSeedManifest(projectRoot, manifest);
+    if (retainedIds.size > 0) {
+      await clearTombstonesForIds(projectRoot, retainedIds);
+    }
+
+    console.log("");
+    if (retainedIds.size > 0) {
+      console.log(
+        `Retained ${retainedIds.size} item(s)${asyncRetain ? " (async)" : ""}${failed > 0 ? `, ${failed} failed` : ""}.`,
+      );
+      console.log(
+        "Incremental state saved under .nocciolo/local/seed-manifest.json",
+      );
+      console.log(
+        "Hindsight may still run consolidation in the background — safe to close the terminal after retain finishes.",
+      );
+    } else {
+      console.log("Nothing was successfully retained.");
+    }
   }
 
-  console.log("");
-  if (retainedIds.size > 0) {
-    console.log(
-      `Retained ${retainedIds.size} item(s)${asyncRetain ? " (async)" : ""}${failed > 0 ? `, ${failed} failed` : ""}.`,
-    );
-    console.log(
-      "Incremental state saved under .nocciolo/local/seed-manifest.json",
-    );
-    console.log(
-      "Hindsight may still run consolidation in the background — safe to close the terminal after retain finishes.",
-    );
-  } else {
-    console.log("Nothing was successfully retained.");
+  if (refreshMentalModels) {
+    await runPostSeedMentalModelRefresh({
+      client,
+      projectRoot,
+      bankId: config.bankId,
+    });
   }
 
   return {
@@ -167,6 +190,44 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     async: asyncRetain,
     failed,
   };
+}
+
+async function runPostSeedMentalModelRefresh(input: {
+  client: HindsightClient;
+  projectRoot: string;
+  bankId: string;
+}): Promise<void> {
+  const templatePath = bankTemplatePath(input.projectRoot);
+  if (!(await pathExists(templatePath))) {
+    console.log("");
+    console.log(
+      "Skipping --refresh-mental-models: bank template not found. Run `nocciolo configure` first.",
+    );
+    return;
+  }
+  const template = await readJsonFile<HindsightBankTemplate>(templatePath);
+  if (template.mental_models.length === 0) {
+    console.log("");
+    console.log("Skipping --refresh-mental-models: template declares no models.");
+    return;
+  }
+
+  console.log("");
+  console.log(
+    `Refreshing ${template.mental_models.length} declared mental model(s)...`,
+  );
+  console.log(
+    "Note: models with refresh_after_consolidation may also refresh after consolidation; this is an explicit opt-in refresh after retain.",
+  );
+
+  const result = await refreshDeclaredMentalModels({
+    client: input.client,
+    bankId: input.bankId,
+    template,
+  });
+  console.log(
+    `Refreshed ${result.refreshed.length} mental model(s): ${result.refreshed.join(", ")}`,
+  );
 }
 
 export interface RetainRunResult {
@@ -276,47 +337,6 @@ function printRetainWarning(itemCount: number, asyncRetain: boolean): void {
   console.log("");
 }
 
-function collectOperationIds(response: {
-  operation_id?: string;
-  operation_ids?: string[];
-}): string[] {
-  if (response.operation_ids && response.operation_ids.length > 0) {
-    return response.operation_ids;
-  }
-  if (response.operation_id) {
-    return [response.operation_id];
-  }
-  return [];
-}
-
-async function pollOperationUntilDone(
-  client: HindsightClient,
-  bankId: string,
-  operationId: string,
-): Promise<void> {
-  let lastLine = "";
-  for (;;) {
-    const status = await client.getOperationStatus(bankId, operationId);
-    const line = formatOperationProgressLine(operationId, status);
-    if (line !== lastLine) {
-      console.log(`  ${line}`);
-      lastLine = line;
-    }
-
-    const state = status.status ?? "";
-    if (state === "completed") {
-      console.log(`  Operation ${operationId} completed.`);
-      return;
-    }
-    if (state === "failed" || state === "cancelled") {
-      throw new Error(
-        `Hindsight operation ${operationId} ${state}${status.error_message ? `: ${status.error_message}` : ""}`,
-      );
-    }
-
-    await delay(2000);
-  }
-}
 
 function printSeedPlan(input: {
   prepared: PreparedSeed;

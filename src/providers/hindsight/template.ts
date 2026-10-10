@@ -1,3 +1,4 @@
+import { buildStarterMentalModels } from "./mental-models.js";
 import type { BankTemplateInput, HindsightBankTemplate } from "./types.js";
 
 export function generateHindsightBankTemplate(
@@ -57,32 +58,21 @@ export function generateHindsightBankTemplate(
         },
       ],
     },
-    mental_models: [
-      {
-        id: "project-context",
-        name: "Project Context",
-        source_query: `What is ${name}'s purpose, tech stack, architecture, and key conventions? What are the main components and how do they fit together?`,
-        max_tokens: 2048,
-        tags: ["project"],
-        trigger: { refresh_after_consolidation: true },
-      },
-      {
-        id: "architecture-decisions",
-        name: "Architecture Decisions",
-        source_query: `What architectural decisions have been made for ${name}, including trade-offs and rationale?`,
-        max_tokens: 2048,
-        tags: ["architecture", "decisions"],
-        trigger: { refresh_after_consolidation: true },
-      },
-      {
-        id: "coding-standards",
-        name: "Coding Standards",
-        source_query: `What coding standards, style rules, and engineering practices should agents follow in ${name}?`,
-        max_tokens: 1536,
-        tags: ["standards"],
-        trigger: { refresh_after_consolidation: true },
-      },
-    ],
+    mental_models: buildStarterMentalModels({
+      projectName: name,
+      ...(input.mentalModelIds !== undefined
+        ? { mentalModelIds: input.mentalModelIds }
+        : {}),
+      ...(input.taggingMode !== undefined
+        ? { taggingMode: input.taggingMode }
+        : {}),
+      ...(input.customTagsByModelId !== undefined
+        ? { customTagsByModelId: input.customTagsByModelId }
+        : {}),
+      ...(input.refreshPolicy !== undefined
+        ? { refreshPolicy: input.refreshPolicy }
+        : {}),
+    }),
     directives: [
       {
         name: "prefer-durable-sources",

@@ -261,7 +261,8 @@ Apply is idempotent for:
 - Declared mental models (matched by stable `id`)
 
 Creating a mental model may start an async reflect.
-If the bank was empty, refresh mental models again after the first successful `seed` (Phase 6 lifecycle CLI will deepen this).
+If the bank was empty, refresh mental models again after the first successful `seed`.
+See [mental-models.md](./mental-models.md).
 
 Actionable errors distinguish auth failures, missing template, and bad template version.
 On Cloud, apply requires an API key.

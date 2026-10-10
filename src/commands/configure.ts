@@ -10,8 +10,12 @@ import {
   runBankApply,
   type BankApplyResult,
 } from "./bank.js";
+import {
+  resolveBankTemplateInput,
+  type ConfigureWizardFlags,
+} from "./configure-wizard.js";
 
-export interface ConfigureOptions {
+export interface ConfigureOptions extends ConfigureWizardFlags {
   cwd?: string;
   dryRun?: boolean;
   force?: boolean;
@@ -56,10 +60,29 @@ export async function runConfigure(
       );
     }
 
-    template = generateHindsightBankTemplate({
-      projectName: config.name,
-      bankId: config.bankId,
-    });
+    let templateInput;
+    try {
+      templateInput = await resolveBankTemplateInput({
+        projectName: config.name,
+        bankId: config.bankId,
+        flags: {
+          ...(options.yes !== undefined ? { yes: options.yes } : {}),
+          dryRun,
+          ...(options.models !== undefined ? { models: options.models } : {}),
+          ...(options.taggingMode !== undefined
+            ? { taggingMode: options.taggingMode }
+            : {}),
+          ...(options.refreshPolicy !== undefined
+            ? { refreshPolicy: options.refreshPolicy }
+            : {}),
+        },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new NoccioloError(message, "Fix the flags or re-run configure.");
+    }
+
+    template = generateHindsightBankTemplate(templateInput);
 
     if (!dryRun) {
       await ensureDir(hindsightDir(projectRoot));
@@ -103,6 +126,18 @@ export function printConfigureResult(result: ConfigureResult): void {
     console.log(
       `Mental models: ${result.template.mental_models.length}, directives: ${result.template.directives.length}`,
     );
+    for (const model of result.template.mental_models) {
+      const refresh = model.trigger.refresh_after_consolidation
+        ? "auto"
+        : "manual";
+      const tags = model.tags.length > 0 ? model.tags.join(",") : "(none)";
+      const match = model.trigger.tags_match
+        ? ` tags_match=${model.trigger.tags_match}`
+        : "";
+      console.log(
+        `  - ${model.id}: refresh=${refresh}; tags=${tags}${match}`,
+      );
+    }
   } else if (result.dryRun && !result.apply) {
     console.log(`${prefix}Would write bank template for bank "${result.bankId}"`);
     console.log(`${prefix}Path: ${result.templatePath}`);
@@ -120,5 +155,8 @@ export function printConfigureResult(result: ConfigureResult): void {
 
   console.log(
     "Next: run `nocciolo bank apply --dry-run` (or `configure --apply`) then `nocciolo seed --dry-run`.",
+  );
+  console.log(
+    "After seed, refresh models with `nocciolo mental-model refresh --all` or `seed --refresh-mental-models`.",
   );
 }

@@ -173,6 +173,8 @@ describe("agent rules", () => {
     });
     expect(rule).toContain("alwaysApply: true");
     expect(rule).toContain("nocciolo");
+    expect(rule).toContain("Prefer `reflect`");
+    expect(rule).toContain("Prefer `recall`");
   });
 });
 

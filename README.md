@@ -337,6 +337,9 @@ Prefer `recall` / `reflect` before rediscovering the same facts from scattered d
 Treat repo docs and ADRs as source of truth; the bank is the agent-facing memory of those sources.
 Do not retain secrets, credentials, or ephemeral chat into the bank.
 
+For curated playbook answers (architecture, standards, how we work), declare and refresh Hindsight mental models.
+See [docs/mental-models.md](./docs/mental-models.md).
+
 Wire any harness with `nocciolo mcp` (print snippets, or `--write` / `--write-agents` / `--write-cursor-rules`).
 Full CLI flag list: [docs/nocciolo-cli-commands.md](./docs/nocciolo-cli-commands.md).
 
@@ -463,7 +466,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 ## Docs
 
-- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `prune`, `mcp`, `docker`)
+- [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mental-model`, `prune`, `mcp`, `docker`)
 - [Jev integration](./docs/jev-integration.md): planned opt-in judge, including optional `--judge jev` on prune
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
@@ -475,9 +478,11 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [Graphiti integration](./docs/graphiti-integration.md): planned opt-in Graphiti / Zep seed provider (not the CLI default)
 - [Hindsight bank backup](./docs/hindsight-bank-backup.md): Docker `hindsight-admin` full backup and per-bank export
 - [Hindsight upgrade](./docs/hindsight-upgrade.md): `nocciolo docker upgrade --to <version>` (manual Docker fallback)
-- [Hindsight mental models](./docs/hindsight-mental-models.md): curated reflect, tagging, configure wizard, post-seed CLI
+- [Mental models](./docs/mental-models.md): user guide for configure → apply → seed → refresh → agent reflect
+- [Hindsight mental models (design)](./docs/hindsight-mental-models.md): tagging, wizard internals, provider boundaries
 - [Phase 4 dogfood gaps](./docs/phase-4-dogfood-gaps.md): Strumentario lessons: multi-repo MCP, template apply, shareable config
 - [Phase 5 dogfood gaps](./docs/phase-5-dogfood-gaps.md): zanuka-web lessons: `store` ops path; prune shipped; optional bank-list helper / dogfood archive of Python seeder
+- [Phase 6 dogfood gaps](./docs/phase-6-dogfood-gaps.md): nocciolo bank pass: apply → refresh → reflect on Hindsight 0.10.3
 - [Sensitive data](./docs/sensitive-data.md): allowlist/denylist decisions so secrets never get retained
 
 ## Core Principles

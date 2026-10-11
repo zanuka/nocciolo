@@ -419,7 +419,9 @@ Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tra
 
 Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
 
-Full design: [docs/jev-integration.md](./docs/jev-integration.md). Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
+Product rule: [docs/jev.md](./docs/jev.md).
+Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
+Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
 `nocciolo prune` (path-gone / section-gone / explicit) is in the CLI today: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 Optional `--judge jev` annotation on prune is not shipped yet.
 
@@ -467,6 +469,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 ## Docs
 
 - [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mental-model`, `prune`, `mcp`, `docker`)
+- [Jev product rule](./docs/jev.md): Jev is a judge, not a backend (opt-in, do-not-build, confidence gate)
 - [Jev integration](./docs/jev-integration.md): planned opt-in judge, including optional `--judge jev` on prune
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall

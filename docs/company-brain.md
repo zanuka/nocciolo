@@ -190,6 +190,7 @@ A Hindsight bank today is set up, seeded, and maintained without it.
 
 [Jev](https://docs.typesafe.ai/introduction) (TypeSafe System One) is the planned judgment layer for this config.
 It is [Phase 7](../ROADMAP.md) on the roadmap.
+Product rule: [jev.md](./jev.md).
 It is optional.
 Hindsight stays the memory bank.
 The CLI keeps today's heuristics when `NOCCIOLO_TYPESAFE_API_KEY` is unset and `--judge jev` is absent.
@@ -219,4 +220,5 @@ What Jev sees is small on purpose: the section, the mission, and a short list of
 Secrets and denylisted paths stay on the machine.
 Retain, prune, and share stay in this CLI, behind the confidence gate.
 
+Product rule: [jev.md](./jev.md).
 Issue groups and the phase checklist are in [Phase 7](../ROADMAP.md).

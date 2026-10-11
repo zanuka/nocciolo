@@ -56,13 +56,16 @@
     {
       "id": "project-context",
       "name": "Project Context",
-      "source_query": "What is nocciolo's purpose, tech stack, architecture, and key conventions? What are the main components and how do they fit together?",
+      "source_query": "Summarize nocciolo only from retained memories: purpose, that it is a TypeScript/Node CLI for Hindsight memory banks, main pipeline stages (scan, extract, seed, prune, integration), and local-first conventions. Do not invent languages, frameworks, or infrastructure (for example Python, Django, React, Kubernetes) unless a memory states them as the product stack. Prefer README and architecture docs over incidental mentions of archived scripts or dogfood notes.",
       "max_tokens": 2048,
       "tags": [
-        "project"
+        "knowledge:overview",
+        "knowledge:domain",
+        "knowledge:architecture"
       ],
       "trigger": {
-        "refresh_after_consolidation": true
+        "refresh_after_consolidation": true,
+        "tags_match": "any"
       }
     },
     {
@@ -71,11 +74,12 @@
       "source_query": "What architectural decisions have been made for nocciolo, including trade-offs and rationale?",
       "max_tokens": 2048,
       "tags": [
-        "architecture",
-        "decisions"
+        "knowledge:architecture",
+        "knowledge:decision"
       ],
       "trigger": {
-        "refresh_after_consolidation": true
+        "refresh_after_consolidation": true,
+        "tags_match": "any"
       }
     },
     {
@@ -84,10 +88,10 @@
       "source_query": "What coding standards, style rules, and engineering practices should agents follow in nocciolo?",
       "max_tokens": 1536,
       "tags": [
-        "standards"
+        "knowledge:standard"
       ],
       "trigger": {
-        "refresh_after_consolidation": true
+        "refresh_after_consolidation": false
       }
     }
   ],

@@ -98,7 +98,7 @@ flowchart TD
 | `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` + `share.json`, deployment profiles, connection resolution |
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
-| `src/providers/hindsight/` | Bank template types/generator + HTTP retain / list / delete / bank-apply client |
+| `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
@@ -382,11 +382,10 @@ node dist/cli.js --help
 
 ## Current gaps (intentional)
 
-- No interactive `configure` wizard yet (`init` prompts for bank id + Docker container name)
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
-- Single bank per project config (multi-bank CLI is Phase 7; one Docker server can already host many banks)
-- Team sharing / deployment profiles (Phase 4)
+- Single bank per project config (multi-bank CLI is later; one Docker server can already host many banks)
+- Optional Jev judgment layer (Phase 4 remainder)
 
 ## Related docs
 

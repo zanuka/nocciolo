@@ -7,7 +7,7 @@ alwaysApply: true
 
 Use the project memory bank `nocciolo` via Hindsight MCP when answering questions about architecture, decisions, coding standards, or domain rules.
 
-- Prefer `recall` / `reflect` on the project bank before re-deriving facts from README/ADRs alone.
+- Prefer `reflect` (or mental models) for architecture, standards, and how-we-work questions; prefer `recall` for narrow facts and provenance.
 - MCP URL: `http://localhost:8888/mcp/nocciolo/`
 - Docs and ADRs remain authoritative; the bank is how agents inherit them across sessions.
 - Never retain secrets or credentials into the bank.

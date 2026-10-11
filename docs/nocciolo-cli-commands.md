@@ -96,11 +96,16 @@ Container name is shared: one Hindsight container can host many banks.
 ## `nocciolo configure`
 
 Generate a Hindsight bank template under `.nocciolo/hindsight/`.
+In a TTY, prompts for starter mental models, tagging mode, and refresh policy unless `--yes` or flags skip prompts.
 
 | Flag | Description |
 |------|-------------|
 | `--dry-run` | Print the template without writing files |
 | `--force` | Overwrite an existing bank template |
+| `-y, --yes` | Accept starter defaults without interactive prompts |
+| `--models <ids>` | Comma-separated starter ids (`project-context`, `architecture-decisions`, `coding-standards`) |
+| `--tagging-mode <mode>` | `topic-scoped` (default), `project-wide`, or `custom` |
+| `--refresh-policy <policy>` | `differentiated` (default), `auto`, or `manual` |
 | `--apply` | Apply the existing (or newly written) template to Hindsight |
 | `--hindsight-url <url>` | Override Hindsight base URL when using `--apply` |
 | `--api-key <key>` | API key when using `--apply` |
@@ -108,6 +113,7 @@ Generate a Hindsight bank template under `.nocciolo/hindsight/`.
 The template holds mission, directives, mental models, and extraction policy.
 It is separate from project content retained by `seed`.
 Prefer `nocciolo bank apply` when you only want to apply an existing template.
+See [mental-models.md](./mental-models.md) (user guide) and [hindsight-mental-models.md](./hindsight-mental-models.md) (design).
 
 ---
 
@@ -166,6 +172,7 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 |------|-------------|
 | `--dry-run` | Preview candidates without calling Hindsight or writing the seed manifest |
 | `--force` | Re-seed even when source content hashes are unchanged |
+| `--refresh-mental-models` | After retain, refresh declared mental models (opt-in; may overlap `refresh_after_consolidation`) |
 | `--hindsight-url <url>` | Override Hindsight base URL |
 | `--api-key <key>` | Hindsight API key (or set env vars above) |
 | `--async` | Submit retain asynchronously to Hindsight |
@@ -174,6 +181,26 @@ Incremental state lives in `.nocciolo/local/seed-manifest.json` (gitignored).
 Stable `document_id`s upsert on re-seed.
 When `.nocciolo/config.json` has `scanner.include`, that glob set replaces the default README / docs / ADR walk for this command and for `store`. `scanner.exclude` and `scanner.extensions` apply either way. Omit `scanner` to keep the default. Secrets paths stay denied.
 See [sync strategy](./nocciolo-sync-strategy.md) and [knowledge-base configs](./nocciolo-configs.md).
+
+---
+
+## `nocciolo mental-model`
+
+Post-seed lifecycle for Hindsight mental models on the configured bank.
+
+| Subcommand | Description |
+|------------|-------------|
+| `list` | List models (`--detail metadata\|content\|full`) |
+| `get <id>` | Fetch one model |
+| `create` | Create with `--name` and `--source-query` (optional `--id`, tags, trigger) |
+| `update <id>` | Patch name, query, tags, trigger |
+| `refresh [id]` | Refresh one id, or `--all` declared template models |
+| `clear <id>` | Clear content so the next refresh is a full re-synthesis |
+| `tags` | List tags (`--source memories\|mental_models`) |
+
+Mutating paths support `--dry-run`. Refresh dry-run uses Hindsight `dry-run-refresh` when available.
+`--save-template` writes create/update declarations back into `bank-template.json`.
+See [mental-models.md](./mental-models.md).
 
 ---
 

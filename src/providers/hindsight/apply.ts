@@ -74,9 +74,7 @@ export async function applyBankTemplate(input: {
     detail: "mission, extraction, disposition, entity labels",
   });
 
-  const existingDirectives = dryRun
-    ? []
-    : await input.client.listAllDirectives(input.bankId);
+  const existingDirectives = await input.client.listAllDirectives(input.bankId);
   const directivesByName = new Map(
     existingDirectives.map((d) => [d.name, d] as const),
   );
@@ -116,9 +114,7 @@ export async function applyBankTemplate(input: {
     }
   }
 
-  const existingModels = dryRun
-    ? []
-    : await input.client.listAllMentalModels(input.bankId);
+  const existingModels = await input.client.listAllMentalModels(input.bankId);
   const modelsById = new Map(existingModels.map((m) => [m.id, m] as const));
 
   for (const model of input.template.mental_models) {

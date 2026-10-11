@@ -173,15 +173,15 @@ User guide: [docs/team-sharing.md](./docs/team-sharing.md).
 
 Do **not** fold mental-model curation into `init` prompts. Keep generation in `configure` / template; keep apply separate; add refresh after `seed`. Multi-provider: treat mental models as a **Hindsight adapter** capability; Mem0 path later can expose extraction instructions + category/metadata guidance without inventing a fake mental-model API.
 
-- [x] Document mental-model role, tagging, configure wizard, and post-seed CLI: see [docs/hindsight-mental-models.md](./docs/hindsight-mental-models.md)
-- [ ] Fix default template refresh safety: tagged models default to `all_strict` source matching; align seed tags **or** set `trigger.tags_match` (e.g. `any`) so first refresh is not empty
-- [ ] Interactive `configure` wizard (TTY) for starter models, tagging mode, and refresh policy; `--yes` / flags for non-interactive
-- [ ] `nocciolo mental-model`: list / create / update / refresh / clear / tags against the configured bank (`--dry-run`; poll async operations like seed)
-- [ ] Idempotent apply of declared models from the bank template (stable `id`s; create-or-update; complements Phase 5 bank apply)
-- [ ] Optional post-seed hook: refresh declared models after retain + consolidation (opt-in flag, not default magic)
-- [ ] Refresh policy presets in template: auto after consolidation for evolving summaries; manual / no auto for curated policy FAQs; optional `delta` mode for long playbooks (Jev freshness judge: [JEV-16](https://github.com/zanuka/nocciolo/issues/51); catalog questions: [JEV-20](https://github.com/zanuka/nocciolo/issues/53))
-- [ ] Agent integration hint: MCP / AGENTS snippet that agents should `reflect` (or read mental models) for architecture / standards / “how we work” questions, not only `recall` ([JEV-25](https://github.com/zanuka/nocciolo/issues/26))
-- [ ] Provider boundary: Hindsight mental-model module; portable “curated context pack” shape only if a future Mem0 (or other) path has a real counterpart
+- [x] Document mental-model role, tagging, configure wizard, and post-seed CLI: see [docs/mental-models.md](./docs/mental-models.md) (user guide) and [docs/hindsight-mental-models.md](./docs/hindsight-mental-models.md) (design)
+- [x] Fix default template refresh safety: tagged models default to `all_strict` source matching; align seed tags **or** set `trigger.tags_match` (e.g. `any`) so first refresh is not empty
+- [x] Interactive `configure` wizard (TTY) for starter models, tagging mode, and refresh policy; `--yes` / flags for non-interactive
+- [x] `nocciolo mental-model`: list / get / create / update / refresh / clear / tags against the configured bank (`--dry-run`; refresh dry-run uses upstream dry-run-refresh; poll async operations like seed; `--save-template` opt-in write-back)
+- [x] Idempotent apply of declared models from the bank template (stable `id`s; create-or-update; tags / `tags_match` / triggers preserved)
+- [x] Optional post-seed hook: `seed --refresh-mental-models` (opt-in; documents overlap with `refresh_after_consolidation`)
+- [x] Refresh policy presets: differentiated defaults (auto for evolving starters; manual for `coding-standards`); trigger typing includes `mode` / full `tags_match` / optional `min_refresh_interval_seconds` (`delta` still optional later; Jev: [JEV-16](https://github.com/zanuka/nocciolo/issues/51), [JEV-20](https://github.com/zanuka/nocciolo/issues/53))
+- [x] Agent integration hint: AGENTS / Cursor snippets prefer `reflect` / mental models for playbook questions; `recall` for narrow facts ([JEV-25](https://github.com/zanuka/nocciolo/issues/26) routing judge remains optional)
+- [x] Provider boundary: Hindsight mental-model helpers stay in `src/providers/hindsight/`; no fake Mem0 mental-model surface
 
 **Goal:** After seed, agents get consistent, high-priority answers to the project’s recurring questions: not just a bag of retained facts.
 

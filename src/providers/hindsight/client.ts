@@ -100,22 +100,53 @@ export interface DirectiveRecord {
   tags?: string[];
 }
 
+export interface MentalModelTriggerPayload {
+  refresh_after_consolidation?: boolean;
+  tags_match?: string;
+  mode?: string;
+  min_refresh_interval_seconds?: number;
+}
+
 export interface MentalModelRecord {
   id: string;
   bank_id?: string;
   name: string;
   source_query?: string | null;
+  content?: string | null;
   max_tokens?: number | null;
   tags?: string[];
-  trigger?: {
-    refresh_after_consolidation?: boolean;
-    tags_match?: string;
-  } | null;
+  is_stale?: boolean;
+  last_refreshed_at?: string | null;
+  last_memory_seen_at?: string | null;
+  last_refresh_failed_at?: string | null;
+  trigger?: MentalModelTriggerPayload | null;
 }
 
 export interface CreateMentalModelResponse {
   id?: string;
   operation_id?: string;
+  [key: string]: unknown;
+}
+
+export interface MentalModelOperationResponse {
+  operation_id?: string;
+  [key: string]: unknown;
+}
+
+export interface DryRunRefreshResult {
+  effective_mode?: string;
+  requested_mode?: string;
+  would_persist?: boolean;
+  diff?: string;
+  outcome?: string;
+  warnings?: string[];
+  [key: string]: unknown;
+}
+
+export interface BankTagsResponse {
+  tags?: string[];
+  items?: Array<{ tag?: string; count?: number }>;
+  total?: number;
   [key: string]: unknown;
 }
 
@@ -532,7 +563,7 @@ export class HindsightClient {
       source_query: string;
       tags?: string[];
       max_tokens?: number;
-      trigger?: { refresh_after_consolidation?: boolean };
+      trigger?: MentalModelTriggerPayload;
     },
   ): Promise<CreateMentalModelResponse> {
     return this.requestJson<CreateMentalModelResponse>(
@@ -551,7 +582,7 @@ export class HindsightClient {
       source_query?: string;
       tags?: string[];
       max_tokens?: number;
-      trigger?: { refresh_after_consolidation?: boolean };
+      trigger?: MentalModelTriggerPayload;
     },
   ): Promise<MentalModelRecord> {
     return this.requestJson<MentalModelRecord>(
@@ -559,6 +590,77 @@ export class HindsightClient {
       `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models/${encodeURIComponent(mentalModelId)}`,
       body,
       `update mental model "${mentalModelId}"`,
+    );
+  }
+
+  async getMentalModel(
+    bankId: string,
+    mentalModelId: string,
+    options: { detail?: string } = {},
+  ): Promise<MentalModelRecord> {
+    const params = new URLSearchParams();
+    if (options.detail !== undefined) {
+      params.set("detail", options.detail);
+    }
+    const query = params.toString();
+    return this.requestJson<MentalModelRecord>(
+      "GET",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models/${encodeURIComponent(mentalModelId)}${query ? `?${query}` : ""}`,
+      undefined,
+      `get mental model "${mentalModelId}"`,
+    );
+  }
+
+  async refreshMentalModel(
+    bankId: string,
+    mentalModelId: string,
+  ): Promise<MentalModelOperationResponse> {
+    return this.requestJson<MentalModelOperationResponse>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models/${encodeURIComponent(mentalModelId)}/refresh`,
+      {},
+      `refresh mental model "${mentalModelId}"`,
+    );
+  }
+
+  async dryRunRefreshMentalModel(
+    bankId: string,
+    mentalModelId: string,
+  ): Promise<DryRunRefreshResult> {
+    return this.requestJson<DryRunRefreshResult>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models/${encodeURIComponent(mentalModelId)}/dry-run-refresh`,
+      {},
+      `dry-run refresh mental model "${mentalModelId}"`,
+    );
+  }
+
+  async clearMentalModel(
+    bankId: string,
+    mentalModelId: string,
+  ): Promise<MentalModelRecord | Record<string, unknown>> {
+    return this.requestJson<MentalModelRecord | Record<string, unknown>>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/mental-models/${encodeURIComponent(mentalModelId)}/clear`,
+      {},
+      `clear mental model "${mentalModelId}"`,
+    );
+  }
+
+  async listBankTags(
+    bankId: string,
+    options: { source?: "memories" | "mental_models" } = {},
+  ): Promise<BankTagsResponse> {
+    const params = new URLSearchParams();
+    if (options.source !== undefined) {
+      params.set("source", options.source);
+    }
+    const query = params.toString();
+    return this.requestJson<BankTagsResponse>(
+      "GET",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/tags${query ? `?${query}` : ""}`,
+      undefined,
+      `list tags for "${bankId}"`,
     );
   }
 

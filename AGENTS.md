@@ -70,7 +70,8 @@ We are building this in public as open source.
 
 See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank` skill.
 Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones); remaining Phase 4 work is the optional Jev judgment layer (including `--judge jev` on prune).
-Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `nocciolo share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `nocciolo docs list`. Remaining dogfood: archive Python list/delete helpers after zanuka-web prune pass; Firstmate wiring when `FM_HOME` is set.
+Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `nocciolo share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `nocciolo docs list`.
+Phase 6 (mental models) shipped: seed-aligned tags, differentiated refresh presets, interactive `configure` wizard, `nocciolo mental-model` lifecycle CLI, opt-in `seed --refresh-mental-models`, and agent snippets preferring `reflect` for playbook questions.
 
 <!-- nocciolo:hindsight-bank -->
 
@@ -78,7 +79,9 @@ Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure
 
 Prefer the project Hindsight bank `nocciolo` for durable nocciolo context (architecture, decisions, standards, domain invariants).
 
-- Recall via the Hindsight MCP tools (`recall`, `reflect`) before rediscovering the same facts from scattered docs.
+- Prefer `reflect` (or read mental models) for architecture, standards, and "how we work" / playbook questions.
+- Prefer `recall` for narrow fact lookup and provenance hunting.
+- Use Hindsight MCP before rediscovering the same facts from scattered docs.
 - MCP endpoint (single-bank): `http://localhost:8888/mcp/nocciolo/`
 - Treat repo docs and ADRs as source of truth; use the bank as the agent-facing memory of those sources.
 - Do not dump secrets, credentials, or ephemeral chat into the bank.

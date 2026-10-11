@@ -254,4 +254,5 @@ First-class support is naming the profile, tightening UX, and teaching the Cloud
 - [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md): shareable config / MCP naming
 - [nocciolo-configs.md](./nocciolo-configs.md): `.nocciolo/` layout
 - [cli-architecture.md](./cli-architecture.md): URL / API key resolution
-- [hindsight-mental-models.md](./hindsight-mental-models.md): post-seed curation (same on Cloud)
+- [mental-models.md](./mental-models.md): post-seed mental models (same on Cloud)
+- [hindsight-mental-models.md](./hindsight-mental-models.md): design notes

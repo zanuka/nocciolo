@@ -25,16 +25,17 @@
       "docs/hindsight-cloud.md",
       "docs/hindsight-mental-models.md",
       "docs/hindsight-upgrade.md",
-      "docs/mental-models.md",
       "docs/jev-benefits-and-costs.md",
       "docs/jev-integration.md",
+      "docs/mental-models.md",
       "docs/nocciolo-cli-commands.md",
       "docs/nocciolo-configs.md",
       "docs/nocciolo-sync-strategy.md",
       "docs/phase-4-dogfood-gaps.md",
       "docs/phase-5-dogfood-gaps.md",
       "docs/phase-6-dogfood-gaps.md",
-      "docs/sensitive-data.md"
+      "docs/sensitive-data.md",
+      "docs/team-sharing.md"
     ]
   }
 }

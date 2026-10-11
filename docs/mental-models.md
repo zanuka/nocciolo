@@ -54,11 +54,12 @@ Create/apply alone is not enough.
 
 | Id | Purpose | Default refresh |
 |----|---------|-----------------|
-| `project-context` | Purpose, stack, components, conventions | Auto after consolidation |
+| `project-context` | Purpose, CLI shape, pipeline, local-first conventions | Auto after consolidation |
 | `architecture-decisions` | Decisions, trade-offs, rationale | Auto after consolidation |
 | `coding-standards` | Style rules and engineering practices | Manual (on demand) |
 
-Defaults use **topic-scoped** tags aligned with what `seed` already stamps (`nocciolo`, `knowledge:architecture`, `knowledge:decision`, `knowledge:standard`).
+Defaults use **topic-scoped** tags aligned with what `seed` already stamps (`knowledge:overview`, `knowledge:domain`, `knowledge:architecture`, `knowledge:decision`, `knowledge:standard`).
+`project-context` does **not** use the shared bank tag `nocciolo` alone (that scopes almost every memory and invites vague stack hallucinations).
 Multi-tag models set `tags_match: any` so refresh is not empty under Hindsight's default `all_strict`.
 
 You can change this at configure time:

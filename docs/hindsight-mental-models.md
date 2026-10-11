@@ -62,7 +62,7 @@ Default generated templates use **topic-scoped tags that seed already emits**, p
 | Layer | Tags (example) |
 |-------|----------------|
 | Seed retain | `nocciolo`, `kind:adr`, `knowledge:decision`, … |
-| `project-context` | `nocciolo` (shared bank tag: sees all seeded memories) |
+| `project-context` | `knowledge:overview`, `knowledge:domain`, `knowledge:architecture` with `trigger.tags_match: "any"` (not the shared `nocciolo` tag: that scopes almost the whole bank) |
 | `architecture-decisions` | `knowledge:architecture`, `knowledge:decision` with `trigger.tags_match: "any"` |
 | `coding-standards` | `knowledge:standard` |
 
@@ -162,7 +162,7 @@ Keep provider logic out of commands. Do not invent a Mem0 mental-model API; if a
 
 ## Decisions
 
-1. Default tagging mode: topic-scoped with seed-aligned tags + `tags_match: any` on multi-tag models (`project-context` uses shared `nocciolo` only).
+1. Default tagging mode: topic-scoped with seed-aligned tags + `tags_match: any` on multi-tag models (`project-context` uses overview/domain/architecture, not bank-wide `nocciolo`).
 2. Template write-back: **`--save-template` only** (not always).
 3. First content: explicit `mental-model refresh` and/or `seed --refresh-mental-models`; never auto-refresh on apply.
 4. Default refresh presets: auto for `project-context` / `architecture-decisions`; manual for `coding-standards`.

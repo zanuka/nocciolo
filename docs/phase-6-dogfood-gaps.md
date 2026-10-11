@@ -49,13 +49,13 @@ Not run this pass (optional follow-ups): interactive `configure` wizard TTY, `se
 
 **Product (optional):** Progress lines per model; warn that dry-run costs the same as live refresh.
 
-## Gap 3: Broad `project-context` quality lag
+## Gap 3: Broad `project-context` quality lag (mitigated)
 
-**Symptom:** After refresh, `project-context` (tag `nocciolo`, all memories in scope) produced thinner / less accurate prose than topic-scoped `architecture-decisions` and `coding-standards`.
+**Symptom:** After refresh, `project-context` (tag `nocciolo`, all memories in scope) produced thinner / inaccurate prose (invented Django/React stacks under Ollama) vs topic-scoped `architecture-decisions` and `coding-standards`.
 
-**Ops rule:** Prefer topic-scoped models for agent playbooks; treat project-context as a coarse onboarding summary.
+**Fix:** Default starter now uses topic tags `knowledge:overview` / `knowledge:domain` / `knowledge:architecture` with `tags_match: any`, plus a source_query that forbids inventing stack unless memories state it. Re-`bank apply`, `clear`, and `refresh` after upgrading the template.
 
-**Product (optional):** Tighten `project-context` source_query; consider `tags_match` / fact-type limits; or default project-context to untagged / narrower query.
+**Ops rule:** Prefer Architecture Decisions / Coding Standards for agent playbooks; treat project-context as a coarse onboarding summary and re-refresh after large seed/consolidation.
 
 ## Gap 4: Apply dry-run create/update accuracy (fixed this pass)
 
@@ -67,8 +67,7 @@ Not run this pass (optional follow-ups): interactive `configure` wizard TTY, `se
 
 1. **Ops:** document refresh-after-apply (done in apply next-step copy + this doc)
 2. **Optional UX:** progress for multi dry-run / refresh-all
-3. **Optional quality:** tighten project-context starter query / scope
-4. **Optional:** poll create operations during apply when bank already has content
+3. **Optional:** poll create operations during apply when bank already has content
 
 ## Non-goals (this pass)
 

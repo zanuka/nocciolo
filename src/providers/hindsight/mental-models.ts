@@ -22,9 +22,14 @@ export const STARTER_MENTAL_MODELS: StarterMentalModelSpec[] = [
     id: "project-context",
     name: "Project Context",
     sourceQuery: (name) =>
-      `What is ${name}'s purpose, tech stack, architecture, and key conventions? What are the main components and how do they fit together?`,
+      `Summarize ${name} only from retained memories: purpose, that it is a TypeScript/Node CLI for Hindsight memory banks, main pipeline stages (scan, extract, seed, prune, integration), and local-first conventions. Do not invent languages, frameworks, or infrastructure (for example Python, Django, React, Kubernetes) unless a memory states them as the product stack. Prefer README and architecture docs over incidental mentions of archived scripts or dogfood notes.`,
     maxTokens: 2048,
-    topicTags: [SEED_SHARED_TAG],
+    topicTags: [
+      "knowledge:overview",
+      "knowledge:domain",
+      "knowledge:architecture",
+    ],
+    multiTagMatch: "any",
     defaultRefresh: "auto",
   },
   {

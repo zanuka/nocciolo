@@ -16,7 +16,7 @@ import {
   collectOperationIds,
   pollOperationUntilDone,
 } from "../providers/hindsight/operations.js";
-import { refreshDeclaredMentalModels } from "../providers/hindsight/refresh-models.js";
+import { refreshDeclaredMentalModels } from "../providers/hindsight/operations.js";
 import type {
   HindsightBankTemplate,
   HindsightMentalModel,

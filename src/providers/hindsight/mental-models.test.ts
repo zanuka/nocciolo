@@ -18,7 +18,7 @@ describe("mental model starters", () => {
     ).toBe(false);
   });
 
-  it("maps topic tags with any match for multi-tag architecture", () => {
+  it("maps topic tags with any match for multi-tag starters", () => {
     const architecture = STARTER_MENTAL_MODELS.find(
       (s) => s.id === "architecture-decisions",
     )!;
@@ -26,6 +26,19 @@ describe("mental model starters", () => {
       tagsForStarter({ spec: architecture, taggingMode: "topic-scoped" }),
     ).toEqual({
       tags: ["knowledge:architecture", "knowledge:decision"],
+      tagsMatch: "any",
+    });
+    const projectContext = STARTER_MENTAL_MODELS.find(
+      (s) => s.id === "project-context",
+    )!;
+    expect(
+      tagsForStarter({ spec: projectContext, taggingMode: "topic-scoped" }),
+    ).toEqual({
+      tags: [
+        "knowledge:overview",
+        "knowledge:domain",
+        "knowledge:architecture",
+      ],
       tagsMatch: "any",
     });
   });

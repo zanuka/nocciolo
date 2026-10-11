@@ -26,8 +26,12 @@ describe("generateHindsightBankTemplate", () => {
 
     const byId = new Map(template.mental_models.map((m) => [m.id, m]));
 
-    expect(byId.get("project-context")?.tags).toEqual(["nocciolo"]);
-    expect(byId.get("project-context")?.trigger.tags_match).toBeUndefined();
+    expect(byId.get("project-context")?.tags).toEqual([
+      "knowledge:overview",
+      "knowledge:domain",
+      "knowledge:architecture",
+    ]);
+    expect(byId.get("project-context")?.trigger.tags_match).toBe("any");
 
     expect(byId.get("architecture-decisions")?.tags).toEqual([
       "knowledge:architecture",

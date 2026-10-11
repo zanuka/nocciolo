@@ -141,7 +141,7 @@ Example (abbreviated from this repo’s template):
     {
       "id": "project-context",
       "name": "Project Context",
-      "source_query": "What is nocciolo's purpose, tech stack, architecture, and key conventions?"
+      "source_query": "Summarize nocciolo only from retained memories: purpose, TypeScript/Node CLI for Hindsight banks, pipeline stages, local-first conventions…"
     }
   ],
   "directives": [

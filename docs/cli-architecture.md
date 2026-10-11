@@ -385,7 +385,7 @@ node dist/cli.js --help
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
 - Single bank per project config (multi-bank CLI is later; one Docker server can already host many banks)
-- Optional Jev judgment layer (Phase 4 remainder)
+- Optional Jev judgment layer (Phase 7)
 
 ## Related docs
 

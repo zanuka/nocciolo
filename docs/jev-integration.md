@@ -4,7 +4,7 @@
 
 This is planned work:
 
-- [Phase 4](../ROADMAP.md) on the roadmap
+- [Phase 7](../ROADMAP.md) on the roadmap
 - [JEV-0](https://github.com/zanuka/nocciolo/issues/58), the epic
 - the open [`jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev)
 

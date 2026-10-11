@@ -426,7 +426,7 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 | `audit --judge jev` + confirm | Structured prune; tombstones | After |
 | Firstmate routing | Bank only when the task needs it | After |
 | Recall rerank / still-true | Safer context; extra latency and tokens | After, flag-gated |
-| Share safety gate | Extra check before `public` | After, with Phase 4 profiles |
+| Share safety gate | Extra check before `public` | After, with Phase 5 profiles |
 
 Foundation work (JEV-1–3) has **no TypeSafe cost**. It is documentation, a `Judge` port, and sanitization so the later flags cannot leak secrets or become a default.
 

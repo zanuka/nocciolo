@@ -413,13 +413,13 @@ A later [Graphiti](https://github.com/getzep/graphiti) / Zep adapter will reuse 
 Nocciolo will seed a project graph from durable docs (ADRs, standards, architecture), install a software ontology, and point `mcp` / `docker print` at the official Graphiti stack.
 It will not install or run Graphiti for you.
 
-Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
+Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tracked under Phase 8 in the [roadmap](./ROADMAP.md).
 
 ### Jev (planned)
 
 Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
 
-Full design: [docs/jev-integration.md](./docs/jev-integration.md).
+Full design: [docs/jev-integration.md](./docs/jev-integration.md). Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
 `nocciolo prune` (path-gone / section-gone / explicit) is in the CLI today: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 Optional `--judge jev` annotation on prune is not shipped yet.
 

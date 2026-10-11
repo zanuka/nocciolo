@@ -173,7 +173,7 @@ If every source is retained again on a second run with no edits:
 
 - **Edit in place** → re-run `seed`; same ids → upsert
 - **Rename or delete a file** → re-run `seed` for the new path; **old memories remain** under old ids (`nocciolo:docs/foo.md#…`)
-- Use `nocciolo prune` for path-gone / section-gone / explicit cleanup (tombstones prevent unchanged re-retain). Optional `--judge jev` scores for “still on disk but no longer true” are planned in [Phase 4](../ROADMAP.md). Details: [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune)
+- Use `nocciolo prune` for path-gone / section-gone / explicit cleanup (tombstones prevent unchanged re-retain). Optional `--judge jev` scores for "still on disk but no longer true" are planned in [Phase 7](../ROADMAP.md). Details: [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune)
 
 ---
 

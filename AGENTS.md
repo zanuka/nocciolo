@@ -69,9 +69,10 @@ We are building this in public as open source.
 ## Current Focus
 
 See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank` skill.
-Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones); remaining Phase 4 work is the optional Jev judgment layer (including `--judge jev` on prune).
+Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones).
 Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `nocciolo share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `nocciolo docs list`.
 Phase 6 (mental models) shipped: seed-aligned tags, differentiated refresh presets, interactive `configure` wizard, `nocciolo mental-model` lifecycle CLI, opt-in `seed --refresh-mental-models`, and agent snippets preferring `reflect` for playbook questions.
+Phase 7 (current): optional Jev judgment layer first (including `--judge jev` on prune), then reliability and DX.
 
 <!-- nocciolo:hindsight-bank -->
 

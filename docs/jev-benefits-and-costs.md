@@ -2,7 +2,7 @@
 
 **Status:** planning / opt-in design  
 **Audience:** Nocciolo operators, SWE team leads, anyone deciding whether to turn on `--judge jev`  
-**Related:** [JEV-0 epic](https://github.com/zanuka/nocciolo/issues/58), [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev), [jev-integration.md](../jev-integration.md), [JEV issue pack](./JEV_GITHUB_ISSUES.md), TypeSafe [Introduction](https://docs.typesafe.ai/introduction), [System One](https://docs.typesafe.ai/concepts/system-one), [Models & pricing](https://docs.typesafe.ai/models)  
+**Related:** [JEV-0 epic](https://github.com/zanuka/nocciolo/issues/58), [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev), [jev.md](./jev.md) (product rule), [jev-integration.md](./jev-integration.md), [JEV issue pack](./JEV_GITHUB_ISSUES.md), TypeSafe [Introduction](https://docs.typesafe.ai/introduction), [System One](https://docs.typesafe.ai/concepts/system-one), [Models & pricing](https://docs.typesafe.ai/models)  
 **As of:** 29 September 2026
 
 This report is for end-users of Nocciolo, not a TypeSafe sales brief. Nocciolo stays local-first. Jev is an **opt-in hosted judge**. If you never set a TypeSafe key, you never pay TypeSafe, and the CLI behaves as it does today.
@@ -445,5 +445,5 @@ Success test (already in the issue pack): on Strumentario or Nocciolo itself, `s
 ## 8. Sources
 
 - TypeSafe docs: [Introduction](https://docs.typesafe.ai/introduction), [System One](https://docs.typesafe.ai/concepts/system-one), [How to build with System One](https://docs.typesafe.ai/concepts/how-to-build-with-system-one), [Models](https://docs.typesafe.ai/models)
-- Nocciolo: [JEV-0](https://github.com/zanuka/nocciolo/issues/58), [JEV issue pack](./JEV_GITHUB_ISSUES.md), [jev-integration.md](../jev-integration.md), [company-brain.md](./company-brain.md)
+- Nocciolo: [JEV-0](https://github.com/zanuka/nocciolo/issues/58), [JEV issue pack](./JEV_GITHUB_ISSUES.md), [jev.md](./jev.md), [jev-integration.md](./jev-integration.md), [company-brain.md](./company-brain.md)
 - Planning rates in §5 were computed from the official **$0.042 / MTok input, output free** line on the models page as of 29 September 2026. Re-verify before procurement.

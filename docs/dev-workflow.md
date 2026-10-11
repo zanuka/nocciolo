@@ -264,7 +264,7 @@ Empty placeholders such as `docs/dev-workflow.md` (before content landed) are sk
 - [x] Phase 4: bank hygiene (`nocciolo prune` v1)
 - [x] Phase 5: multi-repo MCP DX, template apply, shareable configs & deployment profiles ([Strumentario gaps](./phase-4-dogfood-gaps.md); [zanuka-web gaps](./phase-5-dogfood-gaps.md))
 - [x] Phase 6: mental models (Hindsight curated reflect): [mental-models.md](./mental-models.md); design: [hindsight-mental-models.md](./hindsight-mental-models.md); dogfood: [phase-6-dogfood-gaps.md](./phase-6-dogfood-gaps.md)
-- [ ] Phase 7: optional Jev judgment layer (including `--judge jev` on prune), then reliability & DX ([jev-integration.md](./jev-integration.md))
+- [ ] Phase 7: optional Jev judgment layer (including `--judge jev` on prune), then reliability & DX ([jev.md](./jev.md), [jev-integration.md](./jev-integration.md))
 
 Update this file when a new command becomes part of the daily loop.
 

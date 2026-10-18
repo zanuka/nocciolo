@@ -21,6 +21,10 @@ import { runStoreCommand } from "./commands/store.js";
 import { printBankApplyResult, runBankApply } from "./commands/bank.js";
 import { printShareResult, runShare } from "./commands/share.js";
 import { printDocsListResult, runDocsList } from "./commands/docs.js";
+import {
+  addJudgeCliOptions,
+  judgeOptionsFromCli,
+} from "./judge/cli.js";
 import { formatError } from "./utils/errors.js";
 
 function readPackageVersion(): string {
@@ -257,48 +261,54 @@ async function main(): Promise<void> {
       },
     );
 
-  program
-    .command("seed")
-    .description("Retain durable knowledge into the configured bank")
-    .option(
-      "--dry-run",
-      "Preview extracted candidates without calling Hindsight",
-    )
-    .option("--force", "Re-seed even when source content is unchanged")
-    .option(
-      "--refresh-mental-models",
-      "After retain, refresh declared mental models (opt-in; may overlap refresh_after_consolidation)",
-    )
-    .option(
-      "--hindsight-url <url>",
-      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
-    )
-    .option(
-      "--api-key <key>",
-      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
-    )
-    .option("--async", "Submit retain asynchronously to Hindsight")
-    .action(
-      async (opts: {
-        dryRun?: boolean;
-        force?: boolean;
-        refreshMentalModels?: boolean;
-        hindsightUrl?: string;
-        apiKey?: string;
-        async?: boolean;
-      }) => {
-        await runSeedCommand({
-          dryRun: Boolean(opts.dryRun),
-          force: Boolean(opts.force),
-          async: Boolean(opts.async),
-          refreshMentalModels: Boolean(opts.refreshMentalModels),
-          ...(opts.hindsightUrl !== undefined
-            ? { hindsightUrl: opts.hindsightUrl }
-            : {}),
-          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
-        });
-      },
-    );
+  addJudgeCliOptions(
+    program
+      .command("seed")
+      .description("Retain durable knowledge into the configured bank")
+      .option(
+        "--dry-run",
+        "Preview extracted candidates without calling Hindsight",
+      )
+      .option("--force", "Re-seed even when source content is unchanged")
+      .option(
+        "--refresh-mental-models",
+        "After retain, refresh declared mental models (opt-in; may overlap refresh_after_consolidation)",
+      )
+      .option(
+        "--hindsight-url <url>",
+        "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+      )
+      .option(
+        "--api-key <key>",
+        "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      )
+      .option("--async", "Submit retain asynchronously to Hindsight"),
+  ).action(
+    async (opts: {
+      dryRun?: boolean;
+      force?: boolean;
+      refreshMentalModels?: boolean;
+      hindsightUrl?: string;
+      apiKey?: string;
+      async?: boolean;
+      judge?: string;
+      confidence?: string;
+      strict?: boolean;
+    }) => {
+      const judgeOpts = judgeOptionsFromCli(opts);
+      await runSeedCommand({
+        dryRun: Boolean(opts.dryRun),
+        force: Boolean(opts.force),
+        async: Boolean(opts.async),
+        refreshMentalModels: Boolean(opts.refreshMentalModels),
+        ...(opts.hindsightUrl !== undefined
+          ? { hindsightUrl: opts.hindsightUrl }
+          : {}),
+        ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        ...judgeOpts,
+      });
+    },
+  );
 
   const mentalModel = program
     .command("mental-model")
@@ -573,121 +583,133 @@ async function main(): Promise<void> {
       },
     );
 
-  program
-    .command("store")
-    .description(
-      "Retain operator-selected durable markdown into the configured bank (preview first; reuses seed's retain path)",
-    )
-    .option(
-      "--dry-run",
-      "Print known/new/changed/unchanged buckets without calling Hindsight",
-    )
-    .option("--force", "Re-store selected sources even when unchanged")
-    .option("--async", "Submit retain asynchronously to Hindsight")
-    .option(
-      "-y, --yes",
-      "Store changed known files only; never adopt new files silently",
-    )
-    .option(
-      "--files <list>",
-      "Comma-separated paths to store exactly (also allowlists them)",
-    )
-    .option(
-      "--add-files <list>",
-      "Comma-separated paths to add to store.allowlist without retaining",
-    )
-    .option(
-      "--project <path>",
-      "Project root (defaults to cwd, walking out of a disposable worktree to the durable clone)",
-    )
-    .option(
-      "--hindsight-url <url>",
-      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
-    )
-    .option(
-      "--api-key <key>",
-      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
-    )
-    .action(
-      async (opts: {
-        dryRun?: boolean;
-        force?: boolean;
-        async?: boolean;
-        yes?: boolean;
-        files?: string;
-        addFiles?: string;
-        project?: string;
-        hindsightUrl?: string;
-        apiKey?: string;
-      }) => {
-        await runStoreCommand({
-          dryRun: Boolean(opts.dryRun),
-          force: Boolean(opts.force),
-          async: Boolean(opts.async),
-          yes: Boolean(opts.yes),
-          ...(opts.files !== undefined ? { files: opts.files } : {}),
-          ...(opts.addFiles !== undefined ? { addFiles: opts.addFiles } : {}),
-          ...(opts.project !== undefined ? { project: opts.project } : {}),
-          ...(opts.hindsightUrl !== undefined
-            ? { hindsightUrl: opts.hindsightUrl }
-            : {}),
-          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
-        });
-      },
-    );
+  addJudgeCliOptions(
+    program
+      .command("store")
+      .description(
+        "Retain operator-selected durable markdown into the configured bank (preview first; reuses seed's retain path)",
+      )
+      .option(
+        "--dry-run",
+        "Print known/new/changed/unchanged buckets without calling Hindsight",
+      )
+      .option("--force", "Re-store selected sources even when unchanged")
+      .option("--async", "Submit retain asynchronously to Hindsight")
+      .option(
+        "-y, --yes",
+        "Store changed known files only; never adopt new files silently",
+      )
+      .option(
+        "--files <list>",
+        "Comma-separated paths to store exactly (also allowlists them)",
+      )
+      .option(
+        "--add-files <list>",
+        "Comma-separated paths to add to store.allowlist without retaining",
+      )
+      .option(
+        "--project <path>",
+        "Project root (defaults to cwd, walking out of a disposable worktree to the durable clone)",
+      )
+      .option(
+        "--hindsight-url <url>",
+        "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+      )
+      .option(
+        "--api-key <key>",
+        "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      ),
+  ).action(
+    async (opts: {
+      dryRun?: boolean;
+      force?: boolean;
+      async?: boolean;
+      yes?: boolean;
+      files?: string;
+      addFiles?: string;
+      project?: string;
+      hindsightUrl?: string;
+      apiKey?: string;
+      judge?: string;
+      confidence?: string;
+      strict?: boolean;
+    }) => {
+      const judgeOpts = judgeOptionsFromCli(opts);
+      await runStoreCommand({
+        dryRun: Boolean(opts.dryRun),
+        force: Boolean(opts.force),
+        async: Boolean(opts.async),
+        yes: Boolean(opts.yes),
+        ...(opts.files !== undefined ? { files: opts.files } : {}),
+        ...(opts.addFiles !== undefined ? { addFiles: opts.addFiles } : {}),
+        ...(opts.project !== undefined ? { project: opts.project } : {}),
+        ...(opts.hindsightUrl !== undefined
+          ? { hindsightUrl: opts.hindsightUrl }
+          : {}),
+        ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        ...judgeOpts,
+      });
+    },
+  );
 
-  program
-    .command("prune")
-    .description(
-      "Remove bank documents that are path-gone, section-gone, or explicitly selected",
-    )
-    .option(
-      "--dry-run",
-      "List prune candidates without deleting or writing tombstones",
-    )
-    .option(
-      "--source <path>",
-      "Limit selection to bank documents for this repo path",
-    )
-    .option(
-      "--document-id <id>",
-      "Limit selection to this Hindsight document_id",
-    )
-    .option(
-      "-y, --yes",
-      "Apply an explicit --source or --document-id selection without a second prompt",
-    )
-    .option(
-      "--hindsight-url <url>",
-      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
-    )
-    .option(
-      "--api-key <key>",
-      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
-    )
-    .action(
-      async (opts: {
-        dryRun?: boolean;
-        source?: string;
-        documentId?: string;
-        yes?: boolean;
-        hindsightUrl?: string;
-        apiKey?: string;
-      }) => {
-        await runPruneCommand({
-          dryRun: Boolean(opts.dryRun),
-          yes: Boolean(opts.yes),
-          ...(opts.source !== undefined ? { source: opts.source } : {}),
-          ...(opts.documentId !== undefined
-            ? { documentId: opts.documentId }
-            : {}),
-          ...(opts.hindsightUrl !== undefined
-            ? { hindsightUrl: opts.hindsightUrl }
-            : {}),
-          ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
-        });
-      },
-    );
+  addJudgeCliOptions(
+    program
+      .command("prune")
+      .description(
+        "Remove bank documents that are path-gone, section-gone, or explicitly selected",
+      )
+      .option(
+        "--dry-run",
+        "List prune candidates without deleting or writing tombstones",
+      )
+      .option(
+        "--source <path>",
+        "Limit selection to bank documents for this repo path",
+      )
+      .option(
+        "--document-id <id>",
+        "Limit selection to this Hindsight document_id",
+      )
+      .option(
+        "-y, --yes",
+        "Apply an explicit --source or --document-id selection without a second prompt",
+      )
+      .option(
+        "--hindsight-url <url>",
+        "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+      )
+      .option(
+        "--api-key <key>",
+        "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      ),
+  ).action(
+    async (opts: {
+      dryRun?: boolean;
+      source?: string;
+      documentId?: string;
+      yes?: boolean;
+      hindsightUrl?: string;
+      apiKey?: string;
+      judge?: string;
+      confidence?: string;
+      strict?: boolean;
+    }) => {
+      const judgeOpts = judgeOptionsFromCli(opts);
+      await runPruneCommand({
+        dryRun: Boolean(opts.dryRun),
+        yes: Boolean(opts.yes),
+        ...(opts.source !== undefined ? { source: opts.source } : {}),
+        ...(opts.documentId !== undefined
+          ? { documentId: opts.documentId }
+          : {}),
+        ...(opts.hindsightUrl !== undefined
+          ? { hindsightUrl: opts.hindsightUrl }
+          : {}),
+        ...(opts.apiKey !== undefined ? { apiKey: opts.apiKey } : {}),
+        ...judgeOpts,
+      });
+    },
+  );
 
   program
     .command("mcp")

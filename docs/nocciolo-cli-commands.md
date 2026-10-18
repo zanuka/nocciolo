@@ -176,7 +176,11 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 | `--hindsight-url <url>` | Override Hindsight base URL |
 | `--api-key <key>` | Hindsight API key (or set env vars above) |
 | `--async` | Submit retain asynchronously to Hindsight |
+| `--judge <id>` | `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional; needs `NOCCIOLO_TYPESAFE_API_KEY`) |
+| `--confidence <n>` | Minimum confidence to apply a Jev decision (default `0.8`; see [jev.md](./jev.md)) |
+| `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
+Keep/skip scoring with `--judge jev` is not wired yet (judge port only).
 Incremental state lives in `.nocciolo/local/seed-manifest.json` (gitignored).
 Stable `document_id`s upsert on re-seed.
 When `.nocciolo/config.json` has `scanner.include`, that glob set replaces the default README / docs / ADR walk for this command and for `store`. `scanner.exclude` and `scanner.extensions` apply either way. Omit `scanner` to keep the default. Secrets paths stay denied.
@@ -219,6 +223,9 @@ Retain operator-selected durable markdown into the configured bank, on an ongoin
 | `--project <path>` | Project root (default: cwd, walking out of a disposable git worktree to the durable clone) |
 | `--hindsight-url <url>` | Override Hindsight base URL |
 | `--api-key <key>` | Hindsight API key (or set env vars above) |
+| `--judge <id>` | `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional) |
+| `--confidence <n>` | Minimum confidence to apply a Jev decision (default `0.8`) |
+| `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
 Selection when neither `--yes` nor `--files` is given: in an interactive terminal, `store` prompts a multi-select over new files (changed known files are included by default); otherwise it behaves like `--yes` and never silently adopts new files.
 
@@ -269,7 +276,7 @@ Do not treat all `nocciolo:` ids as stale merely because they are not bare paths
 - Apply writes `.nocciolo/local/tombstones.json` so an unchanged source is not re-retained on the next `seed` or `store`.
 - A later edit, or `--force` on `seed` / `store`, can retain again (and clears matching tombstones after a successful retain).
 - Mental-model refresh may be recommended in the output. It is a separate confirmation (not auto-run).
-- Optional `--judge jev` annotation is not shipped yet. Path-gone and section-gone work with no TypeSafe key.
+- Optional `--judge jev` prune annotation (outdated / irrelevant / contradicted scoring) is not wired yet. The judge port and flags exist; path-gone and section-gone work with no TypeSafe key.
 
 | Flag | Description |
 |------|-------------|
@@ -279,6 +286,9 @@ Do not treat all `nocciolo:` ids as stale merely because they are not bare paths
 | `-y, --yes` | Apply an explicit `--source` or `--document-id` selection without a second prompt. Refused when nothing is selected. |
 | `--hindsight-url <url>` | Override Hindsight base URL |
 | `--api-key <key>` | Hindsight API key (or set env vars above) |
+| `--judge <id>` | `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional) |
+| `--confidence <n>` | Minimum confidence to apply a Jev decision (default `0.8`) |
+| `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
 ### Retiring a custom seeder
 

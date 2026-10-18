@@ -7,8 +7,9 @@ Jev answers narrow, typed questions about that work.
 Nocciolo keeps every side effect.
 
 **Status:** Product rule for Phase 7 ([JEV-1](https://github.com/zanuka/nocciolo/issues/20)).
-The CLI judge port (`--judge jev`) is not shipped yet.
-**Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
+Judge port: [JEV-2](https://github.com/zanuka/nocciolo/issues/21) (`src/judge/`, `--judge` / `--confidence` / `--strict` on seed/store/prune).
+Keep/skip and prune annotation wiring are still planned.
+**Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
 ---
 
@@ -40,9 +41,13 @@ Hindsight remains the default memory path.
 
 ## Offline fallback
 
-With no TypeSafe key, without `--judge jev`, or when the TypeSafe API errors, the CLI keeps today's offline heuristics and the same UX.
-No TypeSafe call on the default path.
-Missing key or API failure must not fail the whole command when heuristics can finish the job.
+Without `--judge jev`, the CLI uses offline heuristics and makes no TypeSafe call.
+
+With `--judge jev`:
+
+- Missing `NOCCIOLO_TYPESAFE_API_KEY` is a hard error (unset the flag to keep heuristics).
+- Network / timeout / 429 / 5xx: warn once and fall back to heuristics for that run.
+- Pass `--strict` to fail instead of falling back.
 
 ---
 
@@ -83,6 +88,7 @@ Detail and sequencing: [jev-integration.md](./jev-integration.md) and the Phase 
 ## Confidence-gated routing
 
 Choice and Score answers include confidence.
+Default `--confidence` is **0.8**.
 Nocciolo routes on that score:
 
 - At or above `--confidence`: apply the Nocciolo side effect the operator already authorized (retain, prune selection, share check, Firstmate route).

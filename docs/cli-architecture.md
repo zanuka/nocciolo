@@ -99,6 +99,7 @@ flowchart TD
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
+| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); TypeSafe HTTP only behind `--judge jev`; Hindsight code must not import TypeSafe |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
@@ -150,6 +151,9 @@ Common flags:
 - `--hindsight-url <url>`: override Hindsight base URL for this run
 - `--api-key <key>`: override API key for this run (seed / store / prune) or enable tenant auth (docker) / print auth snippets (mcp)
 - `--async`: submit retain asynchronously to Hindsight
+- `--judge <id>`: `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional; needs `NOCCIOLO_TYPESAFE_API_KEY`) on seed / store / prune
+- `--confidence <n>`: minimum confidence to apply a Jev decision (default `0.8`; see [jev.md](./jev.md))
+- `--strict`: with `--judge jev`, fail on TypeSafe network/API errors instead of falling back to heuristics
 
 ## Config and generated files
 
@@ -385,7 +389,7 @@ node dist/cli.js --help
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
 - Single bank per project config (multi-bank CLI is later; one Docker server can already host many banks)
-- Optional Jev judgment layer (Phase 7)
+- Optional Jev judgment layer (Phase 7): judge port shipped; keep/skip and prune annotation not wired yet
 
 ## Related docs
 

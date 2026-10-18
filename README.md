@@ -470,6 +470,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 
 - [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mental-model`, `prune`, `mcp`, `docker`)
 - [Jev product rule](./docs/jev.md): Jev is a judge, not a backend (opt-in, do-not-build, confidence gate)
+- [Jev diagrams](./docs/jev-diagrams.md): how Jev enhances store of new data and updates to changed content
 - [Jev integration](./docs/jev-integration.md): planned opt-in judge, including optional `--judge jev` on prune
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall

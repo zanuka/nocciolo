@@ -4,6 +4,7 @@ import {
   resolveProjectConnection,
 } from "../config/connection.js";
 import { bankTemplatePath } from "../config/paths.js";
+import { createJudge } from "../judge/index.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
   formatPercent,
@@ -40,6 +41,9 @@ export interface SeedOptions {
   apiKey?: string;
   async?: boolean;
   refreshMentalModels?: boolean;
+  judge?: string;
+  confidence?: number;
+  strict?: boolean;
 }
 
 export interface SeedResult {
@@ -57,6 +61,14 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   const force = options.force ?? false;
   const asyncRetain = options.async ?? false;
   const refreshMentalModels = options.refreshMentalModels ?? false;
+
+  createJudge({
+    ...(options.judge !== undefined ? { judge: options.judge } : {}),
+    ...(options.confidence !== undefined
+      ? { confidence: options.confidence }
+      : {}),
+    ...(options.strict !== undefined ? { strict: options.strict } : {}),
+  });
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);

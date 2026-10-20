@@ -3,6 +3,7 @@
 [Jev](https://docs.typesafe.ai/introduction) (TypeSafe System One) is an opt-in judge for decisions Nocciolo still makes with heuristics. Nocciolo already scans a repo, hashes what it keeps, and retains that into a Hindsight bank. The open question is which of that work is worth retaining, what is stale, what should go first, and when a person should step in. Jev takes a small slice of that state and returns a typed answer with a confidence score. Nocciolo keeps the side effects.
 
 Product rule (judge, not backend): [jev.md](./jev.md).
+Store and update flow diagrams: [jev-diagrams.md](./jev-diagrams.md).
 
 This is planned work:
 
@@ -119,4 +120,5 @@ They do not reach extract, Jev, or Hindsight.
 - Retain, prune, and share stay in this CLI, behind the confidence gate.
 
 Full product rule: [jev.md](./jev.md).
+Store / update diagrams: [jev-diagrams.md](./jev-diagrams.md).
 How those decisions show up in bank setup is in [company brain config](./company-brain.md).

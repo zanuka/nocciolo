@@ -31,6 +31,7 @@ import {
 import { nextManifest, prepareSeed, toRetainItems } from "../seeder/prepare.js";
 import { clearTombstonesForIds } from "../seeder/tombstones.js";
 import { retainPreparedItems } from "./seed.js";
+import { createJudge } from "../judge/index.js";
 import { NoccioloError } from "../utils/errors.js";
 import { isInteractive, promptMultiSelect } from "../utils/prompt.js";
 
@@ -45,6 +46,9 @@ export interface StoreOptions {
   addFiles?: string;
   hindsightUrl?: string;
   apiKey?: string;
+  judge?: string;
+  confidence?: number;
+  strict?: boolean;
 }
 
 export interface StoreBucketEntry {
@@ -175,6 +179,14 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
   const force = options.force ?? false;
   const asyncRetain = options.async ?? false;
   const yes = options.yes ?? false;
+
+  createJudge({
+    ...(options.judge !== undefined ? { judge: options.judge } : {}),
+    ...(options.confidence !== undefined
+      ? { confidence: options.confidence }
+      : {}),
+    ...(options.strict !== undefined ? { strict: options.strict } : {}),
+  });
 
   const projectRoot = await resolveStoreProjectRoot(options);
   const config = await loadConfig(projectRoot);

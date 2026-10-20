@@ -19,7 +19,8 @@ Keep these concerns separated:
 3. Bank template / configuration generation
 4. Seeding (retain) into the memory system
 5. Pruning stale bank documents (path-gone / section-gone / explicit; local tombstones)
-6. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
+6. Optional judgment (`src/judge/`: heuristic or opt-in Jev; not a memory provider)
+7. Integration emission (MCP, Cursor rules, AGENTS.md snippets, etc.)
 
 Do not collapse these into a single opaque pipeline.
 
@@ -46,6 +47,7 @@ Put logic in the matching layer; do not collapse stages into `commands/` or a si
 | Heuristic candidates + provenance | `src/extractor/` |
 | Prepare retain + seed manifest | `src/seeder/` |
 | Hindsight template + HTTP retain | `src/providers/hindsight/` |
+| Opt-in Judge port (heuristic / Jev) | `src/judge/` |
 | MCP snippets + AGENTS / Cursor rules | `src/integration/` |
 | Local Hindsight Docker helper | `src/docker/` |
 

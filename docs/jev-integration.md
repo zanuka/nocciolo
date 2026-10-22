@@ -110,6 +110,8 @@ flowchart TD
 
 Secrets and denylisted paths stop at scan.
 They do not reach extract, Jev, or Hindsight.
+Inline tokens, private keys, and connection strings inside a seedable file are skipped when Jev state is built.
+That text is not sent to TypeSafe.
 
 ## Boundary
 

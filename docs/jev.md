@@ -8,6 +8,7 @@ Nocciolo keeps every side effect.
 
 **Status:** Product rule for Phase 7 ([JEV-1](https://github.com/zanuka/nocciolo/issues/20)).
 Judge port: [JEV-2](https://github.com/zanuka/nocciolo/issues/21) (`src/judge/`, `--judge` / `--confidence` / `--strict` on seed/store/prune).
+State sanitization: [JEV-3](https://github.com/zanuka/nocciolo/issues/22) (`buildJevState` before any TypeSafe call).
 Keep/skip and prune annotation wiring are still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
@@ -101,15 +102,30 @@ Pattern reference: [Confidence-gated routing](https://docs.typesafe.ai/patterns/
 
 ## State budget
 
-Send only what the question needs:
+`buildJevState` in `src/judge/` is the only supported way to fill TypeSafe `state`.
+[JEV-3](https://github.com/zanuka/nocciolo/issues/22).
 
-- the candidate section (or small equivalent)
-- bank mission / short directive context when relevant
-- a short list of overlapping observations or document ids
+Send only:
 
-Do not send secrets, denylisted paths, the full repo tree, or a full bank export.
-Secrets stop at scan before extract or Jev.
-State sanitization is [JEV-3](https://github.com/zanuka/nocciolo/issues/22).
+- the candidate section excerpt
+- its path and heading
+- the bank mission when the question needs it
+- at most 5 overlapping observation summaries
+
+Do not send the full repo tree, a full file, a bank export, a git patch, or MCP conversation logs.
+
+Two local checks run before any HTTP body is built:
+
+- Denylist: reuse `src/scanner/sensitive.ts`. If a path is not seedable, it is not judgeable.
+- Inline secrets: a token, private key, credential connection string, or assignment-shaped API key skips the section. The warning names the path and does not include the secret. The later Noul secret question ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)) runs only on text that already passed this gate.
+
+Jev allows 32k tokens for state plus the longest question.
+The builder reserves 8k tokens for questions and caps state at 24k tokens, counted as 4 characters per token (96k characters).
+Field caps are tighter: section 6k characters, mission 1.2k, each overlap summary 400.
+`JevJudge` refuses to POST a payload that fails these checks.
+Info logs record the path and question ids.
+Debug logs (`NOCCIOLO_LOG_LEVEL=debug`) record field names and lengths.
+Section text and the request body are not logged.
 
 ---
 

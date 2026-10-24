@@ -16,6 +16,37 @@ export {
   isJevTransientError,
 } from "./jev.js";
 export { HeuristicJudge, heuristicAnswerFor } from "./heuristic.js";
+export {
+  JEV_CHARS_PER_TOKEN,
+  JEV_DOCUMENT_ID_MAX_CHARS,
+  JEV_HEADING_MAX_CHARS,
+  JEV_MISSION_MAX_CHARS,
+  JEV_OVERLAP_MAX,
+  JEV_OVERLAP_SUMMARY_MAX_CHARS,
+  JEV_PATH_MAX_CHARS,
+  JEV_QUESTION_TOKEN_RESERVE,
+  JEV_SECTION_MAX_CHARS,
+  JEV_STATE_MAX_CHARS,
+  JEV_STATE_MAX_TOKENS,
+  JEV_STATE_QUESTION_TOKEN_BUDGET,
+  assertJevStateSendable,
+  buildJevState,
+  containsInlineSecret,
+  emitJevDispatchLogs,
+  fitJevState,
+  jevDispatchLogs,
+} from "./state.js";
+export type {
+  JevDispatchLog,
+  JevLogLevel,
+  JevOverlap,
+  JevState,
+  JevStateBuild,
+  JevStateCandidate,
+  JevStateReady,
+  JevStateSkip,
+  JevStateSkipReason,
+} from "./state.js";
 export type {
   ChoiceAnswer,
   ChoiceQuestion,

@@ -156,10 +156,10 @@ Jev returns values code can branch on. The `Judge` port (`off | heuristic | jev`
 
 ### 3.8 Secrets and denylisted paths never become Jev state
 
-Anything sent to TypeSafe leaves the machine. The benefit only holds if state is a redacted excerpt:
+Anything sent to TypeSafe leaves the machine. The benefit only holds if state is a capped excerpt, and secret-bearing text is skipped:
 
 - reuse the seed denylist (`.env`, credentials, key files)
-- redact inline secret patterns before build-state
+- skip inline secrets before build-state (tokens, private keys, connection strings). The warning names the path and does not include the secret.
 - cap state: section + path + heading + mission + at most N overlap summaries
 - never attach the full bank, a huge file, a secret-bearing patch, or MCP conversation logs
 - second-pass Noul `contains_secret` / `contains_pii` on candidates that already passed the path filter
@@ -401,7 +401,7 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 5. **Do not put Jev on `recall` by default.**
 6. **Do not let a file watcher call Jev without the high-signal gate (JEV-13).**
 7. **Fail closed on secrets; fail open to heuristics on 429/5xx** unless `--strict`.
-8. **Log question ids and paths at info; log full state only at debug.**
+8. **Log question ids and paths at info. Log field names and lengths at debug. Do not log section text or the request body.**
 9. **Pin `jev-1.13.0` in production** once you have floors; `jev-latest` can move.
 10. **Re-read [docs.typesafe.ai/models](https://docs.typesafe.ai/models) before annual budgeting.** Rate limits and price are documented as changeable.
 

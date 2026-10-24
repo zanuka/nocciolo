@@ -99,7 +99,7 @@ flowchart TD
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
-| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); TypeSafe HTTP only behind `--judge jev`; Hindsight code must not import TypeSafe |
+| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; Hindsight code must not import TypeSafe |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |

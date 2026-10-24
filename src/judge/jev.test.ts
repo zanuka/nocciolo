@@ -43,6 +43,7 @@ describe("JevJudge", () => {
     const judge = new JevJudge({
       apiKey: "test-key",
       fetchImpl,
+      log: () => undefined,
     });
 
     const result = await judge.evaluate({
@@ -95,6 +96,7 @@ describe("JevJudge", () => {
       judge: "jev",
       env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
       fetchImpl,
+      log: () => undefined,
       warn: (message) => warnings.push(message),
     });
 
@@ -129,6 +131,7 @@ describe("JevJudge", () => {
       strict: true,
       env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
       fetchImpl,
+      log: () => undefined,
     });
 
     await expect(
@@ -171,6 +174,7 @@ describe("JevJudge", () => {
       env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
       fetchImpl,
       timeoutMs: 10,
+      log: () => undefined,
       warn: () => undefined,
     });
 
@@ -186,5 +190,31 @@ describe("JevJudge", () => {
 
     expect(result.fellBackFromJev).toBe(true);
     expect(result.answers.keep).toEqual({ type: "noul", noul: 0 });
+  });
+
+  it("does not fall back to heuristics when state contains a secret", async () => {
+    let called = false;
+    const resolved = createJudge({
+      judge: "jev",
+      env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
+      log: () => undefined,
+      fetchImpl: async () => {
+        called = true;
+        return new Response("{}", { status: 200 });
+      },
+    });
+
+    await expect(
+      resolved.judge.evaluate({
+        state: {
+          path: "docs/adr/0001.md",
+          section: "sk-test-abcdefghijklmnopqrstuvwxyz",
+        },
+        questions: {
+          keep: { type: "noul", instructions: "Keep?" },
+        },
+      }),
+    ).rejects.toThrow(/secret pattern/);
+    expect(called).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 import { NoccioloError } from "../utils/errors.js";
 import { HeuristicJudge } from "./heuristic.js";
 import { isJevTransientError, JevJudge } from "./jev.js";
+import type { JevLogLevel } from "./state.js";
 import type {
   ChoiceAnswer,
   Judge,
@@ -23,6 +24,7 @@ export interface ResolveJudgeOptions {
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
   warn?: (message: string) => void;
+  log?: (level: JevLogLevel, message: string) => void;
 }
 
 export interface ResolvedJudge {
@@ -161,6 +163,7 @@ export function createJudge(options: ResolveJudgeOptions = {}): ResolvedJudge {
     ...(options.fetchImpl !== undefined
       ? { fetchImpl: options.fetchImpl }
       : {}),
+    ...(options.log !== undefined ? { log: options.log } : {}),
   });
 
   return {

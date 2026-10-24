@@ -1,4 +1,10 @@
 import { NoccioloError } from "../utils/errors.js";
+import {
+  assertJevStateSendable,
+  emitJevDispatchLogs,
+  jevDispatchLogs,
+  type JevLogLevel,
+} from "./state.js";
 import type {
   ChoiceAnswer,
   Judge,
@@ -20,6 +26,7 @@ export interface JevJudgeOptions {
   model?: string;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  log?: (level: JevLogLevel, message: string) => void;
 }
 
 interface SystemOneResponseBody {
@@ -191,6 +198,7 @@ export class JevJudge implements Judge {
   private readonly model: string;
   private readonly timeoutMs: number;
   private readonly fetchImpl: typeof fetch;
+  private readonly log: (level: JevLogLevel, message: string) => void;
 
   constructor(options: JevJudgeOptions) {
     this.apiKey = options.apiKey;
@@ -201,9 +209,27 @@ export class JevJudge implements Judge {
     this.model = options.model ?? DEFAULT_JEV_MODEL;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_JEV_TIMEOUT_MS;
     this.fetchImpl = options.fetchImpl ?? fetch;
+    this.log =
+      options.log ??
+      ((level, message) => {
+        if (level === "debug") {
+          console.debug(message);
+          return;
+        }
+        console.info(message);
+      });
   }
 
   async evaluate(input: JudgeEvaluateInput): Promise<JudgeResult> {
+    assertJevStateSendable(input.state);
+    emitJevDispatchLogs(
+      jevDispatchLogs({
+        questionIds: Object.keys(input.questions),
+        state: input.state,
+      }),
+      this.log,
+    );
+
     const questions: Record<string, unknown> = {};
     for (const [key, question] of Object.entries(input.questions)) {
       questions[key] = toRequestQuestion(question);

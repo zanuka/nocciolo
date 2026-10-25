@@ -128,10 +128,14 @@ export async function prepareSeed(input: {
 
 export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
   return facts.map((fact) => {
+    const knowledgeTags =
+      fact.bankKind !== undefined
+        ? fact.bankKind.tags
+        : [`knowledge:${fact.knowledgeKind}`];
     const metadata: Record<string, string> = {
       source: fact.provenance.sourcePath,
       kind: fact.provenance.kind,
-      knowledge_kind: fact.knowledgeKind,
+      knowledge_kind: fact.bankKind?.id ?? fact.knowledgeKind,
       title: fact.title,
       nocciolo_fact_id: fact.id,
     };
@@ -145,11 +149,7 @@ export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
       document_id: fact.id,
       timestamp: "unset",
       metadata,
-      tags: [
-        "nocciolo",
-        `kind:${fact.provenance.kind}`,
-        `knowledge:${fact.knowledgeKind}`,
-      ],
+      tags: ["nocciolo", `kind:${fact.provenance.kind}`, ...knowledgeTags],
     };
   });
 }

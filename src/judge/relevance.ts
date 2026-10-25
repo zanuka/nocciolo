@@ -1,5 +1,6 @@
-import type { CandidateFact } from "../extractor/types.js";
+import type { BankKindStamp, CandidateFact } from "../extractor/types.js";
 import type { PreparedSeed } from "../seeder/prepare.js";
+import { knowledgeKindById, knowledgeKindQuestion, listKnowledgeKinds } from "./knowledge-kinds.js";
 import { buildJevState, containsInlineSecret } from "./state.js";
 import type {
   Judge,
@@ -51,6 +52,12 @@ export interface RelevanceRow {
     score: number;
     confidence: number;
   };
+  kind?: {
+    choice: string;
+    confidence: number;
+    probabilities: Record<string, number>;
+  };
+  bankKind?: BankKindStamp;
 }
 
 export interface RelevanceReport {
@@ -101,6 +108,7 @@ export function relevanceQuestions(): Record<string, JudgeQuestion> {
         "Constitutional: a constraint the project must keep",
       ],
     },
+    kind: knowledgeKindQuestion(),
   };
 }
 
@@ -142,13 +150,19 @@ export function decideRelevance(
     ...(durability !== undefined ? { durability } : {}),
   };
 
+  const kind = readKind(result.answers.kind);
   if (isDurable === undefined || isEphemeral === undefined || inScope === undefined) {
-    return {
-      ...base,
-      action: "review",
-      reason: `confidence below ${formatConfidence(confidence)}`,
-      heuristicVsJev: "review",
-    };
+    return applyKnowledgeKind(
+      {
+        ...base,
+        action: "review",
+        reason: `confidence below ${formatConfidence(confidence)}`,
+        heuristicVsJev: "review",
+      },
+      kind,
+      confidence,
+      heuristicKept,
+    );
   }
 
   const bands = {
@@ -174,12 +188,17 @@ export function decideRelevance(
     reasons.push("out of scope");
   }
   if (reasons.length > 0) {
-    return {
-      ...scored,
-      action: "skip",
-      reason: reasons.join("; "),
-      heuristicVsJev: versusHeuristic("skip", heuristicKept),
-    };
+    return applyKnowledgeKind(
+      {
+        ...scored,
+        action: "skip",
+        reason: reasons.join("; "),
+        heuristicVsJev: versusHeuristic("skip", heuristicKept),
+      },
+      kind,
+      confidence,
+      heuristicKept,
+    );
   }
 
   if (
@@ -187,20 +206,30 @@ export function decideRelevance(
     bands.isEphemeral === "uncertain" ||
     bands.inScope === "uncertain"
   ) {
-    return {
-      ...scored,
-      action: "review",
-      reason: `confidence below ${formatConfidence(confidence)}`,
-      heuristicVsJev: "review",
-    };
+    return applyKnowledgeKind(
+      {
+        ...scored,
+        action: "review",
+        reason: `confidence below ${formatConfidence(confidence)}`,
+        heuristicVsJev: "review",
+      },
+      kind,
+      confidence,
+      heuristicKept,
+    );
   }
 
-  return {
-    ...scored,
-    action: "retain",
-    reason: "not a high-confidence reject",
-    heuristicVsJev: versusHeuristic("retain", heuristicKept),
-  };
+  return applyKnowledgeKind(
+    {
+      ...scored,
+      action: "retain",
+      reason: "not a high-confidence reject",
+      heuristicVsJev: versusHeuristic("retain", heuristicKept),
+    },
+    kind,
+    confidence,
+    heuristicKept,
+  );
 }
 
 export async function judgeSeedRelevance(input: {
@@ -273,6 +302,19 @@ export function applyRelevanceRows(
   const retainIds = new Set(
     rows.filter((row) => row.action === "retain").map((row) => row.fact.id),
   );
+  const bankKindById = new Map<string, BankKindStamp>();
+  for (const row of rows) {
+    if (row.action === "retain" && row.bankKind !== undefined) {
+      bankKindById.set(row.fact.id, row.bankKind);
+    }
+  }
+  const stamp = (fact: CandidateFact): CandidateFact => {
+    const bankKind = bankKindById.get(fact.id);
+    if (bankKind === undefined) {
+      return fact;
+    }
+    return { ...fact, bankKind: { id: bankKind.id, tags: [...bankKind.tags] } };
+  };
   const heuristicSkipIds = new Set(
     prepared.sources.flatMap((source) =>
       source.heuristicSkips.map((fact) => fact.id),
@@ -294,10 +336,10 @@ export function applyRelevanceRows(
       return source;
     }
     const retained = [
-      ...source.facts.filter(
-        (fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id),
-      ),
-      ...source.heuristicSkips.filter((fact) => retainIds.has(fact.id)),
+      ...source.facts
+        .filter((fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id))
+        .map(stamp),
+      ...source.heuristicSkips.filter((fact) => retainIds.has(fact.id)).map(stamp),
     ];
     const hasReview = group.some((row) => row.action === "review");
     if (hasReview) {
@@ -326,15 +368,15 @@ export function applyRelevanceRows(
       ...prepared,
       sources,
       factsToRetain: [
-        ...prepared.factsToRetain.filter(
-          (fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id),
-        ),
+        ...prepared.factsToRetain
+          .filter((fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id))
+          .map(stamp),
         ...rows
           .filter(
             (row) =>
               row.action === "retain" && heuristicSkipIds.has(row.fact.id),
           )
-          .map((row) => row.fact),
+          .map((row) => stamp(row.fact)),
       ],
     },
     settleEmptyPaths,
@@ -415,6 +457,12 @@ function formatRow(row: RelevanceRow, prefix: string): string[] {
       `${prefix}score: durability=${row.durability.score} confidence=${row.durability.confidence.toFixed(2)}`,
     );
   }
+  if (row.kind !== undefined) {
+    lines.push(
+      `${prefix}kind: ${row.kind.choice} confidence=${row.kind.confidence.toFixed(2)}`,
+      `${prefix}probabilities: ${formatKindProbabilities(row.kind.probabilities)}`,
+    );
+  }
   lines.push(`${prefix}decision: ${row.action} (${row.reason})`);
   return lines;
 }
@@ -447,6 +495,109 @@ function toRelevanceState(
   }
   relevance.sourceCommit = commit;
   return relevance;
+}
+
+interface KindRead {
+  choice: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+}
+
+function applyKnowledgeKind(
+  decision: Omit<RelevanceRow, "fact" | "heuristicKept">,
+  kind: KindRead | undefined,
+  confidence: number,
+  heuristicKept: boolean,
+): Omit<RelevanceRow, "fact" | "heuristicKept"> {
+  if (kind === undefined) {
+    return decision;
+  }
+  const withKind: Omit<RelevanceRow, "fact" | "heuristicKept"> = {
+    ...decision,
+    kind: {
+      choice: kind.choice,
+      confidence: kind.confidence,
+      probabilities: kind.probabilities,
+    },
+  };
+  const spec = knowledgeKindById(kind.choice);
+  const confident = kind.confidence + 1e-9 >= confidence;
+  if (spec === undefined) {
+    if (withKind.action !== "retain") {
+      return withKind;
+    }
+    return {
+      ...withKind,
+      action: "review",
+      reason: "unrecognized knowledge kind",
+      heuristicVsJev: "review",
+    };
+  }
+  if (confident && spec.disposition !== "retain") {
+    if (withKind.action === "skip") {
+      return withKind;
+    }
+    return {
+      ...withKind,
+      action: "skip",
+      reason:
+        spec.disposition === "personal"
+          ? "style preference stays out of the company bank"
+          : "knowledge kind noise",
+      heuristicVsJev: versusHeuristic("skip", heuristicKept),
+    };
+  }
+  if (withKind.action !== "retain") {
+    return withKind;
+  }
+  if (!confident) {
+    return {
+      ...withKind,
+      action: "review",
+      reason: `kind confidence below ${formatConfidence(confidence)}`,
+      heuristicVsJev: "review",
+    };
+  }
+  return {
+    ...withKind,
+    bankKind: { id: spec.id, tags: [...spec.tags] },
+  };
+}
+
+function formatKindProbabilities(probabilities: Record<string, number>): string {
+  const ordered = listKnowledgeKinds().map((kind) => kind.id);
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const id of ordered) {
+    const value = probabilities[id];
+    if (value === undefined) {
+      continue;
+    }
+    seen.add(id);
+    parts.push(`${id}=${value.toFixed(2)}`);
+  }
+  for (const [id, value] of Object.entries(probabilities)) {
+    if (seen.has(id)) {
+      continue;
+    }
+    parts.push(`${id}=${value.toFixed(2)}`);
+  }
+  return parts.join(" ");
+}
+
+function readKind(answer: JudgeAnswer | undefined): KindRead | undefined {
+  if (
+    answer === undefined ||
+    answer.type !== "choice" ||
+    !Number.isFinite(answer.confidence)
+  ) {
+    return undefined;
+  }
+  return {
+    choice: answer.choice,
+    confidence: answer.confidence,
+    probabilities: { ...answer.probabilities },
+  };
 }
 
 function readNoul(answer: JudgeAnswer | undefined): number | undefined {

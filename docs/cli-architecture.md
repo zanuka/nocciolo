@@ -102,7 +102,7 @@ flowchart TD
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
-| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; `seed --judge jev` runs the relevance gate once per `document_id`, including headings the heuristic would drop; Hindsight code must not import TypeSafe |
+| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; `seed --judge jev` runs the relevance gate and the knowledge-kind choice once per `document_id` (criteria in `knowledge-kinds.json`), including headings the heuristic would drop; Hindsight code must not import TypeSafe |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
@@ -392,7 +392,7 @@ node dist/cli.js --help
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
 - Single bank per project config (multi-bank CLI is later; one Docker server can already host many banks)
-- Optional Jev judgment layer (Phase 7): seed relevance gate is shipped. Knowledge-kind, contradiction, citation, secret second pass, and prune annotation are not wired yet
+- Optional Jev judgment layer (Phase 7): seed relevance gate and knowledge-kind taxonomy are shipped. Contradiction, citation, secret second pass, and prune annotation are not wired yet
 
 ## Related docs
 

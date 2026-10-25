@@ -461,14 +461,15 @@ Nocciolo's Jev layer is the gate in front of retain: it decides which section is
 
 | What still gets through heuristics | What `seed --judge jev` does |
 |---|---|
-| Changelogs, tables of contents, generated dumps, and meeting notes | Asks `is_durable`, `is_ephemeral`, `in_scope`, and a durability score (0 ephemeral through 4 constitutional) on the section |
+| Changelogs, tables of contents, generated dumps, and meeting notes | Asks `is_durable`, `is_ephemeral`, `in_scope`, a durability score (0 ephemeral through 4 constitutional), and a knowledge `kind` on the section |
 | A README that mixes an architecture decision with badges | One file can produce a mix of retain, skip, and review rows (`nocciolo:<path>#<section>`) |
 
 ```text
 nocciolo seed --dry-run --judge jev
-  document_id, path, heading, decision, score, confidence, heuristic-vs-jev
-  high-confidence rejects are skipped
+  document_id, path, heading, decision, score, confidence, kind, probabilities, heuristic-vs-jev
+  high-confidence rejects are skipped, including confident noise and style_pref
   low-confidence rows stay in review and are not retained
+  retained rows get stable knowledge:<kind> tags
   Hindsight retain runs only for the rows the gate keeps
 ```
 

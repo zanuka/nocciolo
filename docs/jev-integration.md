@@ -22,10 +22,11 @@ This is planned work:
 ## Why
 
 **Spend retain on durable knowledge.** Hindsight retain is the expensive step. Heuristics already drop a lot of noise, and changelogs, tables of contents, and boilerplate still get through often enough to matter. Jev scores a section before that spend.
-The relevance questions (`is_durable`, `is_ephemeral`, `in_scope`, and the durability score) run on `seed --judge jev` today.
+The relevance questions (`is_durable`, `is_ephemeral`, `in_scope`, and the durability score) and the `kind` choice run on `seed --judge jev` today.
+Dry-run prints the kind and its probabilities.
+A confident `noise` or `style_pref` is left out of the company bank.
 These checks are still planned:
 
-- what kind of knowledge it is
 - whether it contradicts observations already in the bank
 - whether a later reader can cite it
 - whether it carries a secret or personal data

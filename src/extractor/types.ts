@@ -13,6 +13,11 @@ export interface Provenance {
   kind: string;
 }
 
+export interface BankKindStamp {
+  id: string;
+  tags: string[];
+}
+
 export interface CandidateFact {
   id: string;
   title: string;
@@ -20,6 +25,7 @@ export interface CandidateFact {
   knowledgeKind: KnowledgeKind;
   score: number;
   provenance: Provenance;
+  bankKind?: BankKindStamp;
 }
 
 export interface ExtractedSource {

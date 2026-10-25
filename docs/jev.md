@@ -9,7 +9,8 @@ Nocciolo keeps every side effect.
 **Status:** Product rule for Phase 7 ([JEV-1](https://github.com/zanuka/nocciolo/issues/20)).
 Judge port: [JEV-2](https://github.com/zanuka/nocciolo/issues/21) (`src/judge/`, `--judge` / `--confidence` / `--strict` on seed/store/prune).
 State sanitization: [JEV-3](https://github.com/zanuka/nocciolo/issues/22) (`buildJevState` before any TypeSafe call).
-Keep/skip and prune annotation wiring are still planned.
+Relevance gate: [JEV-4](https://github.com/zanuka/nocciolo/issues/30) (`seed --judge jev` before retain).
+Knowledge-kind, contradiction, citation, secret second pass, and prune annotation are still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
 ---
@@ -95,6 +96,13 @@ Nocciolo routes on that score:
 - At or above `--confidence`: apply the Nocciolo side effect the operator already authorized (retain, prune selection, share check, Firstmate route).
 - Below threshold: dry-run queue, unchecked prune row, or Firstmate captain escalation.
 - Never silent apply on low confidence.
+
+Noul answers have no separate confidence field.
+The `noul` value is the probability that the answer is yes, from 0 to 1.
+`--confidence` is the yes threshold.
+A noul at or below `1 - confidence` is a confident no.
+A value between those thresholds stays in the dry-run review queue.
+The relevance gate skips retain only for a confident reject: ephemeral and not durable, or out of scope.
 
 Pattern reference: [Confidence-gated routing](https://docs.typesafe.ai/patterns/confidence-routing).
 

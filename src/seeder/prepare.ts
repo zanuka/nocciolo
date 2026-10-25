@@ -138,11 +138,17 @@ export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
   });
 }
 
+export interface NextManifestOptions {
+  settleEmptyPaths?: ReadonlySet<string>;
+  reopenPaths?: ReadonlySet<string>;
+}
+
 export function nextManifest(
   previous: SeedManifest | undefined,
   bankId: string,
   prepared: PreparedSeed,
   retainedFactIds: Set<string>,
+  options?: NextManifestOptions,
 ): SeedManifest {
   const sources: SeedManifest["sources"] = {
     ...(previous?.bankId === bankId ? previous.sources : {}),
@@ -150,10 +156,22 @@ export function nextManifest(
   const now = new Date().toISOString();
 
   for (const source of prepared.sources) {
+    if (options?.reopenPaths?.has(source.relativePath)) {
+      delete sources[source.relativePath];
+      continue;
+    }
     if (source.unchanged) {
       continue;
     }
     if (source.facts.length === 0) {
+      if (options?.settleEmptyPaths?.has(source.relativePath)) {
+        sources[source.relativePath] = {
+          contentHash: source.contentHash,
+          factIds: [],
+          seededAt: now,
+        };
+        continue;
+      }
       delete sources[source.relativePath];
       continue;
     }

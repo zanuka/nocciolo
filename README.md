@@ -6,6 +6,11 @@
 
 Nocciolo (Italian for kernel / core): the durable core of project knowledge that agents inherit.
 
+Hindsight is the memory bank.
+Nocciolo is the config that turns a repo's durable docs into a bank coding agents can trust.
+It decides what from this repo is worth retaining, keeps the link back to the source, and wires the bank into agents without a forced cloud path.
+Optionally, `--judge jev` asks whether a section is durable project knowledge before that retain is spent.
+
 ## Goal
 
 Seed [Hindsight](https://hindsight.vectorize.io/) memory banks from durable project docs, ADRs, and decisions so agents inherit shared context instead of rediscovering it every session.
@@ -36,7 +41,7 @@ Agents inherit shared context instead of rediscovering it.
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
-- **Adds an optional Jev judgment layer** for bounded decisions around seeding, recall, prune, and routing. The seed relevance gate is available with `--judge jev`. Recall, prune annotation, and routing are still planned: see [Jev](#jev) and [Jev integration](./docs/jev-integration.md)
+- **Adds an optional Jev judgment layer** so `seed --judge jev` can skip changelogs, tables of contents, and other ephemeral sections before retain. Recall rerank, prune annotation, and routing are still planned: see [Jev](#jev)
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
@@ -45,6 +50,28 @@ Hindsight is the first-class target ([retain / recall / reflect](https://hindsig
 Host it yourself with Docker or use [Hindsight Cloud](https://docs.hindsight.vectorize.io/) when you want managed infra (same Nocciolo seed/MCP flow: see [docs/hindsight-cloud.md](./docs/hindsight-cloud.md)).
 [Graphiti](https://github.com/getzep/graphiti) (and optional Zep Cloud) is planned as an opt-in seed destination, not a second default: see [Graphiti (planned)](#graphiti-planned) below.
 Event-driven updates, richer curation, and team-wide sharing are on the [roadmap](./ROADMAP.md).
+
+## Why Nocciolo
+
+Default Hindsight retains whatever you hand it and extracts facts from that text.
+The bank is then only as good as whatever landed in retain.
+Nocciolo sits in front of that, even when Jev is off.
+
+| Default Hindsight | Nocciolo |
+|---|---|
+| You decide what to retain | The scanner finds durable sources (README, docs, ADRs) and surfaces candidates |
+| Facts come from whatever you send | Heuristics prefer decisions, invariants, and architecture over changelogs, tables of contents, and badge walls |
+| Freshness means sending the tree again | Incremental `seed` re-retains only sources whose content hash changed |
+| Provenance is whatever you attach | Source path and git commit are first-class on every fact |
+| MCP wiring is yours to assemble | `nocciolo mcp` emits configs and rules for Cursor, Claude Code, and other harnesses |
+| Bank mission and directives are manual | `init` and `configure` generate a bank template from the project |
+| Stale items stay until you clean them | `prune` groups path-gone and section-gone, then tombstones so the same unchanged text does not come back |
+| Local Docker is a separate setup | `nocciolo docker` with local-first defaults |
+
+Hindsight remembers what you give it.
+Nocciolo decides what from this repo is worth giving it.
+
+The longer developer write-up, including talking points, is [docs/why-nocciolo.md](./docs/why-nocciolo.md).
 
 ## Quick Start
 
@@ -146,7 +173,7 @@ Many Hindsight setups use a script that **uploads markdown files** into the bank
 - **Incremental updates**: content hashes skip unchanged sources; only new or edited docs hit Hindsight
 - **Stable upserts**: same path + section → same `document_id`; edits update memories instead of duplicating them
 - **Provenance**: each fact carries source path, kind, and optional git commit
-- **Preview before retain**: `--dry-run` lists candidates and skips with no API calls
+- **Preview before retain**: `--dry-run` lists candidates with no Hindsight calls. `--judge jev` adds a TypeSafe relevance pass.
 - **Clear separation**: bank template (mission/directives) vs seed (project facts); additive, never wipes the bank
 
 Full rationale for contributors: [docs/nocciolo-sync-strategy.md](./docs/nocciolo-sync-strategy.md).
@@ -155,8 +182,9 @@ What `seed` actually does:
 
 1. Scan durable sources locally (README, `docs/**`, ADRs: secrets like `.env` excluded). A `scanner` block in `.nocciolo/config.json` replaces that default walk with `include` globs, then applies `exclude` globs. Omit `scanner` to keep the conservative default. The secrets denylist still wins over `include`. `store.allowlist` stays separate: the scanner decides what can be discovered, and the allowlist decides which new files `store` retains.
 2. Extract scored candidate facts with provenance (source path + optional git commit). `.mdx` is extracted like markdown when `scanner.extensions` includes `.mdx`. Leading YAML frontmatter is dropped so title and status fields are not retained as sections. Draft filenames are skipped only when an `exclude` glob matches them (for example `**/_*.mdx`).
-3. **Retain** each candidate via Hindsight’s memories API (LLM extraction per item)
-4. Write incremental state to `.nocciolo/local/seed-manifest.json` (gitignored, machine-local)
+3. Optionally, with `--judge jev`, ask whether each candidate is durable project knowledge. High-confidence rejects are dropped. Low confidence stays in review. Omit the flag and this step does not run.
+4. **Retain** each kept candidate via Hindsight’s memories API (LLM extraction per item)
+5. Write incremental state to `.nocciolo/local/seed-manifest.json` (gitignored, machine-local)
 
 Hindsight then runs **consolidation** in the background (observations / mental models). That is expected and usually much faster than re-uploading whole files.
 
@@ -166,9 +194,13 @@ Every `seed` run **reads all durable sources locally** (to compute hashes), but 
 
 ```bash
 pnpm nocciolo seed --dry-run
+pnpm nocciolo seed --dry-run --judge jev   # optional relevance gate; needs NOCCIOLO_TYPESAFE_API_KEY
 ```
 
-Shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections. No API calls.
+The first command shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections.
+It does not call Hindsight.
+The second command adds the Jev relevance table and calls TypeSafe only.
+See [Jev](#jev).
 
 **Retain with clear progress**
 
@@ -417,30 +449,57 @@ Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tra
 
 ### Jev
 
-Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is an optional judgment layer, not a memory backend or CLI provider.
-Hindsight remains the default.
+Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is an optional judge, not a memory backend or CLI provider.
+Hindsight remains the bank.
 Offline heuristics remain the path when `--judge jev` is omitted.
+You bring your own TypeSafe key (`NOCCIOLO_TYPESAFE_API_KEY`).
+Without that key, behavior is unchanged and Nocciolo makes no TypeSafe call.
+
+Hindsight can optionally rerank recall with Jev.
+That orders memories already in the bank.
+Nocciolo's Jev layer is the gate in front of retain: it decides which section is worth storing.
+
+| What still gets through heuristics | What `seed --judge jev` does |
+|---|---|
+| Changelogs, tables of contents, generated dumps, and meeting notes | Asks `is_durable`, `is_ephemeral`, `in_scope`, and a durability score (0 ephemeral through 4 constitutional) on the section |
+| A README that mixes an architecture decision with badges | One file can produce a mix of retain, skip, and review rows (`nocciolo:<path>#<section>`) |
+
+```text
+nocciolo seed --dry-run --judge jev
+  path, heading, decision, score, confidence, heuristic-vs-jev
+  high-confidence rejects are skipped
+  low-confidence rows stay in review and are not retained
+  Hindsight retain runs only for the rows the gate keeps
+```
+
+A confident reject is ephemeral and not durable, or out of scope for the bank mission.
+`--confidence` defaults to 0.8.
+A noul between that threshold and `1 - confidence` stays in the review queue.
+Jev returns the typed answers.
+Nocciolo policy decides retain, skip, or review.
+Jev does not write the bank or the repo.
+Secrets and denylisted paths stay on the machine.
+
+A typical section call is on the order of 1,000 to 2,500 input tokens.
+TypeSafe bills input tokens only, about $0.042 per million, and output is free.
+A first seed of a normal docs tree is cents.
+Later runs judge changed sections, not the whole bank on every command.
 
 Product rule: [docs/jev.md](./docs/jev.md).
 Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
+Developer talking points: [docs/why-nocciolo.md](./docs/why-nocciolo.md).
 Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
 
-`nocciolo seed --dry-run --judge jev` prints a relevance decision for each heuristic candidate and does not call Hindsight.
-A confident reject is left out of a live retain.
-A score below `--confidence` stays in the review queue.
 `nocciolo prune` (path-gone / section-gone / explicit) is in the CLI today: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 Optional `--judge jev` annotation on prune is not shipped yet.
 
 Still planned, tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev):
 
-- `store` and seed-priority decisions.
-- Optional `--judge jev` on `nocciolo prune`: annotate outdated / irrelevant / contradicted items (including when the file is still on disk). You confirm, then Nocciolo deletes. Flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
-- MCP recall guards.
+- `store` and seed-priority decisions, including a retain budget.
+- Optional `--judge jev` on `nocciolo prune`: annotate outdated, irrelevant, or contradicted items, including when the file is still on disk. You confirm, then Nocciolo deletes. Flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
+- MCP recall guards, so an agent `retain` of session notes can be refused.
+- A golden set that can improve the offline heuristics without requiring Jev at runtime.
 - Deployment-profile and share-safety checks, with Firstmate routing and escalation when confidence is low.
-
-Jev returns typed choices and scores.
-Nocciolo keeps scanning, side effects, and apply.
-Secrets and denylisted paths stay local.
 
 ### `nocciolo mcp` options
 
@@ -477,6 +536,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 ## Docs
 
 - [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mental-model`, `prune`, `mcp`, `docker`)
+- [Why Nocciolo](./docs/why-nocciolo.md): what the CLI adds over default Hindsight, and what `--judge jev` adds on top
 - [Jev product rule](./docs/jev.md): Jev is a judge, not a backend (opt-in, do-not-build, confidence gate)
 - [Jev diagrams](./docs/jev-diagrams.md): how Jev enhances store of new data and updates to changed content
 - [Jev integration](./docs/jev-integration.md): opt-in judge. The seed relevance gate is available. Prune annotation is still planned.

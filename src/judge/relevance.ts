@@ -32,6 +32,7 @@ export interface RelevanceState {
 
 export interface RelevanceRow {
   fact: CandidateFact;
+  heuristicKept: boolean;
   action: RelevanceAction;
   reason: string;
   heuristicVsJev: HeuristicVsJev;
@@ -118,11 +119,15 @@ export function noulBand(noul: number, confidence: number): NoulBand {
 export function decideRelevance(
   result: JudgeResult,
   confidence: number,
-): Omit<RelevanceRow, "fact"> {
+  options?: { heuristicKept?: boolean },
+): Omit<RelevanceRow, "fact" | "heuristicKept"> {
+  const heuristicKept = options?.heuristicKept ?? true;
   if (result.fellBackFromJev || result.judgeId !== "jev") {
     return {
-      action: "retain",
-      reason: "TypeSafe unavailable; kept the heuristic candidate",
+      action: heuristicKept ? "retain" : "skip",
+      reason: heuristicKept
+        ? "TypeSafe unavailable; kept the heuristic candidate"
+        : "TypeSafe unavailable; left the heuristic skip in place",
       heuristicVsJev: "fallback",
       ...(result.model !== undefined ? { model: result.model } : {}),
     };
@@ -173,7 +178,7 @@ export function decideRelevance(
       ...scored,
       action: "skip",
       reason: reasons.join("; "),
-      heuristicVsJev: "disagree",
+      heuristicVsJev: versusHeuristic("skip", heuristicKept),
     };
   }
 
@@ -194,12 +199,13 @@ export function decideRelevance(
     ...scored,
     action: "retain",
     reason: "not a high-confidence reject",
-    heuristicVsJev: "agree",
+    heuristicVsJev: versusHeuristic("retain", heuristicKept),
   };
 }
 
 export async function judgeSeedRelevance(input: {
   facts: readonly CandidateFact[];
+  heuristicSkips?: readonly CandidateFact[];
   judge: Judge;
   confidence: number;
   mission?: string;
@@ -208,15 +214,13 @@ export async function judgeSeedRelevance(input: {
   const rows: RelevanceRow[] = [];
   let fellBack = false;
 
-  for (const fact of input.facts) {
+  const judgeFact = async (
+    fact: CandidateFact,
+    heuristicKept: boolean,
+  ): Promise<void> => {
     if (fellBack) {
-      rows.push({
-        fact,
-        action: "retain",
-        reason: "TypeSafe unavailable; kept the heuristic candidate",
-        heuristicVsJev: "fallback",
-      });
-      continue;
+      rows.push(fallbackRow(fact, heuristicKept));
+      return;
     }
 
     const built = buildJevState({
@@ -228,11 +232,12 @@ export async function judgeSeedRelevance(input: {
     if (!built.ok) {
       rows.push({
         fact,
-        action: "retain",
+        heuristicKept,
+        action: heuristicKept ? "retain" : "skip",
         reason: built.message,
         heuristicVsJev: "unjudged",
       });
-      continue;
+      return;
     }
 
     const state = toRelevanceState(built.state, fact.provenance.commit);
@@ -240,8 +245,17 @@ export async function judgeSeedRelevance(input: {
     if (result.fellBackFromJev) {
       fellBack = true;
     }
-    const decision = decideRelevance(result, input.confidence);
-    rows.push({ fact, ...decision });
+    const decision = decideRelevance(result, input.confidence, {
+      heuristicKept,
+    });
+    rows.push({ fact, heuristicKept, ...decision });
+  };
+
+  for (const fact of input.facts) {
+    await judgeFact(fact, true);
+  }
+  for (const fact of input.heuristicSkips ?? []) {
+    await judgeFact(fact, false);
   }
 
   return rows;
@@ -259,6 +273,11 @@ export function applyRelevanceRows(
   const retainIds = new Set(
     rows.filter((row) => row.action === "retain").map((row) => row.fact.id),
   );
+  const heuristicSkipIds = new Set(
+    prepared.sources.flatMap((source) =>
+      source.heuristicSkips.map((fact) => fact.id),
+    ),
+  );
   const byPath = new Map<string, RelevanceRow[]>();
   for (const row of rows) {
     const path = row.fact.provenance.sourcePath;
@@ -274,21 +293,22 @@ export function applyRelevanceRows(
     if (group === undefined || source.unchanged) {
       return source;
     }
-    const retained = source.facts.filter(
-      (fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id),
-    );
+    const retained = [
+      ...source.facts.filter(
+        (fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id),
+      ),
+      ...source.heuristicSkips.filter((fact) => retainIds.has(fact.id)),
+    ];
     const hasReview = group.some((row) => row.action === "review");
     if (hasReview) {
       reopenPaths.push(source.relativePath);
     } else if (retained.length === 0) {
       settleEmptyPaths.push(source.relativePath);
     }
-    if (retained.length === source.facts.length) {
-      return source;
-    }
     const next: PreparedSeed["sources"][number] = {
       ...source,
       facts: retained,
+      heuristicSkips: [],
       skipped: retained.length === 0,
     };
     if (retained.length === 0) {
@@ -305,9 +325,17 @@ export function applyRelevanceRows(
     prepared: {
       ...prepared,
       sources,
-      factsToRetain: prepared.factsToRetain.filter(
-        (fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id),
-      ),
+      factsToRetain: [
+        ...prepared.factsToRetain.filter(
+          (fact) => !judgedIds.has(fact.id) || retainIds.has(fact.id),
+        ),
+        ...rows
+          .filter(
+            (row) =>
+              row.action === "retain" && heuristicSkipIds.has(row.fact.id),
+          )
+          .map((row) => row.fact),
+      ],
     },
     settleEmptyPaths,
     reopenPaths,
@@ -366,10 +394,12 @@ export function formatRelevanceLines(input: {
 }
 
 function formatRow(row: RelevanceRow, prefix: string): string[] {
+  const heuristic = row.heuristicKept ? "keep" : "skip";
   const lines = [
+    `${prefix}document_id: ${row.fact.id}`,
     `${prefix}path: ${row.fact.provenance.sourcePath}`,
     `${prefix}heading: ${row.fact.title}`,
-    `${prefix}heuristic: keep knowledge=${row.fact.knowledgeKind} score=${row.fact.score}`,
+    `${prefix}heuristic: ${heuristic} knowledge=${row.fact.knowledgeKind} score=${row.fact.score}`,
     `${prefix}jev: ${row.action}`,
     `${prefix}heuristic-vs-jev: ${row.heuristicVsJev}`,
   ];
@@ -437,6 +467,26 @@ function readScore(
     return undefined;
   }
   return { score: score.score, confidence: score.confidence };
+}
+
+function versusHeuristic(
+  action: "retain" | "skip",
+  heuristicKept: boolean,
+): HeuristicVsJev {
+  const jevKeeps = action === "retain";
+  return jevKeeps === heuristicKept ? "agree" : "disagree";
+}
+
+function fallbackRow(fact: CandidateFact, heuristicKept: boolean): RelevanceRow {
+  return {
+    fact,
+    heuristicKept,
+    action: heuristicKept ? "retain" : "skip",
+    reason: heuristicKept
+      ? "TypeSafe unavailable; kept the heuristic candidate"
+      : "TypeSafe unavailable; left the heuristic skip in place",
+    heuristicVsJev: "fallback",
+  };
 }
 
 function formatConfidence(confidence: number): string {

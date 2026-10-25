@@ -205,7 +205,7 @@ A low score stays a preview until someone confirms.
 
 | Decision | Today | With Jev |
 |----------|-------|----------|
-| What to retain | `seed --dry-run` lists a heuristic keep/skip. | `seed --dry-run --judge jev` adds a relevance decision, a durability score, and confidence for each section. Knowledge kind, contradiction, citation, and a secret second pass are still planned. |
+| What to retain | `seed --dry-run` lists a heuristic keep/skip. | `seed --dry-run --judge jev` adds a relevance decision, a durability score, and confidence for each section. One file can mix retain and skip. Knowledge kind, contradiction, citation, and a secret second pass are still planned. |
 | What to spend retain on | Every candidate that passes is eligible. | Candidates are ranked under a retain budget, so a large diff retains the durable sections first. |
 | What `store` adopts | You pick every new file. The command never adopts one on its own. | Jev can propose allowlist entries, and it can hold an edit that does not look durable. You still confirm before anything is retained. |
 | Whether the template fits the repo | `configure` writes mission, directives, and starter mental models for you to review in git. | Jev scores that draft, suggests how aggressive extraction should be, proposes mental-model questions, and assigns tags the same way across sections. The prose stays in the template you commit. |

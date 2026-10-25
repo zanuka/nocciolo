@@ -64,6 +64,7 @@ export function extractFromSource(
       relativePath: source.relativePath,
       contentHash,
       facts: [],
+      heuristicSkips: [],
       skipped: true,
       skipReason: "empty file",
     };
@@ -83,6 +84,7 @@ export function extractFromSource(
       relativePath: source.relativePath,
       contentHash,
       facts: fact ? [fact] : [],
+      heuristicSkips: [],
       skipped: !fact,
       ...(fact ? {} : { skipReason: "content below minimum signal" }),
     };
@@ -90,6 +92,7 @@ export function extractFromSource(
 
   const sections = splitMarkdownSections(trimmed);
   const facts: CandidateFact[] = [];
+  const heuristicSkips: CandidateFact[] = [];
 
   for (const [index, section] of sections.entries()) {
     const scored = scoreSection(
@@ -110,8 +113,13 @@ export function extractFromSource(
       sectionSlug: slugifyHeading(section.heading || "body"),
       ...(options.commit !== undefined ? { commit: options.commit } : {}),
     });
-    if (fact) {
+    if (!fact) {
+      continue;
+    }
+    if (scored.keep) {
       facts.push(fact);
+    } else {
+      heuristicSkips.push(fact);
     }
   }
 
@@ -121,6 +129,7 @@ export function extractFromSource(
     relativePath: source.relativePath,
     contentHash,
     facts,
+    heuristicSkips,
     skipped: facts.length === 0,
     ...(facts.length === 0
       ? { skipReason: "no high-signal sections matched heuristics" }
@@ -187,16 +196,13 @@ function scoreSection(
   body: string,
   sourceKind: DurableSource["kind"],
   isFirst: boolean,
-): { kind: KnowledgeKind; score: number } | undefined {
+): { kind: KnowledgeKind; score: number; keep: boolean } | undefined {
   const text = `${heading}\n${body}`;
   if (text.trim().length < MIN_SECTION_CHARS) {
     return undefined;
   }
 
-  if (NOISE_HEADINGS.test(heading.trim())) {
-    return undefined;
-  }
-
+  const noise = NOISE_HEADINGS.test(heading.trim());
   let bestKind: KnowledgeKind = sourceKind === "readme" ? "overview" : "other";
   let score = sourceKind === "docs" ? 1 : sourceKind === "readme" ? 1 : 0;
 
@@ -211,17 +217,12 @@ function scoreSection(
     }
   }
 
-  if (sourceKind === "readme" && isFirst) {
+  if (!noise && sourceKind === "readme" && isFirst) {
     score += 3;
     bestKind = "overview";
   }
 
-  const minScore = sourceKind === "readme" ? 3 : 3;
-  if (score < minScore) {
-    return undefined;
-  }
-
-  return { kind: bestKind, score };
+  return { kind: bestKind, score, keep: !noise && score >= 3 };
 }
 
 function buildFact(input: {

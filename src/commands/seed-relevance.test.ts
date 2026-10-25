@@ -1,10 +1,11 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Judge, JudgeEvaluateInput, JudgeResult } from "../judge/types.js";
 import type { ResolvedJudge } from "../judge/resolve.js";
 import type { HindsightClient } from "../providers/hindsight/client.js";
+import { seedManifestPath } from "../seeder/manifest.js";
 import { runSeed } from "./seed.js";
 
 const ADR = `# ADR 0001: Keep the bank local
@@ -40,6 +41,17 @@ const WORKSHOP = `# Notes
 ## Workshop
 
 Workshop notes from a design session. We discussed the module architecture and whether it belongs in the bank. The section is long enough for the heuristic filter to keep it.
+`;
+
+const MIXED_README = `# Fixture
+
+## Architecture
+
+The module boundary is a local-first architecture decision. We chose to keep the Hindsight bank on the machine. This invariant is a project standard for later integrations.
+
+## Changelog
+
+This generated changelog is a badge wall and a table of contents. The notes are a TODO pile, not a decision or a standard.
 `;
 
 function answersFor(text: string): JudgeResult {
@@ -155,6 +167,7 @@ describe("seed relevance gate", () => {
     });
 
     const output = logs.join("\n");
+    expect(output).toContain("document_id:");
     expect(output).toContain("path: docs/adr/0001-local-bank.md");
     expect(output).toContain("heading:");
     expect(output).toContain("heuristic-vs-jev:");
@@ -249,5 +262,120 @@ describe("seed relevance gate", () => {
     expect(ids.some((id) => id.includes("docs/badges.md"))).toBe(true);
     expect(ids.some((id) => id.includes("docs/contents.md"))).toBe(true);
     expect(ids.some((id) => id.includes("docs/notes.md"))).toBe(true);
+  });
+
+  it("dry-run shows one row per README section and retains only the architecture section", async () => {
+    const root = await tempProject();
+    await writeFile(join(root, "README.md"), MIXED_README, "utf8");
+    const judge = new ScriptedJudge();
+    const resolved: ResolvedJudge = {
+      judgeId: "jev",
+      confidence: 0.8,
+      strict: false,
+      judge,
+    };
+    captureLogs();
+
+    const result = await runSeed({
+      cwd: root,
+      dryRun: true,
+      resolvedJudge: resolved,
+    });
+
+    const output = logs.join("\n");
+    const readmeRows =
+      result.relevance?.rows.filter(
+        (row) => row.fact.provenance.sourcePath === "README.md",
+      ) ?? [];
+    expect(readmeRows.map((row) => [row.fact.id, row.action])).toEqual([
+      ["nocciolo:README.md#architecture", "retain"],
+      ["nocciolo:README.md#changelog", "skip"],
+    ]);
+    expect(output).toContain("document_id: nocciolo:README.md#architecture");
+    expect(output).toContain("document_id: nocciolo:README.md#changelog");
+    expect(output).toContain("heading: Architecture");
+    expect(output).toContain("heading: Changelog");
+    expect(output).toMatch(
+      /document_id: nocciolo:README.md#changelog[\s\S]*?heuristic: skip/,
+    );
+
+    const readmeCalls = judge.calls.filter((call) => {
+      const state = call.state as { path?: string };
+      return state.path === "README.md";
+    });
+    expect(readmeCalls).toHaveLength(2);
+    const architecture = readmeCalls.find((call) => {
+      const state = call.state as { heading?: string };
+      return state.heading === "Architecture";
+    })?.state as { text?: string };
+    const changelog = readmeCalls.find((call) => {
+      const state = call.state as { heading?: string };
+      return state.heading === "Changelog";
+    })?.state as { text?: string };
+    expect(architecture.text).toMatch(/local-first/);
+    expect(architecture.text).not.toMatch(/badge wall/);
+    expect(changelog.text).toMatch(/changelog/i);
+    expect(changelog.text).not.toMatch(/local-first/);
+
+    const ids = result.prepared.factsToRetain.map((fact) => fact.id);
+    expect(ids).toContain("nocciolo:README.md#architecture");
+    expect(ids).not.toContain("nocciolo:README.md#changelog");
+  });
+
+  it("live seed retains the README architecture section and skips its changelog section", async () => {
+    const root = await tempProject();
+    await writeFile(join(root, "README.md"), MIXED_README, "utf8");
+    const judge = new ScriptedJudge();
+    const resolved: ResolvedJudge = {
+      judgeId: "jev",
+      confidence: 0.8,
+      strict: false,
+      judge,
+    };
+    const client = {
+      retain: vi.fn(async () => ({ success: true })),
+    } as unknown as HindsightClient & { retain: ReturnType<typeof vi.fn> };
+
+    const result = await runSeed({
+      cwd: root,
+      resolvedJudge: resolved,
+      client,
+    });
+
+    const ids = retainedIds(client);
+    expect(ids).toContain("nocciolo:README.md#architecture");
+    expect(ids).not.toContain("nocciolo:README.md#changelog");
+    expect(
+      result.relevance?.rows.find((row) => row.fact.id === "nocciolo:README.md#changelog")
+        ?.action,
+    ).toBe("skip");
+
+    const manifest = JSON.parse(await readFile(seedManifestPath(root), "utf8")) as {
+      sources: Record<string, { factIds: string[] }>;
+    };
+    expect(manifest.sources["README.md"]?.factIds).toContain(
+      "nocciolo:README.md#architecture",
+    );
+    expect(manifest.sources["README.md"]?.factIds ?? []).not.toContain(
+      "nocciolo:README.md#changelog",
+    );
+  });
+
+  it("leaves the changelog section out when --judge jev is omitted", async () => {
+    const root = await tempProject();
+    await writeFile(join(root, "README.md"), MIXED_README, "utf8");
+    const client = {
+      retain: vi.fn(async () => ({ success: true })),
+    } as unknown as HindsightClient & { retain: ReturnType<typeof vi.fn> };
+
+    const result = await runSeed({
+      cwd: root,
+      client,
+    });
+
+    const ids = retainedIds(client);
+    expect(result.relevance).toBeUndefined();
+    expect(ids).toContain("nocciolo:README.md#architecture");
+    expect(ids).not.toContain("nocciolo:README.md#changelog");
   });
 });

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { CandidateFact } from "../extractor/types.js";
 import type { Judge, JudgeResult } from "./types.js";
+import type { PreparedSeed } from "../seeder/prepare.js";
 import {
+  applyRelevanceRows,
   decideRelevance,
   judgeSeedRelevance,
   noulBand,
@@ -186,6 +188,23 @@ describe("decideRelevance", () => {
     expect(decision.action).toBe("retain");
     expect(decision.heuristicVsJev).toBe("fallback");
   });
+
+  it("agrees with a heuristic skip and disagrees when Jev would retain it", () => {
+    const skipped = decideRelevance(
+      jevResult({ isDurable: 0.05, isEphemeral: 0.97, inScope: 0.9, durability: 0 }),
+      0.8,
+      { heuristicKept: false },
+    );
+    const promoted = decideRelevance(
+      jevResult({ isDurable: 0.96, isEphemeral: 0.04, inScope: 0.93, durability: 4 }),
+      0.8,
+      { heuristicKept: false },
+    );
+    expect(skipped.action).toBe("skip");
+    expect(skipped.heuristicVsJev).toBe("agree");
+    expect(promoted.action).toBe("retain");
+    expect(promoted.heuristicVsJev).toBe("disagree");
+  });
 });
 
 describe("judgeSeedRelevance", () => {
@@ -261,5 +280,161 @@ describe("judgeSeedRelevance", () => {
     expect(rows[0]?.heuristicVsJev).toBe("unjudged");
     expect(rows[0]?.reason).toMatch(/secret pattern/);
     expect(rows[0]?.reason).not.toContain("sk-test-abcdefghijklmnopqrstuvwxyz");
+  });
+
+  it("judges a heuristic skip on its own section and does not retain it on fallback", async () => {
+    let calls = 0;
+    const judge: Judge = {
+      id: "jev",
+      async evaluate() {
+        calls += 1;
+        return {
+          judgeId: "jev",
+          fellBackFromJev: true,
+          answers: {},
+        };
+      },
+    };
+    const kept = fact({
+      id: "nocciolo:README.md#architecture",
+      path: "README.md",
+      title: "Architecture",
+      content: ADR_TEXT,
+    });
+    const skipped = fact({
+      id: "nocciolo:README.md#changelog",
+      path: "README.md",
+      title: "Changelog",
+      content: CHANGELOG_TEXT,
+    });
+    const rows = await judgeSeedRelevance({
+      facts: [kept],
+      heuristicSkips: [skipped],
+      judge,
+      confidence: 0.8,
+    });
+    expect(calls).toBe(1);
+    expect(rows.map((row) => [row.fact.id, row.action])).toEqual([
+      ["nocciolo:README.md#architecture", "retain"],
+      ["nocciolo:README.md#changelog", "skip"],
+    ]);
+    expect(rows[1]?.reason).toMatch(/heuristic skip/);
+  });
+
+  it("does not retain a heuristic skip when Jev agrees it is ephemeral", async () => {
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(input) {
+        const state = input.state as { text?: string };
+        const ephemeral = /changelog/i.test(state.text ?? "");
+        return jevResult({
+          isDurable: ephemeral ? 0.05 : 0.96,
+          isEphemeral: ephemeral ? 0.97 : 0.04,
+          inScope: 0.93,
+          durability: ephemeral ? 0 : 4,
+        });
+      },
+    };
+    const architecture = fact({
+      id: "nocciolo:README.md#architecture",
+      path: "README.md",
+      title: "Architecture",
+      content: ADR_TEXT,
+    });
+    const changelog = fact({
+      id: "nocciolo:README.md#changelog",
+      path: "README.md",
+      title: "Changelog",
+      content: CHANGELOG_TEXT,
+    });
+    const rows = await judgeSeedRelevance({
+      facts: [architecture],
+      heuristicSkips: [changelog],
+      judge,
+      confidence: 0.8,
+      mission: "Hold durable decisions.",
+    });
+    const prepared: PreparedSeed = {
+      projectRoot: "/tmp/p",
+      bankId: "fixture",
+      sources: [
+        {
+          relativePath: "README.md",
+          contentHash: "hash",
+          facts: [architecture],
+          heuristicSkips: [changelog],
+          skipped: false,
+          unchanged: false,
+        },
+      ],
+      factsToRetain: [architecture],
+      skippedUnchanged: 0,
+      skippedEmpty: 0,
+      skippedTombstoned: 0,
+    };
+    const applied = applyRelevanceRows(prepared, rows);
+    expect(rows.map((row) => [row.fact.id, row.action, row.heuristicVsJev])).toEqual([
+      ["nocciolo:README.md#architecture", "retain", "agree"],
+      ["nocciolo:README.md#changelog", "skip", "agree"],
+    ]);
+    expect(applied.prepared.factsToRetain.map((item) => item.id)).toEqual([
+      "nocciolo:README.md#architecture",
+    ]);
+    expect(applied.prepared.sources[0]?.heuristicSkips).toEqual([]);
+    expect(applied.settleEmptyPaths).toEqual([]);
+  });
+
+  it("promotes a heuristic skip when Jev is confident the section is durable", async () => {
+    const judge: Judge = {
+      id: "jev",
+      async evaluate() {
+        return jevResult({
+          isDurable: 0.96,
+          isEphemeral: 0.04,
+          inScope: 0.93,
+          durability: 4,
+        });
+      },
+    };
+    const changelog = fact({
+      id: "nocciolo:README.md#changelog",
+      path: "README.md",
+      title: "Changelog",
+      content: ADR_TEXT,
+    });
+    const rows = await judgeSeedRelevance({
+      facts: [],
+      heuristicSkips: [changelog],
+      judge,
+      confidence: 0.8,
+    });
+    const prepared: PreparedSeed = {
+      projectRoot: "/tmp/p",
+      bankId: "fixture",
+      sources: [
+        {
+          relativePath: "README.md",
+          contentHash: "hash",
+          facts: [],
+          heuristicSkips: [changelog],
+          skipped: true,
+          unchanged: false,
+        },
+      ],
+      factsToRetain: [],
+      skippedUnchanged: 0,
+      skippedEmpty: 1,
+      skippedTombstoned: 0,
+    };
+    const applied = applyRelevanceRows(prepared, rows);
+    expect(rows[0]?.action).toBe("retain");
+    expect(rows[0]?.heuristicVsJev).toBe("disagree");
+    expect(rows[0]?.heuristicKept).toBe(false);
+    expect(applied.prepared.factsToRetain.map((item) => item.id)).toEqual([
+      "nocciolo:README.md#changelog",
+    ]);
+    expect(applied.prepared.sources[0]?.facts.map((item) => item.id)).toEqual([
+      "nocciolo:README.md#changelog",
+    ]);
   });
 });

@@ -6,6 +6,8 @@ Product rule: [jev.md](./jev.md).
 Narrative design: [jev-integration.md](./jev-integration.md).
 Judge port: `src/judge/` ([JEV-2](https://github.com/zanuka/nocciolo/issues/21)).
 The seed relevance gate is shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
+Section-level keep/skip is shipped with it ([JEV-5](https://github.com/zanuka/nocciolo/issues/36)).
+One file can retain one section and skip another.
 `store` durability gates are still planned ([JEV-10](https://github.com/zanuka/nocciolo/issues/41), [JEV-12](https://github.com/zanuka/nocciolo/issues/31)).
 The diagrams show that intended `store` experience with `--judge jev`.
 

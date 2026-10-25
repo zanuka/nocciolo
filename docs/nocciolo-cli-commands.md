@@ -180,8 +180,10 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 | `--confidence <n>` | Minimum confidence to apply a Jev decision (default `0.8`; see [jev.md](./jev.md)) |
 | `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
-`--judge jev` runs the relevance gate on candidates that already passed the heuristic filter.
-The dry-run prints path, heading, decisions, score, confidence, and heuristic-vs-jev, and it does not call Hindsight.
+`--judge jev` runs the relevance gate once per section (`nocciolo:<path>#<section>`).
+The dry-run prints `document_id`, path, heading, decisions, score, confidence, and heuristic-vs-jev, and it does not call Hindsight.
+One file can mix retain and skip.
+Headings the heuristic would drop are judged only when this flag is on.
 A confident reject is left out of retain.
 A score below `--confidence` is listed as review and is not retained.
 Omit the flag to keep heuristics only.

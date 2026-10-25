@@ -17,6 +17,18 @@ export {
 } from "./jev.js";
 export { HeuristicJudge, heuristicAnswerFor } from "./heuristic.js";
 export {
+  KNOWLEDGE_KIND_IDS,
+  knowledgeKindById,
+  knowledgeKindQuestion,
+  listKnowledgeKinds,
+} from "./knowledge-kinds.js";
+export type {
+  KnowledgeKindCriterion,
+  KnowledgeKindDisposition,
+  KnowledgeKindId,
+  KnowledgeKindSpec,
+} from "./knowledge-kinds.js";
+export {
   applyRelevanceRows,
   decideRelevance,
   formatRelevanceLines,
@@ -65,7 +77,9 @@ export type {
 } from "./state.js";
 export type {
   ChoiceAnswer,
+  ChoiceCriterion,
   ChoiceQuestion,
+  StructuredChoiceCriterion,
   Instructions,
   Judge,
   JudgeAnswer,

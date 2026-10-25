@@ -10,7 +10,8 @@ Nocciolo keeps every side effect.
 Judge port: [JEV-2](https://github.com/zanuka/nocciolo/issues/21) (`src/judge/`, `--judge` / `--confidence` / `--strict` on seed/store/prune).
 State sanitization: [JEV-3](https://github.com/zanuka/nocciolo/issues/22) (`buildJevState` before any TypeSafe call).
 Relevance gate: [JEV-4](https://github.com/zanuka/nocciolo/issues/30) (`seed --judge jev` before retain).
-Knowledge-kind, contradiction, citation, secret second pass, and prune annotation are still planned.
+Knowledge kind ships on that same call.
+Contradiction, citation, secret second pass, and prune annotation are still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
 ---
@@ -74,7 +75,8 @@ See [graphiti-integration.md](./graphiti-integration.md) product rule.
 Bounded decisions where a typed answer plus confidence is enough:
 
 - Section relevance and keep/skip before retain (shipped on `seed --judge jev`)
-- Knowledge-kind, contradiction, citation support, PII / secret second pass
+- Knowledge kind on that same call (shipped)
+- Contradiction, citation support, PII / secret second pass
 - Seed priority and retain budget; `store` allowlist proposals and durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
 - Bank-template fitness scores (mission / directives / tags / mental-model questions); prose stays in the template
@@ -105,6 +107,27 @@ A value between those thresholds stays in the dry-run review queue.
 The relevance gate skips retain only for a confident reject: ephemeral and not durable, or out of scope.
 
 Pattern reference: [Confidence-gated routing](https://docs.typesafe.ai/patterns/confidence-routing).
+
+---
+
+## Knowledge kind
+
+`seed --judge jev` asks a `kind` choice in the same call as the relevance gate.
+The bins, and the `what` / `not_for` / `examples` for each one, live in `src/judge/knowledge-kinds.json`.
+Dry-run prints the chosen kind, its confidence, and the probability of every bin.
+`document_id` stays `nocciolo:<path>#<section>`, so a later reclassification still upserts the same document.
+
+A confident `noise` answer is skipped, the same as a relevance reject.
+A confident `style_pref` answer is skipped too.
+Style preferences can go to a personal memory store later.
+They do not enter the company brain.
+Other kinds are retained only when that choice meets `--confidence`.
+Those items use the tags listed for the kind in the catalog (`knowledge:<kind>`).
+A kind below `--confidence` stays in review and is not retained, so the bank does not keep a guessed tag.
+Without `--judge jev`, retain tags stay on the offline heuristic labels (`knowledge:decision`, `knowledge:overview`, and the rest).
+Starter mental models still filter on those heuristic labels.
+`knowledge:architecture` and `knowledge:standard` match the taxonomy ids of the same name.
+`knowledge:adr` does not match a model that only lists `knowledge:decision`.
 
 ---
 

@@ -1,0 +1,162 @@
+{
+  "instructions": {
+    "question": "What kind of knowledge is this section?",
+    "focus": "Pick the single best bin. Use noise when the section should not be forced into a durable kind."
+  },
+  "kinds": [
+    {
+      "id": "adr",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:adr"],
+      "criteria": {
+        "what": "A recorded decision: the choice that was made, the context, and why that option won.",
+        "not_for": "The current shape of the system with no recorded choice (architecture), or a rule that must stay true with no decision write-up (invariant).",
+        "examples": [
+          "ADR 0001: We chose a local Hindsight bank.",
+          "We decided stable document ids so re-seed upserts."
+        ]
+      }
+    },
+    {
+      "id": "invariant",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:invariant"],
+      "criteria": {
+        "what": "A constraint that must remain true of the product or domain, independent of one write-up.",
+        "not_for": "The record of how the team chose it (adr), or a contributor convention (standard).",
+        "examples": [
+          "Secrets never leave the machine.",
+          "The bank id is not the Docker container name."
+        ]
+      }
+    },
+    {
+      "id": "public_api",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:public_api"],
+      "criteria": {
+        "what": "Caller-facing behavior: a CLI flag, command contract, or HTTP route that other people depend on.",
+        "not_for": "The field list of a stored document (schema), or which module owns the code (architecture).",
+        "examples": [
+          "seed --dry-run must not call Hindsight.",
+          "retain accepts content, document_id, and tags."
+        ]
+      }
+    },
+    {
+      "id": "architecture",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:architecture"],
+      "criteria": {
+        "what": "How the system is divided: modules, boundaries, and where a concern lives.",
+        "not_for": "The decision record that chose the split (adr), or the steps an operator runs (runbook).",
+        "examples": [
+          "Scanner, extractor, and seeder stay separate.",
+          "Commands must not own extraction."
+        ]
+      }
+    },
+    {
+      "id": "standard",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:standard"],
+      "criteria": {
+        "what": "An engineering convention the repository requires contributors to follow.",
+        "not_for": "A personal formatting taste (style_pref), or a product constraint that is true even without a contributor (invariant).",
+        "examples": [
+          "Throw NoccioloError and name the next step.",
+          "Prefer small, focused changes."
+        ]
+      }
+    },
+    {
+      "id": "runbook",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:runbook"],
+      "criteria": {
+        "what": "A repeated operator procedure: the commands, the order, and what success looks like.",
+        "not_for": "Why the system is shaped that way (architecture), or a one-time choice (adr).",
+        "examples": [
+          "Start Hindsight, then run nocciolo seed.",
+          "Run nocciolo prune after a doc path is deleted."
+        ]
+      }
+    },
+    {
+      "id": "schema",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:schema"],
+      "criteria": {
+        "what": "A data shape: field names, types, and allowed values for config or a payload.",
+        "not_for": "What a command promises to do (public_api), or a narrative of module boundaries (architecture).",
+        "examples": [
+          ".nocciolo/config.json requires bankId and provider.",
+          "Retain metadata includes source and knowledge_kind."
+        ]
+      }
+    },
+    {
+      "id": "style_pref",
+      "company_bank": false,
+      "disposition": "personal",
+      "tags": ["knowledge:style_pref"],
+      "criteria": {
+        "what": "A personal taste about formatting, tone, or tools that the repository does not require.",
+        "not_for": "A convention the repository requires (standard). Style preferences belong in a personal memory store later, not the company brain.",
+        "examples": [
+          "I like a two-space indent in scratch notes.",
+          "I prefer this editor theme for markdown."
+        ]
+      }
+    },
+    {
+      "id": "historical_context",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:historical_context"],
+      "criteria": {
+        "what": "Background for how the project got here, without stating a rule that is still in force.",
+        "not_for": "A decision that still applies (adr), or the structure as it works now (architecture).",
+        "examples": [
+          "The first prototype stored one JSON file.",
+          "Prune shipped after the scanner."
+        ]
+      }
+    },
+    {
+      "id": "opinion",
+      "company_bank": true,
+      "disposition": "retain",
+      "tags": ["knowledge:opinion"],
+      "criteria": {
+        "what": "A view or judgment that the project has not adopted as a decision, standard, or invariant.",
+        "not_for": "A recorded choice (adr), a required convention (standard), or a personal formatting taste (style_pref).",
+        "examples": [
+          "This API might feel heavy later, and we have not decided to change it.",
+          "I would rather not add another provider yet."
+        ]
+      }
+    },
+    {
+      "id": "noise",
+      "company_bank": false,
+      "disposition": "skip",
+      "tags": [],
+      "criteria": {
+        "what": "Text that is not durable project knowledge, including a changelog, table of contents, badge wall, generated dump, meeting notes, or a TODO pile.",
+        "not_for": "Any durable bin above. Noise is skipped and is not forced into a durable kind.",
+        "examples": [
+          "A changelog entry for 0.1.3.",
+          "A table of contents with no decision."
+        ]
+      }
+    }
+  ]
+}

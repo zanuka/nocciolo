@@ -22,19 +22,29 @@ Seed [Hindsight](https://hindsight.vectorize.io/) memory banks from durable proj
 
 ## The Problem
 
-AI coding agents start every session cold.
+Architecture decisions, coding standards, and the reasons behind them live in scattered READMEs, ADRs, comments, and tribal knowledge.
+Re-reading that pile every session wastes tokens, produces inconsistent output, and breaks long-running work.
 
-They re-learn architecture decisions, coding standards, domain invariants, and “why we built it this way” from scattered READMEs, ADRs, comments, and tribal knowledge. That wastes tokens, produces inconsistent output, and breaks long-running agentic workflows.
-
-Traditional documentation is written for humans. Agent memory systems need structured, durable, queryable knowledge with clear missions and boundaries.
+Traditional documentation is written for humans.
+Agent memory needs structured, durable, queryable knowledge with a mission and clear boundaries.
 
 ## The Vision
 
 Nocciolo is the **company brain config** layer.
 
-It turns the durable knowledge already living in your repository into a properly configured memory bank that agents can retain, recall, and reflect against: starting with [Hindsight](https://hindsight.vectorize.io).
+It turns the durable knowledge already living in your repository into a configured memory bank that agents can retain, recall, and reflect against, starting with [Hindsight](https://hindsight.vectorize.io).
 
-Agents inherit shared context instead of rediscovering it.
+## One memory across your agents
+
+Most developers switch between several agents in a day: Claude Code in the terminal, Cursor in the editor, Codex or Pi for a second opinion, and Firstmate supervising workers across projects.
+Each session starts cold, and each tool keeps its own memory, if any, in its own format.
+Hindsight is one shared memory server.
+Nocciolo fills a project bank on it with the knowledge every agent should trust: reviewed docs, ADRs, standards, and the decisions behind them.
+`nocciolo mcp` wires that bank once per harness, so every agent recalls the same architecture and conventions.
+Pair it with Hindsight's coding-agent plugin on a separate bank when you also want session history and recent commits remembered automatically.
+The project bank stays limited to what you reviewed.
+For Firstmate, `nocciolo mcp --harness firstmate --write-firstmate` registers the project with the captain's home, so workers in disposable worktrees reach the same bank as the durable clone.
+`store` still writes only from the clone that owns `.nocciolo/`.
 
 ## What Nocciolo Does
 
@@ -42,7 +52,7 @@ Agents inherit shared context instead of rediscovering it.
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
 - **Adds an optional Jev judgment layer** so `seed --judge jev` can skip changelogs, tables of contents, and other ephemeral sections before retain. Recall rerank, prune annotation, and routing are still planned: see [Jev](#jev)
-- **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
+- **Emits** MCP config so each harness shares one project bank. See [One memory across your agents](#one-memory-across-your-agents)
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
 
@@ -321,7 +331,10 @@ The allowlist lives at `store.allowlist` in `.nocciolo/config.json` (version-con
 
 The first `store` run after a `seed` bootstraps this allowlist from the last seed manifest's sources, so already-seeded files read as known, not new.
 
-`store` refuses to run from a disposable git worktree (a Treehouse pool checkout, for example): it only operates on the durable clone that owns `.nocciolo/`. When run from a worktree it resolves the durable clone via the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, installed by `nocciolo mcp --harness firstmate --write-firstmate`) or via `--project <durable-clone-path>`.
+`store` refuses to run from a disposable git worktree.
+It only operates on the durable clone that owns `.nocciolo/`.
+From a worktree it resolves that clone via the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, written by `nocciolo mcp --harness firstmate --write-firstmate`) or via `--project <durable-clone-path>`.
+See [One memory across your agents](#one-memory-across-your-agents).
 
 ## Local Hindsight & agent wiring
 
@@ -350,7 +363,9 @@ Hindsight **retain** (what `nocciolo seed` calls) needs a working LLM. If your H
 
 ### Hindsight MCP tools (any agent)
 
-After you wire the project bank MCP endpoint (`http://localhost:8888/mcp/<bankId>/`), Cursor, Claude Code, Roo, Codex, Kiro, Firstmate, and other harnesses that speak MCP expose the same Hindsight tools for that bank. `--harness firstmate` prints a captain-home snippet only (see [docs/nocciolo-cli-commands.md](./docs/nocciolo-cli-commands.md)); it does not write into this repo.
+Once the project bank is wired, every harness exposes the same Hindsight tools.
+The endpoint is `http://localhost:8888/mcp/<bankId>/`.
+How those harnesses share the bank is in [One memory across your agents](#one-memory-across-your-agents).
 
 The three you will use most often:
 
@@ -372,7 +387,6 @@ Do not retain secrets, credentials, or ephemeral chat into the bank.
 For curated playbook answers (architecture, standards, how we work), declare and refresh Hindsight mental models.
 See [docs/mental-models.md](./docs/mental-models.md).
 
-Wire any harness with `nocciolo mcp` (print snippets, or `--write` / `--write-agents` / `--write-cursor-rules`).
 Full CLI flag list: [docs/nocciolo-cli-commands.md](./docs/nocciolo-cli-commands.md).
 
 ### Claude Code
@@ -461,14 +475,15 @@ Nocciolo's Jev layer is the gate in front of retain: it decides which section is
 
 | What still gets through heuristics | What `seed --judge jev` does |
 |---|---|
-| Changelogs, tables of contents, generated dumps, and meeting notes | Asks `is_durable`, `is_ephemeral`, `in_scope`, and a durability score (0 ephemeral through 4 constitutional) on the section |
+| Changelogs, tables of contents, generated dumps, and meeting notes | Asks `is_durable`, `is_ephemeral`, `in_scope`, a durability score (0 ephemeral through 4 constitutional), and a knowledge `kind` on the section |
 | A README that mixes an architecture decision with badges | One file can produce a mix of retain, skip, and review rows (`nocciolo:<path>#<section>`) |
 
 ```text
 nocciolo seed --dry-run --judge jev
-  document_id, path, heading, decision, score, confidence, heuristic-vs-jev
-  high-confidence rejects are skipped
+  document_id, path, heading, decision, score, confidence, kind, probabilities, heuristic-vs-jev
+  high-confidence rejects are skipped, including confident noise and style_pref
   low-confidence rows stay in review and are not retained
+  retained rows get stable knowledge:<kind> tags
   Hindsight retain runs only for the rows the gate keeps
 ```
 

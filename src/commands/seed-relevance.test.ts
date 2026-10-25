@@ -2,7 +2,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Judge, JudgeEvaluateInput, JudgeResult } from "../judge/types.js";
+import { KNOWLEDGE_KIND_IDS } from "../judge/knowledge-kinds.js";
+import type { ChoiceAnswer, Judge, JudgeEvaluateInput, JudgeResult } from "../judge/types.js";
 import type { ResolvedJudge } from "../judge/resolve.js";
 import type { HindsightClient } from "../providers/hindsight/client.js";
 import { seedManifestPath } from "../seeder/manifest.js";
@@ -54,11 +55,41 @@ The module boundary is a local-first architecture decision. We chose to keep the
 This generated changelog is a badge wall and a table of contents. The notes are a TODO pile, not a decision or a standard.
 `;
 
+function kindFor(text: string): { choice: string; confidence: number } {
+  if (/changelog|badge wall|table of contents/i.test(text)) {
+    return { choice: "noise", confidence: 0.95 };
+  }
+  if (/personal editor theme/i.test(text)) {
+    return { choice: "style_pref", confidence: 0.94 };
+  }
+  if (/workshop notes/i.test(text)) {
+    return { choice: "opinion", confidence: 0.44 };
+  }
+  if (/kind split/i.test(text)) {
+    return { choice: "historical_context", confidence: 0.46 };
+  }
+  if (/module boundary is a local-first/i.test(text)) {
+    return { choice: "architecture", confidence: 0.92 };
+  }
+  return { choice: "adr", confidence: 0.93 };
+}
+
+function kindAnswer(choice: string, confidence: number): ChoiceAnswer {
+  const probabilities: Record<string, number> = {};
+  const rest = KNOWLEDGE_KIND_IDS.filter((id) => id !== choice);
+  const share = rest.length === 0 ? 0 : (1 - confidence) / rest.length;
+  for (const id of KNOWLEDGE_KIND_IDS) {
+    probabilities[id] = id === choice ? confidence : share;
+  }
+  return { type: "choice", choice, probabilities, confidence };
+}
+
 function answersFor(text: string): JudgeResult {
   const ephemeral = /changelog|badge wall|table of contents/i.test(text);
   const uncertain = /workshop notes/i.test(text);
   const noul = uncertain ? 0.55 : ephemeral ? 0.05 : 0.96;
   const flipped = uncertain ? 0.55 : ephemeral ? 0.97 : 0.04;
+  const kind = kindFor(text);
   return {
     judgeId: "jev",
     model: "jev-1.13.0",
@@ -73,6 +104,7 @@ function answersFor(text: string): JudgeResult {
         probabilities: { "0": ephemeral ? 0.9 : 0.1 },
         confidence: uncertain ? 0.4 : 0.91,
       },
+      kind: kindAnswer(kind.choice, kind.confidence),
     },
   };
 }
@@ -142,11 +174,29 @@ describe("seed relevance gate", () => {
     });
   }
 
-  function retainedIds(client: { retain: ReturnType<typeof vi.fn> }): string[] {
+  function retainedItems(client: { retain: ReturnType<typeof vi.fn> }): Array<{
+    document_id: string;
+    tags: string[];
+    metadata: Record<string, string>;
+  }> {
     return client.retain.mock.calls.flatMap((call) => {
-      const request = call[1] as { items?: Array<{ document_id: string }> };
-      return (request.items ?? []).map((item) => item.document_id);
+      const request = call[1] as {
+        items?: Array<{
+          document_id: string;
+          tags?: string[];
+          metadata?: Record<string, string>;
+        }>;
+      };
+      return (request.items ?? []).map((item) => ({
+        document_id: item.document_id,
+        tags: item.tags ?? [],
+        metadata: item.metadata ?? {},
+      }));
     });
+  }
+
+  function retainedIds(client: { retain: ReturnType<typeof vi.fn> }): string[] {
+    return retainedItems(client).map((item) => item.document_id);
   }
 
   it("prints path, heading, decisions, scores, confidence, and heuristic-vs-jev on dry-run", async () => {
@@ -176,6 +226,9 @@ describe("seed relevance gate", () => {
     expect(output).toContain("in_scope:");
     expect(output).toContain("score: durability=");
     expect(output).toContain("confidence=");
+    expect(output).toContain("kind: adr confidence=0.93");
+    expect(output).toContain("probabilities:");
+    expect(output).toContain("adr=0.93");
     expect(output).toContain("decision:");
     expect(output).toMatch(/bank mission: Hold durable decisions for Fixture\./);
 
@@ -199,7 +252,17 @@ describe("seed relevance gate", () => {
       "is_ephemeral",
       "in_scope",
       "durability",
+      "kind",
     ]);
+    const kindQuestion = judge.calls[0]?.questions.kind;
+    expect(kindQuestion?.type).toBe("choice");
+    if (kindQuestion?.type === "choice") {
+      expect(kindQuestion.criteria.adr).toMatchObject({
+        what: expect.any(String),
+        not_for: expect.any(String),
+        examples: expect.any(Array),
+      });
+    }
     const state = judge.calls.find((call) => {
       const body = call.state as { path?: string };
       return body.path === "docs/adr/0001-local-bank.md";
@@ -241,6 +304,15 @@ describe("seed relevance gate", () => {
     ).toBe("review");
     expect(result.retained).toBe(ids.length);
     expect(ids.length).toBeGreaterThan(0);
+    const adr = retainedItems(client).find((item) =>
+      item.document_id.includes("docs/adr/0001-local-bank.md#"),
+    );
+    expect(adr?.document_id).toBe(
+      "nocciolo:docs/adr/0001-local-bank.md#decision",
+    );
+    expect(adr?.document_id).not.toContain("knowledge:");
+    expect(adr?.tags).toEqual(["nocciolo", "kind:docs", "knowledge:adr"]);
+    expect(adr?.metadata.knowledge_kind).toBe("adr");
   });
 
   it("keeps heuristic candidates when --judge jev is omitted", async () => {
@@ -262,6 +334,12 @@ describe("seed relevance gate", () => {
     expect(ids.some((id) => id.includes("docs/badges.md"))).toBe(true);
     expect(ids.some((id) => id.includes("docs/contents.md"))).toBe(true);
     expect(ids.some((id) => id.includes("docs/notes.md"))).toBe(true);
+    const adr = retainedItems(client).find((item) =>
+      item.document_id.includes("docs/adr/0001-local-bank.md#"),
+    );
+    expect(adr?.tags).toEqual(["nocciolo", "kind:docs", "knowledge:domain"]);
+    expect(adr?.tags).not.toContain("knowledge:adr");
+    expect(adr?.metadata.knowledge_kind).toBe("domain");
   });
 
   it("dry-run shows one row per README section and retains only the architecture section", async () => {
@@ -377,5 +455,61 @@ describe("seed relevance gate", () => {
     expect(result.relevance).toBeUndefined();
     expect(ids).toContain("nocciolo:README.md#architecture");
     expect(ids).not.toContain("nocciolo:README.md#changelog");
+  });
+
+  it("skips style preferences and holds an uncertain kind out of retain", async () => {
+    const root = await tempProject();
+    await writeFile(
+      join(root, "docs", "style.md"),
+      `# Preferences
+
+## Editor
+
+This section records a personal editor theme and a two-space indent in scratch notes. It mentions architecture and a standard so the keyword filter keeps it. It is not a project decision or invariant.
+`,
+      "utf8",
+    );
+    await writeFile(
+      join(root, "docs", "split.md"),
+      `# Context
+
+## Background
+
+This kind split section mentions architecture and a standard so the heuristic keeps it. It may be historical context. The paragraph is long enough to score as a candidate.
+`,
+      "utf8",
+    );
+    const judge = new ScriptedJudge();
+    const resolved: ResolvedJudge = {
+      judgeId: "jev",
+      confidence: 0.8,
+      strict: false,
+      judge,
+    };
+    const client = {
+      retain: vi.fn(async () => ({ success: true })),
+    } as unknown as HindsightClient & { retain: ReturnType<typeof vi.fn> };
+    captureLogs();
+
+    const result = await runSeed({
+      cwd: root,
+      resolvedJudge: resolved,
+      client,
+    });
+
+    const output = logs.join("\n");
+    expect(output).toContain("kind: style_pref confidence=0.94");
+    expect(output).toContain("style preference stays out of the company bank");
+    expect(output).toContain("kind: historical_context confidence=0.46");
+    expect(output).toContain("kind confidence below 0.80");
+    const actions = new Map(
+      result.relevance?.rows.map((row) => [row.fact.provenance.sourcePath, row.action]),
+    );
+    expect(actions.get("docs/style.md")).toBe("skip");
+    expect(actions.get("docs/split.md")).toBe("review");
+    const ids = retainedIds(client);
+    expect(ids.some((id) => id.includes("docs/style.md"))).toBe(false);
+    expect(ids.some((id) => id.includes("docs/split.md"))).toBe(false);
+    expect(ids.some((id) => id.includes("docs/adr/0001-local-bank.md"))).toBe(true);
   });
 });

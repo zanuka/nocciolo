@@ -19,10 +19,18 @@ export interface NoulQuestion {
   };
 }
 
+export interface StructuredChoiceCriterion {
+  what: string;
+  not_for: string;
+  examples: string[];
+}
+
+export type ChoiceCriterion = string | StructuredChoiceCriterion | null;
+
 export interface ChoiceQuestion {
   type: "choice";
   instructions: Instructions;
-  criteria: Record<string, string | null>;
+  criteria: Record<string, ChoiceCriterion>;
 }
 
 export interface ScoreQuestion {

@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { CandidateFact } from "../extractor/types.js";
 import type { Judge, JudgeResult } from "./types.js";
 import type { PreparedSeed } from "../seeder/prepare.js";
+import { KNOWLEDGE_KIND_IDS, knowledgeKindById } from "./knowledge-kinds.js";
 import {
   applyRelevanceRows,
   decideRelevance,
+  formatRelevanceLines,
   judgeSeedRelevance,
   noulBand,
   relevanceQuestions,
@@ -59,6 +61,24 @@ function fact(input: {
   };
 }
 
+function kindAnswer(choice: string, confidence: number): JudgeResult["answers"][string] {
+  const probabilities: Record<string, number> = {};
+  const rest = KNOWLEDGE_KIND_IDS.filter((id) => id !== choice);
+  const share = rest.length === 0 ? 0 : (1 - confidence) / rest.length;
+  for (const id of KNOWLEDGE_KIND_IDS) {
+    probabilities[id] = id === choice ? confidence : share;
+  }
+  if (!KNOWLEDGE_KIND_IDS.includes(choice as (typeof KNOWLEDGE_KIND_IDS)[number])) {
+    probabilities[choice] = confidence;
+  }
+  return {
+    type: "choice",
+    choice,
+    probabilities,
+    confidence,
+  };
+}
+
 function jevResult(input: {
   isDurable: number;
   isEphemeral: number;
@@ -66,6 +86,7 @@ function jevResult(input: {
   durability?: number;
   durabilityConfidence?: number;
   fellBack?: boolean;
+  kind?: { choice: string; confidence: number };
 }): JudgeResult {
   return {
     judgeId: "jev",
@@ -81,6 +102,9 @@ function jevResult(input: {
         probabilities: { "3": 1 },
         confidence: input.durabilityConfidence ?? 0.91,
       },
+      ...(input.kind !== undefined
+        ? { kind: kindAnswer(input.kind.choice, input.kind.confidence) }
+        : {}),
     },
   };
 }
@@ -93,7 +117,19 @@ describe("relevanceQuestions", () => {
       "is_ephemeral",
       "in_scope",
       "durability",
+      "kind",
     ]);
+    const kind = questions.kind;
+    expect(kind?.type).toBe("choice");
+    if (kind?.type === "choice") {
+      const adr = kind.criteria.adr;
+      expect(adr).toEqual(knowledgeKindById("adr")?.criteria);
+      expect(adr).toMatchObject({
+        what: expect.any(String),
+        not_for: expect.any(String),
+        examples: expect.any(Array),
+      });
+    }
     expect(questions.durability?.type).toBe("score");
     if (questions.durability?.type === "score") {
       expect(questions.durability.criteria).toHaveLength(5);
@@ -242,6 +278,7 @@ describe("judgeSeedRelevance", () => {
       "is_ephemeral",
       "in_scope",
       "durability",
+      "kind",
     ]);
     expect(calls[0]?.state).toEqual({
       path: "docs/adr/0001-local-bank.md",
@@ -436,5 +473,144 @@ describe("judgeSeedRelevance", () => {
     expect(applied.prepared.sources[0]?.facts.map((item) => item.id)).toEqual([
       "nocciolo:README.md#changelog",
     ]);
+  });
+});
+
+describe("knowledge kind on the relevance call", () => {
+  const durable = {
+    isDurable: 0.96,
+    isEphemeral: 0.04,
+    inScope: 0.93,
+    durability: 4,
+  };
+
+  it("prints kind and probabilities on a dry-run row", () => {
+    const decision = decideRelevance(
+      jevResult({ ...durable, kind: { choice: "adr", confidence: 0.93 } }),
+      0.8,
+    );
+    const lines = formatRelevanceLines({
+      rows: [
+        {
+          fact: fact({
+            id: "nocciolo:docs/adr/0001-local-bank.md#document",
+            path: "docs/adr/0001-local-bank.md",
+            title: "ADR 0001",
+            content: ADR_TEXT,
+          }),
+          heuristicKept: true,
+          ...decision,
+        },
+      ],
+      confidence: 0.8,
+      dryRun: true,
+    });
+    const output = lines.join("\n");
+    expect(output).toContain("[dry-run] kind: adr confidence=0.93");
+    expect(output).toContain("[dry-run] probabilities:");
+    expect(output).toContain("adr=0.93");
+    expect(output).toContain("noise=");
+    expect(decision.bankKind).toEqual({
+      id: "adr",
+      tags: ["knowledge:adr"],
+    });
+  });
+
+  it("skips a confident noise kind even when relevance would retain", () => {
+    const decision = decideRelevance(
+      jevResult({ ...durable, kind: { choice: "noise", confidence: 0.96 } }),
+      0.8,
+    );
+    expect(decision.action).toBe("skip");
+    expect(decision.reason).toBe("knowledge kind noise");
+    expect(decision.bankKind).toBeUndefined();
+  });
+
+  it("skips a confident style preference instead of retaining it in the company bank", () => {
+    const decision = decideRelevance(
+      jevResult({
+        ...durable,
+        kind: { choice: "style_pref", confidence: 0.91 },
+      }),
+      0.8,
+    );
+    expect(decision.action).toBe("skip");
+    expect(decision.reason).toBe(
+      "style preference stays out of the company bank",
+    );
+    expect(decision.kind?.probabilities.style_pref).toBeCloseTo(0.91);
+  });
+
+  it("holds a low-confidence kind for review and does not stamp tags", () => {
+    const decision = decideRelevance(
+      jevResult({
+        ...durable,
+        kind: { choice: "adr", confidence: 0.46 },
+      }),
+      0.8,
+    );
+    expect(decision.action).toBe("review");
+    expect(decision.reason).toBe("kind confidence below 0.80");
+    expect(decision.bankKind).toBeUndefined();
+  });
+
+  it("keeps an ephemeral skip when the kind is also noise", () => {
+    const decision = decideRelevance(
+      jevResult({
+        isDurable: 0.05,
+        isEphemeral: 0.97,
+        inScope: 0.9,
+        durability: 0,
+        kind: { choice: "noise", confidence: 0.99 },
+      }),
+      0.8,
+    );
+    expect(decision.action).toBe("skip");
+    expect(decision.reason).toBe("ephemeral and not durable");
+    expect(decision.kind?.choice).toBe("noise");
+  });
+
+  it("stamps retained facts with the catalog tags", () => {
+    const decision = decideRelevance(
+      jevResult({
+        ...durable,
+        kind: { choice: "architecture", confidence: 0.92 },
+      }),
+      0.8,
+    );
+    const architecture = fact({
+      id: "nocciolo:README.md#architecture",
+      path: "README.md",
+      title: "Architecture",
+      content: ADR_TEXT,
+    });
+    const prepared: PreparedSeed = {
+      projectRoot: "/tmp/p",
+      bankId: "fixture",
+      sources: [
+        {
+          relativePath: "README.md",
+          contentHash: "hash",
+          facts: [architecture],
+          heuristicSkips: [],
+          skipped: false,
+          unchanged: false,
+        },
+      ],
+      factsToRetain: [architecture],
+      skippedUnchanged: 0,
+      skippedEmpty: 0,
+      skippedTombstoned: 0,
+    };
+    const applied = applyRelevanceRows(prepared, [
+      { fact: architecture, heuristicKept: true, ...decision },
+    ]);
+    expect(applied.prepared.factsToRetain[0]?.bankKind).toEqual({
+      id: "architecture",
+      tags: ["knowledge:architecture"],
+    });
+    expect(applied.prepared.factsToRetain[0]?.id).toBe(
+      "nocciolo:README.md#architecture",
+    );
   });
 });

@@ -27,7 +27,31 @@ describe("toRetainItems", () => {
         commit: "deadbeef",
         knowledge_kind: "overview",
       },
+      tags: ["nocciolo", "kind:readme", "knowledge:overview"],
     });
+  });
+
+  it("uses catalog tags for a judged kind and keeps the document id", () => {
+    const fact: CandidateFact = {
+      id: "nocciolo:docs/adr/0001-local-bank.md#document",
+      title: "ADR 0001",
+      content: "We chose a local bank.",
+      knowledgeKind: "decision",
+      score: 10,
+      bankKind: { id: "adr", tags: ["knowledge:adr"] },
+      provenance: {
+        sourcePath: "docs/adr/0001-local-bank.md",
+        kind: "adr",
+      },
+    };
+
+    const items = toRetainItems([fact]);
+    expect(items[0]?.document_id).toBe(
+      "nocciolo:docs/adr/0001-local-bank.md#document",
+    );
+    expect(items[0]?.document_id).not.toContain("knowledge:");
+    expect(items[0]?.metadata?.knowledge_kind).toBe("adr");
+    expect(items[0]?.tags).toEqual(["nocciolo", "kind:adr", "knowledge:adr"]);
   });
 });
 

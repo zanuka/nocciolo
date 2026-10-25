@@ -513,7 +513,7 @@ function printSeedPlan(input: {
       console.log(`  ${source.relativePath} (${source.facts.length} fact(s))`);
       for (const fact of source.facts) {
         console.log(
-          `    - [${fact.knowledgeKind} score=${fact.score}] ${fact.title}`,
+          `    - [${fact.bankKind?.id ?? fact.knowledgeKind} score=${fact.score}] ${fact.title}`,
         );
         console.log(`      id: ${fact.id}`);
         const excerpt = fact.content.replace(/\s+/g, " ").trim().slice(0, 100);

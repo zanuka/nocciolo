@@ -75,7 +75,9 @@ Under Hindsight’s default `all_strict`, a multi-tag model only refreshes from 
 3. Reserve customer/team/user scopes (`team:platform`, `customer:acme`) for multi-tenant or multi-team banks: not the default single-repo project template.
 4. Changing model tags without retagging memories (or changing `tags_match`) is a breaking refresh change.
 
-Entity labels (`knowledge_kind`, `durability`) on the bank template are **not** the same as memory tags. Labels guide extraction structure; tags drive visibility and refresh scope. Seed maps `knowledge_kind` → `knowledge:<kind>` so models can filter on that vocabulary.
+Entity labels (`knowledge_kind`, `durability`) on the bank template are **not** the same as memory tags. Labels guide extraction structure; tags drive visibility and refresh scope. Offline seed maps the heuristic `knowledge_kind` to `knowledge:<kind>`.
+`seed --judge jev` replaces that label with the taxonomy id from `src/judge/knowledge-kinds.json` and stamps `knowledge:<id>`.
+Starter models that list only `knowledge:decision` do not see a section tagged `knowledge:adr`.
 
 ---
 

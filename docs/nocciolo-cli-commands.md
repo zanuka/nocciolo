@@ -181,11 +181,14 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 | `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
 `--judge jev` runs the relevance gate once per section (`nocciolo:<path>#<section>`).
-The dry-run prints `document_id`, path, heading, decisions, score, confidence, and heuristic-vs-jev, and it does not call Hindsight.
+The dry-run prints `document_id`, path, heading, decisions, score, confidence, knowledge kind, probabilities, and heuristic-vs-jev, and it does not call Hindsight.
 One file can mix retain and skip.
 Headings the heuristic would drop are judged only when this flag is on.
 A confident reject is left out of retain.
-A score below `--confidence` is listed as review and is not retained.
+That includes a confident `noise` kind and a confident `style_pref` (personal taste stays out of the company bank).
+A score or kind below `--confidence` is listed as review and is not retained.
+Retained sections receive the stable tags for that kind (`knowledge:<kind>`).
+`document_id` stays `nocciolo:<path>#<section>`.
 Omit the flag to keep heuristics only.
 Incremental state lives in `.nocciolo/local/seed-manifest.json` (gitignored).
 Stable `document_id`s upsert on re-seed.

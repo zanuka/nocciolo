@@ -128,7 +128,7 @@ Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
 Tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
 The checklist groups those tickets.
 The [issue index](#jev-issue-index) lists the epic.
-JEV-1 through JEV-5 are done in the checklist.
+JEV-1 through JEV-6 are done in the checklist.
 JEV-1 through JEV-5 are closed on GitHub.
 
 - [x] Product rule: `docs/jev.md` states Jev is a judge, not a backend (opt-in, offline fallback, do-not-build, confidence gate, state budget). ([JEV-1](https://github.com/zanuka/nocciolo/issues/20))
@@ -136,7 +136,8 @@ JEV-1 through JEV-5 are closed on GitHub.
 - [x] State sanitization before TypeSafe calls (secrets, denylist, size). `buildJevState` skips denylisted paths and inline secrets, caps the excerpt, and `JevJudge` refuses to POST a payload that fails those checks. ([JEV-3](https://github.com/zanuka/nocciolo/issues/22))
 - [x] Relevance gate before retain: after the heuristic filter, `seed --judge jev` asks `is_durable`, `is_ephemeral`, `in_scope`, and a durability score in one call. High-confidence rejects are skipped. Scores below `--confidence` stay in the dry-run review queue and are not retained. Without `--judge jev`, seed is unchanged. ([JEV-4](https://github.com/zanuka/nocciolo/issues/30))
 - [x] Section-level keep/skip: the same questions run once per `nocciolo:<path>#<section>`. Dry-run prints one row per document id, so one README can retain an architecture section and skip a changelog section. Headings the heuristic would drop are judged only when `--judge jev` is on. ([JEV-5](https://github.com/zanuka/nocciolo/issues/36))
-- [ ] Seed keep/skip continued: knowledge-kind, contradiction against existing observations, citation support, and a PII or secret second pass. `seed --dry-run --judge jev` will grow past the relevance gate. ([JEV-6](https://github.com/zanuka/nocciolo/issues/37), [JEV-7](https://github.com/zanuka/nocciolo/issues/38), [JEV-8](https://github.com/zanuka/nocciolo/issues/39), [JEV-9](https://github.com/zanuka/nocciolo/issues/40))
+- [x] Knowledge-kind taxonomy: the same `seed --judge jev` call asks a `kind` choice. Criteria (`what`, `not_for`, `examples`) live in `src/judge/knowledge-kinds.json`. Dry-run prints the kind and probabilities. Confident `noise` and `style_pref` are not retained. Other confident kinds stamp `knowledge:<kind>`. `document_id` stays `nocciolo:<path>#<section>`. ([JEV-6](https://github.com/zanuka/nocciolo/issues/37))
+- [ ] Seed keep/skip continued: contradiction against existing observations, citation support, and a PII or secret second pass. ([JEV-7](https://github.com/zanuka/nocciolo/issues/38), [JEV-8](https://github.com/zanuka/nocciolo/issues/39), [JEV-9](https://github.com/zanuka/nocciolo/issues/40))
 - [ ] Store and retain budget: propose allowlist adoption for new durable files, rank candidates under a retain budget, and gate `store` edits on durability. The operator still confirms. ([JEV-10](https://github.com/zanuka/nocciolo/issues/41), [JEV-11](https://github.com/zanuka/nocciolo/issues/50), [JEV-12](https://github.com/zanuka/nocciolo/issues/31))
 - [ ] Optional `--judge jev` prune annotation: score items that are still on disk but no longer true (outdated / irrelevant / contradicted). Jev annotates only; Nocciolo deletes after confirm. Low confidence is listed and left unchecked. ([JEV-14](https://github.com/zanuka/nocciolo/issues/32), [JEV-15](https://github.com/zanuka/nocciolo/issues/43), [JEV-16](https://github.com/zanuka/nocciolo/issues/51), [JEV-17](https://github.com/zanuka/nocciolo/issues/52))
 - [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. ([JEV-18](https://github.com/zanuka/nocciolo/issues/23), [JEV-19](https://github.com/zanuka/nocciolo/issues/24), [JEV-20](https://github.com/zanuka/nocciolo/issues/53), [JEV-21](https://github.com/zanuka/nocciolo/issues/54))
@@ -154,7 +155,7 @@ Deferred (still tracked under the Jev epic; land with later phases):
 ### Jev issue index
 
 Issue index as of 25 October 2026.
-JEV-1 through JEV-5 are done in the checklist.
+JEV-1 through JEV-6 are done in the checklist.
 JEV-1 through JEV-5 are closed on GitHub.
 Open [`jev`-labeled issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) are the rest of the table.
 Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is superseded by [#58](https://github.com/zanuka/nocciolo/issues/58).

@@ -82,7 +82,10 @@ flowchart TD
   extract --> hashCheck{Content hash unchanged?}
   hashCheck -->|yes and not --force| skip[Skip source]
   hashCheck -->|no or --force| candidates[Candidates to retain]
-  candidates --> dry{--dry-run?}
+  candidates --> judge{--judge jev?}
+  judge -->|no| dry{--dry-run?}
+  judge -->|yes| relevance[Relevance gate]
+  relevance --> dry
   dry -->|yes| preview[Print candidates plus provenance]
   dry -->|no| retain[POST /v1/default/banks/id/memories]
   retain --> manifest[Write .nocciolo/local/seed-manifest.json]
@@ -99,7 +102,7 @@ flowchart TD
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
-| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; Hindsight code must not import TypeSafe |
+| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; `seed --judge jev` runs the relevance gate before retain; Hindsight code must not import TypeSafe |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
@@ -133,7 +136,7 @@ node dist/cli.js mcp --write --dry-run
 | `share` | Write/validate `.nocciolo/share.json` deployment profile (local/LAN/VPN/public/cloud) |
 | `docs list` | Flat bank document inventory for scripts |
 | `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`); skipped under Cloud profile |
-| `seed --dry-run` | Scan + extract; print candidates; **no** API calls |
+| `seed --dry-run` | Scan + extract; print candidates; no Hindsight calls. `--judge jev` also prints the relevance gate and calls TypeSafe |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
 | `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
 | `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path |
@@ -389,7 +392,7 @@ node dist/cli.js --help
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
 - Single bank per project config (multi-bank CLI is later; one Docker server can already host many banks)
-- Optional Jev judgment layer (Phase 7): judge port shipped; keep/skip and prune annotation not wired yet
+- Optional Jev judgment layer (Phase 7): seed relevance gate is shipped. Knowledge-kind, contradiction, citation, secret second pass, and prune annotation are not wired yet
 
 ## Related docs
 

@@ -5,6 +5,9 @@
 Product rule (judge, not backend): [jev.md](./jev.md).
 Store and update flow diagrams: [jev-diagrams.md](./jev-diagrams.md).
 
+The seed relevance gate is available: `nocciolo seed --dry-run --judge jev` ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
+The rest of this page describes the wider layer that is still planned.
+
 This is planned work:
 
 - [Phase 7](../ROADMAP.md) on the roadmap

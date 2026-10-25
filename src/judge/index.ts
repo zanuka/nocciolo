@@ -17,6 +17,22 @@ export {
 } from "./jev.js";
 export { HeuristicJudge, heuristicAnswerFor } from "./heuristic.js";
 export {
+  applyRelevanceRows,
+  decideRelevance,
+  formatRelevanceLines,
+  judgeSeedRelevance,
+  noulBand,
+  relevanceQuestions,
+} from "./relevance.js";
+export type {
+  HeuristicVsJev,
+  NoulBand,
+  RelevanceAction,
+  RelevanceReport,
+  RelevanceRow,
+  RelevanceState,
+} from "./relevance.js";
+export {
   JEV_CHARS_PER_TOKEN,
   JEV_DOCUMENT_ID_MAX_CHARS,
   JEV_HEADING_MAX_CHARS,

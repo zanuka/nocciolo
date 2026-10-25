@@ -4,7 +4,14 @@ import {
   resolveProjectConnection,
 } from "../config/connection.js";
 import { bankTemplatePath } from "../config/paths.js";
-import { createJudge } from "../judge/index.js";
+import {
+  applyRelevanceRows,
+  createJudge,
+  formatRelevanceLines,
+  judgeSeedRelevance,
+  type RelevanceReport,
+  type ResolvedJudge,
+} from "../judge/index.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
   formatPercent,
@@ -44,6 +51,8 @@ export interface SeedOptions {
   judge?: string;
   confidence?: number;
   strict?: boolean;
+  resolvedJudge?: ResolvedJudge;
+  client?: HindsightClient;
 }
 
 export interface SeedResult {
@@ -53,6 +62,7 @@ export interface SeedResult {
   retained: number;
   async: boolean;
   failed: number;
+  relevance?: RelevanceReport;
 }
 
 export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
@@ -62,13 +72,15 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   const asyncRetain = options.async ?? false;
   const refreshMentalModels = options.refreshMentalModels ?? false;
 
-  createJudge({
-    ...(options.judge !== undefined ? { judge: options.judge } : {}),
-    ...(options.confidence !== undefined
-      ? { confidence: options.confidence }
-      : {}),
-    ...(options.strict !== undefined ? { strict: options.strict } : {}),
-  });
+  const resolved =
+    options.resolvedJudge ??
+    createJudge({
+      ...(options.judge !== undefined ? { judge: options.judge } : {}),
+      ...(options.confidence !== undefined
+        ? { confidence: options.confidence }
+        : {}),
+      ...(options.strict !== undefined ? { strict: options.strict } : {}),
+    });
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
@@ -98,12 +110,41 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     );
     console.log("");
   }
-  const prepared = await prepareSeed({
+  let prepared = await prepareSeed({
     projectRoot,
     bankId: config.bankId,
     force,
     ...(config.scanner !== undefined ? { scanner: config.scanner } : {}),
   });
+
+  let relevance: RelevanceReport | undefined;
+  if (resolved.judgeId === "jev" && prepared.factsToRetain.length > 0) {
+    const mission = await loadRetainMission(projectRoot);
+    const rows = await judgeSeedRelevance({
+      facts: prepared.factsToRetain,
+      judge: resolved.judge,
+      confidence: resolved.confidence,
+      ...(mission !== undefined ? { mission } : {}),
+    });
+    const applied = applyRelevanceRows(prepared, rows);
+    prepared = applied.prepared;
+    relevance = {
+      confidence: resolved.confidence,
+      rows,
+      settleEmptyPaths: applied.settleEmptyPaths,
+      reopenPaths: applied.reopenPaths,
+      ...(mission !== undefined ? { mission } : {}),
+    };
+    for (const line of formatRelevanceLines({
+      rows,
+      confidence: resolved.confidence,
+      dryRun,
+      ...(mission !== undefined ? { mission } : {}),
+    })) {
+      console.log(line);
+    }
+    console.log("");
+  }
 
   printSeedPlan({
     prepared,
@@ -132,13 +173,16 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       retained: 0,
       async: asyncRetain,
       failed: 0,
+      ...(relevance !== undefined ? { relevance } : {}),
     };
   }
 
-  const client = new HindsightClient({
-    baseUrl,
-    ...(apiKey !== undefined ? { apiKey } : {}),
-  });
+  const client =
+    options.client ??
+    new HindsightClient({
+      baseUrl,
+      ...(apiKey !== undefined ? { apiKey } : {}),
+    });
 
   let retainedIds = new Set<string>();
   let failed = 0;
@@ -156,33 +200,45 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     retainedIds = retainResult.retainedIds;
     failed = retainResult.failed;
 
-    const previous =
-      (await loadSeedManifest(projectRoot)) ??
-      createEmptyManifest(config.bankId);
-    const manifest = nextManifest(
-      previous,
-      config.bankId,
-      prepared,
-      retainedIds,
-    );
-    await saveSeedManifest(projectRoot, manifest);
-    if (retainedIds.size > 0) {
-      await clearTombstonesForIds(projectRoot, retainedIds);
-    }
-
     console.log("");
     if (retainedIds.size > 0) {
       console.log(
         `Retained ${retainedIds.size} item(s)${asyncRetain ? " (async)" : ""}${failed > 0 ? `, ${failed} failed` : ""}.`,
       );
+    } else {
+      console.log("Nothing was successfully retained.");
+    }
+  }
+
+  if (shouldPersistSeedManifest(retainedIds, relevance)) {
+    await persistSeedManifest({
+      projectRoot,
+      bankId: config.bankId,
+      prepared,
+      retainedIds,
+      ...(relevance !== undefined ? { relevance } : {}),
+    });
+    if (retainedIds.size > 0) {
       console.log(
         "Incremental state saved under .nocciolo/local/seed-manifest.json",
       );
       console.log(
-        "Hindsight may still run consolidation in the background — safe to close the terminal after retain finishes.",
+        "Hindsight may still run consolidation in the background. It is safe to close the terminal after retain finishes.",
       );
-    } else {
-      console.log("Nothing was successfully retained.");
+    }
+    if (
+      retainedIds.size === 0 &&
+      relevance !== undefined &&
+      relevance.settleEmptyPaths.length > 0
+    ) {
+      console.log(
+        "Recorded Jev skip(s) in .nocciolo/local/seed-manifest.json so unchanged files are not judged again.",
+      );
+    }
+    if (relevance !== undefined && relevance.reopenPaths.length > 0) {
+      console.log(
+        "Left low-confidence candidates out of the seed manifest so the next seed judges them again.",
+      );
     }
   }
 
@@ -201,7 +257,63 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     retained: retainedIds.size,
     async: asyncRetain,
     failed,
+    ...(relevance !== undefined ? { relevance } : {}),
   };
+}
+
+async function loadRetainMission(
+  projectRoot: string,
+): Promise<string | undefined> {
+  const templatePath = bankTemplatePath(projectRoot);
+  if (!(await pathExists(templatePath))) {
+    return undefined;
+  }
+  const template = await readJsonFile<HindsightBankTemplate>(templatePath);
+  const mission = template.bank?.retain_mission?.trim();
+  return mission ? mission : undefined;
+}
+
+function shouldPersistSeedManifest(
+  retainedIds: Set<string>,
+  relevance: RelevanceReport | undefined,
+): boolean {
+  if (retainedIds.size > 0) {
+    return true;
+  }
+  if (relevance === undefined) {
+    return false;
+  }
+  return (
+    relevance.settleEmptyPaths.length > 0 || relevance.reopenPaths.length > 0
+  );
+}
+
+async function persistSeedManifest(input: {
+  projectRoot: string;
+  bankId: string;
+  prepared: PreparedSeed;
+  retainedIds: Set<string>;
+  relevance?: RelevanceReport;
+}): Promise<void> {
+  const previous =
+    (await loadSeedManifest(input.projectRoot)) ??
+    createEmptyManifest(input.bankId);
+  const manifest = nextManifest(
+    previous,
+    input.bankId,
+    input.prepared,
+    input.retainedIds,
+    input.relevance
+      ? {
+          settleEmptyPaths: new Set(input.relevance.settleEmptyPaths),
+          reopenPaths: new Set(input.relevance.reopenPaths),
+        }
+      : undefined,
+  );
+  await saveSeedManifest(input.projectRoot, manifest);
+  if (input.retainedIds.size > 0) {
+    await clearTombstonesForIds(input.projectRoot, input.retainedIds);
+  }
 }
 
 async function runPostSeedMentalModelRefresh(input: {

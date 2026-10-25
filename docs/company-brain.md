@@ -186,10 +186,11 @@ A Hindsight bank today is set up, seeded, and maintained without it.
 
 ---
 
-## How Jev will sharpen the bank (planned)
+## How Jev sharpens the bank
 
-[Jev](https://docs.typesafe.ai/introduction) (TypeSafe System One) is the planned judgment layer for this config.
-It is [Phase 7](../ROADMAP.md) on the roadmap.
+[Jev](https://docs.typesafe.ai/introduction) (TypeSafe System One) is an optional judgment layer for this config.
+The seed relevance gate is available.
+The rest of the layer is still [Phase 7](../ROADMAP.md).
 Product rule: [jev.md](./jev.md).
 It is optional.
 Hindsight stays the memory bank.
@@ -204,7 +205,7 @@ A low score stays a preview until someone confirms.
 
 | Decision | Today | With Jev |
 |----------|-------|----------|
-| What to retain | `seed --dry-run` lists a heuristic keep/skip. | The same preview adds section-level scores: relevance, knowledge kind, contradiction with observations already in the bank, whether the section can be cited, and a second pass for secrets or PII. |
+| What to retain | `seed --dry-run` lists a heuristic keep/skip. | `seed --dry-run --judge jev` adds a relevance decision, a durability score, and confidence for each section. Knowledge kind, contradiction, citation, and a secret second pass are still planned. |
 | What to spend retain on | Every candidate that passes is eligible. | Candidates are ranked under a retain budget, so a large diff retains the durable sections first. |
 | What `store` adopts | You pick every new file. The command never adopts one on its own. | Jev can propose allowlist entries, and it can hold an edit that does not look durable. You still confirm before anything is retained. |
 | Whether the template fits the repo | `configure` writes mission, directives, and starter mental models for you to review in git. | Jev scores that draft, suggests how aggressive extraction should be, proposes mental-model questions, and assigns tags the same way across sections. The prose stays in the template you commit. |

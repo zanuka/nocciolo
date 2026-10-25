@@ -5,7 +5,9 @@ How the opt-in Jev judge sits on Nocciolo's retain path when you store **new** d
 Product rule: [jev.md](./jev.md).
 Narrative design: [jev-integration.md](./jev-integration.md).
 Judge port: `src/judge/` ([JEV-2](https://github.com/zanuka/nocciolo/issues/21)).
-Section keep/skip and `store` durability gates are planned ([JEV-4](https://github.com/zanuka/nocciolo/issues/30) onward); the diagrams show the intended operator experience with `--judge jev`.
+The seed relevance gate is shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
+`store` durability gates are still planned ([JEV-10](https://github.com/zanuka/nocciolo/issues/41), [JEV-12](https://github.com/zanuka/nocciolo/issues/31)).
+The diagrams show that intended `store` experience with `--judge jev`.
 
 Without `--judge jev`, solid boxes still run. Dotted Jev steps are skipped and offline heuristics decide keep/skip.
 

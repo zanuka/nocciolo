@@ -418,7 +418,7 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 
 | Spend (opt-in) | Benefit | First-slice? |
 |---|---|---|
-| `seed --dry-run --judge jev` | See keep/skip + scores before any retain | Yes (JEV-4, JEV-5) |
+| `seed --dry-run --judge jev` | See keep/skip + scores before any retain | Shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)). Mixed retain and skip inside one file continues in [JEV-5](https://github.com/zanuka/nocciolo/issues/36) |
 | `seed --judge jev` | Skip high-confidence junk; review the rest | Yes |
 | MCP retain gate | Stop session fluff entering the bank | Yes (JEV-22) |
 | Golden-set eval | Know whether Jev beats heuristics; improve offline path | Yes (JEV-34) |
@@ -429,6 +429,7 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 | Share safety gate | Extra check before `public` | After, with Phase 5 profiles |
 
 Foundation work (JEV-1–3) has **no TypeSafe cost**. It is documentation, a `Judge` port, and sanitization so the later flags cannot leak secrets or become a default.
+[JEV-4](https://github.com/zanuka/nocciolo/issues/30) is the first call that spends input tokens, one section at a time.
 
 ---
 

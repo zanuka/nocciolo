@@ -73,7 +73,7 @@ See [graphiti-integration.md](./graphiti-integration.md) product rule.
 
 Bounded decisions where a typed answer plus confidence is enough:
 
-- Section relevance and keep/skip before retain
+- Section relevance and keep/skip before retain (shipped on `seed --judge jev`)
 - Knowledge-kind, contradiction, citation support, PII / secret second pass
 - Seed priority and retain budget; `store` allowlist proposals and durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)

@@ -180,7 +180,11 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 | `--confidence <n>` | Minimum confidence to apply a Jev decision (default `0.8`; see [jev.md](./jev.md)) |
 | `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
-Keep/skip scoring with `--judge jev` is not wired yet (judge port only).
+`--judge jev` runs the relevance gate on candidates that already passed the heuristic filter.
+The dry-run prints path, heading, decisions, score, confidence, and heuristic-vs-jev, and it does not call Hindsight.
+A confident reject is left out of retain.
+A score below `--confidence` is listed as review and is not retained.
+Omit the flag to keep heuristics only.
 Incremental state lives in `.nocciolo/local/seed-manifest.json` (gitignored).
 Stable `document_id`s upsert on re-seed.
 When `.nocciolo/config.json` has `scanner.include`, that glob set replaces the default README / docs / ADR walk for this command and for `store`. `scanner.exclude` and `scanner.extensions` apply either way. Omit `scanner` to keep the default. Secrets paths stay denied.

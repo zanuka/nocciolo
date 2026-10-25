@@ -16,9 +16,10 @@ This is planned work:
 
 ## Why
 
-**Spend retain on durable knowledge.** Hindsight retain is the expensive step. Heuristics already drop a lot of noise, and changelogs, tables of contents, and boilerplate still get through often enough to matter. Jev scores a section before that spend:
+**Spend retain on durable knowledge.** Hindsight retain is the expensive step. Heuristics already drop a lot of noise, and changelogs, tables of contents, and boilerplate still get through often enough to matter. Jev scores a section before that spend.
+The relevance questions (`is_durable`, `is_ephemeral`, `in_scope`, and the durability score) run on `seed --judge jev` today.
+These checks are still planned:
 
-- whether it is relevant
 - what kind of knowledge it is
 - whether it contradicts observations already in the bank
 - whether a later reader can cite it

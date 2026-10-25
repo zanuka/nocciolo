@@ -126,7 +126,9 @@ Secrets and denylisted paths stay on the machine.
 Product rule: [docs/jev.md](./docs/jev.md).
 Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
 Tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
-The checklist groups those tickets; the [issue index](#jev-issue-index) lists every open GitHub issue.
+The checklist groups those tickets.
+The [issue index](#jev-issue-index) lists the epic.
+JEV-1 through JEV-4 are closed.
 
 - [x] Product rule: `docs/jev.md` states Jev is a judge, not a backend (opt-in, offline fallback, do-not-build, confidence gate, state budget). ([JEV-1](https://github.com/zanuka/nocciolo/issues/20))
 - [x] Judge port: `Judge` interface (`off` / `heuristic` / `jev`), `--judge` / `--confidence` / `--strict` on seed/store/prune, TypeSafe HTTP client with offline fallback. Missing key with `--judge jev` is a hard error; network/429/5xx fall back to heuristics unless `--strict`. Default path makes no TypeSafe calls. ([JEV-2](https://github.com/zanuka/nocciolo/issues/21))
@@ -149,16 +151,18 @@ Deferred (still tracked under the Jev epic; land with later phases):
 
 ### Jev issue index
 
-Open [`jev`-labeled issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) as of 10 October 2026.
+Issue index as of 24 October 2026.
+JEV-1 through JEV-4 are closed.
+Open [`jev`-labeled issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) are the rest of the table.
 Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is superseded by [#58](https://github.com/zanuka/nocciolo/issues/58).
 
 | ID | Issue | Title |
 |----|-------|-------|
 | JEV-0 | [#58](https://github.com/zanuka/nocciolo/issues/58) | Optional Jev judgment layer for Nocciolo (epic) |
-| JEV-1 | [#20](https://github.com/zanuka/nocciolo/issues/20) | Product rule: Jev is a judge, not a backend |
-| JEV-2 | [#21](https://github.com/zanuka/nocciolo/issues/21) | Judge interface, CLI flags, and offline fallback |
-| JEV-3 | [#22](https://github.com/zanuka/nocciolo/issues/22) | Sanitize Jev state (secrets, denylist, size) |
-| JEV-4 | [#30](https://github.com/zanuka/nocciolo/issues/30) | Relevance gate before retain |
+| JEV-1 | [#20](https://github.com/zanuka/nocciolo/issues/20) | Product rule: Jev is a judge, not a backend (closed) |
+| JEV-2 | [#21](https://github.com/zanuka/nocciolo/issues/21) | Judge interface, CLI flags, and offline fallback (closed) |
+| JEV-3 | [#22](https://github.com/zanuka/nocciolo/issues/22) | Sanitize Jev state (secrets, denylist, size) (closed) |
+| JEV-4 | [#30](https://github.com/zanuka/nocciolo/issues/30) | Relevance gate before retain (closed) |
 | JEV-5 | [#36](https://github.com/zanuka/nocciolo/issues/36) | Section-level keep/skip (not file-level) |
 | JEV-6 | [#37](https://github.com/zanuka/nocciolo/issues/37) | Knowledge-kind taxonomy |
 | JEV-7 | [#38](https://github.com/zanuka/nocciolo/issues/38) | Contradiction check against existing observations |

@@ -36,7 +36,7 @@ Agents inherit shared context instead of rediscovering it.
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
-- **May add an optional Jev judgment layer (planned)** for bounded decisions around seeding, recall, prune, and routing: see [Jev (planned)](#jev-planned) and [Jev integration](./docs/jev-integration.md)
+- **Adds an optional Jev judgment layer** for bounded decisions around seeding, recall, prune, and routing. The seed relevance gate is available with `--judge jev`. Recall, prune annotation, and routing are still planned: see [Jev](#jev) and [Jev integration](./docs/jev-integration.md)
 - **Emits** the configs and MCP snippets needed to wire the bank into Cursor, Claude Code, Roo, and other agent harnesses
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
@@ -415,24 +415,32 @@ It will not install or run Graphiti for you.
 
 Full design: [docs/graphiti-integration.md](./docs/graphiti-integration.md). Tracked under Phase 8 in the [roadmap](./ROADMAP.md).
 
-### Jev (planned)
+### Jev
 
-Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is planned as an optional judgment layer, not a memory backend or CLI provider. Hindsight remains the default, and the current offline heuristics remain the path when Jev is not enabled.
+Jev ([TypeSafe System One](https://docs.typesafe.ai/introduction)) is an optional judgment layer, not a memory backend or CLI provider.
+Hindsight remains the default.
+Offline heuristics remain the path when `--judge jev` is omitted.
 
 Product rule: [docs/jev.md](./docs/jev.md).
 Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
 Tracked under Phase 7 in the [roadmap](./ROADMAP.md).
+
+`nocciolo seed --dry-run --judge jev` prints a relevance decision for each heuristic candidate and does not call Hindsight.
+A confident reject is left out of a live retain.
+A score below `--confidence` stays in the review queue.
 `nocciolo prune` (path-gone / section-gone / explicit) is in the CLI today: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 Optional `--judge jev` annotation on prune is not shipped yet.
 
-Planned work tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) includes:
+Still planned, tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev):
 
-- Confidence-gated seed and retain decisions, plus `store` and seed-priority decisions.
-- Optional `--judge jev` on `nocciolo prune`: annotate outdated / irrelevant / contradicted items (including when the file is still on disk); you confirm; Nocciolo deletes. Flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
+- `store` and seed-priority decisions.
+- Optional `--judge jev` on `nocciolo prune`: annotate outdated / irrelevant / contradicted items (including when the file is still on disk). You confirm, then Nocciolo deletes. Flags: [CLI reference](./docs/nocciolo-cli-commands.md#nocciolo-prune).
 - MCP recall guards.
 - Deployment-profile and share-safety checks, with Firstmate routing and escalation when confidence is low.
 
-Jev would return typed choices and scores; Nocciolo would retain control of scanning, side effects, and apply. Secrets and denylisted paths would remain local. These capabilities are planned and are not available yet.
+Jev returns typed choices and scores.
+Nocciolo keeps scanning, side effects, and apply.
+Secrets and denylisted paths stay local.
 
 ### `nocciolo mcp` options
 
@@ -471,7 +479,7 @@ pnpm nocciolo mcp --hindsight-url http://127.0.0.1:8888 --include-auth
 - [CLI commands](./docs/nocciolo-cli-commands.md): full `nocciolo` command and flag reference (`init`, `configure`, `seed`, `store`, `mental-model`, `prune`, `mcp`, `docker`)
 - [Jev product rule](./docs/jev.md): Jev is a judge, not a backend (opt-in, do-not-build, confidence gate)
 - [Jev diagrams](./docs/jev-diagrams.md): how Jev enhances store of new data and updates to changed content
-- [Jev integration](./docs/jev-integration.md): planned opt-in judge, including optional `--judge jev` on prune
+- [Jev integration](./docs/jev-integration.md): opt-in judge. The seed relevance gate is available. Prune annotation is still planned.
 - [Sync strategy](./docs/nocciolo-sync-strategy.md): why Nocciolo uses curated retain instead of markdown file upload
 - [Knowledge-base configs](./docs/nocciolo-configs.md): `.nocciolo/` files, bank template, seed manifest, and MCP recall
 - [Team sharing](./docs/team-sharing.md): deployment profiles, `nocciolo share`, bank apply, multi-repo MCP for teams

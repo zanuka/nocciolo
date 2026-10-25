@@ -26,6 +26,7 @@ export interface ExtractedSource {
   relativePath: string;
   contentHash: string;
   facts: CandidateFact[];
+  heuristicSkips: CandidateFact[];
   skipped: boolean;
   skipReason?: string;
 }

@@ -6,6 +6,11 @@ Product rule (judge, not backend): [jev.md](./jev.md).
 Store and update flow diagrams: [jev-diagrams.md](./jev-diagrams.md).
 
 The seed relevance gate is available: `nocciolo seed --dry-run --judge jev` ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
+Section-level keep/skip is part of that command ([JEV-5](https://github.com/zanuka/nocciolo/issues/36)).
+Each `nocciolo:<path>#<section>` is its own row.
+A README can retain an architecture section and skip a changelog section in one seed.
+Headings the heuristic would drop, such as changelog, table of contents, and badges, are still judged when `--judge jev` is on.
+Without the flag, those headings stay out of retain.
 The rest of this page describes the wider layer that is still planned.
 
 This is planned work:

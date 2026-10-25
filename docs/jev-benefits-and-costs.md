@@ -418,7 +418,7 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 
 | Spend (opt-in) | Benefit | First-slice? |
 |---|---|---|
-| `seed --dry-run --judge jev` | See keep/skip + scores before any retain | Shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)). Mixed retain and skip inside one file continues in [JEV-5](https://github.com/zanuka/nocciolo/issues/36) |
+| `seed --dry-run --judge jev` | See keep/skip + scores before any retain, one row per section | Shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30), [JEV-5](https://github.com/zanuka/nocciolo/issues/36)). One file can mix retain and skip |
 | `seed --judge jev` | Skip high-confidence junk; review the rest | Yes |
 | MCP retain gate | Stop session fluff entering the bank | Yes (JEV-22) |
 | Golden-set eval | Know whether Jev beats heuristics; improve offline path | Yes (JEV-34) |

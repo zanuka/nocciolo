@@ -70,6 +70,40 @@ Please open an issue.
     expect(titles.some((t) => /quick start/i.test(t))).toBe(false);
     expect(titles.some((t) => /from your project root/i.test(t))).toBe(false);
     expect(titles.some((t) => /contributing/i.test(t))).toBe(false);
+    expect(result.heuristicSkips.map((fact) => fact.title)).toContain(
+      "Quick Start",
+    );
+    expect(result.facts.map((fact) => fact.id)).not.toEqual(
+      expect.arrayContaining(result.heuristicSkips.map((fact) => fact.id)),
+    );
+  });
+
+  it("keeps an architecture section and records a changelog section as a heuristic skip", () => {
+    const content = `# Fixture
+
+## Architecture
+
+The module boundary is a local-first architecture decision. We chose to keep the Hindsight bank on the machine. This invariant is a project standard.
+
+## Changelog
+
+This generated changelog is a badge wall and a table of contents. The notes are a TODO pile, not a decision.
+`;
+    const result = extractFromSource(source("README.md", "readme"), content);
+    expect(result.facts.map((fact) => fact.id)).toContain(
+      "nocciolo:README.md#architecture",
+    );
+    expect(result.facts.map((fact) => fact.id)).not.toContain(
+      "nocciolo:README.md#changelog",
+    );
+    expect(result.heuristicSkips.map((fact) => fact.id)).toContain(
+      "nocciolo:README.md#changelog",
+    );
+    const changelog = result.heuristicSkips.find(
+      (fact) => fact.id === "nocciolo:README.md#changelog",
+    );
+    expect(changelog?.content).toMatch(/changelog/i);
+    expect(changelog?.content).not.toMatch(/local-first/);
   });
 
   it("strips MDX frontmatter before scoring sections", () => {

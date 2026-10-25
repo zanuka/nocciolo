@@ -118,10 +118,17 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   });
 
   let relevance: RelevanceReport | undefined;
-  if (resolved.judgeId === "jev" && prepared.factsToRetain.length > 0) {
+  const heuristicSkips = prepared.sources
+    .filter((source) => !source.unchanged)
+    .flatMap((source) => source.heuristicSkips);
+  if (
+    resolved.judgeId === "jev" &&
+    (prepared.factsToRetain.length > 0 || heuristicSkips.length > 0)
+  ) {
     const mission = await loadRetainMission(projectRoot);
     const rows = await judgeSeedRelevance({
       facts: prepared.factsToRetain,
+      heuristicSkips,
       judge: resolved.judge,
       confidence: resolved.confidence,
       ...(mission !== undefined ? { mission } : {}),

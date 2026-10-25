@@ -466,7 +466,7 @@ Nocciolo's Jev layer is the gate in front of retain: it decides which section is
 
 ```text
 nocciolo seed --dry-run --judge jev
-  path, heading, decision, score, confidence, heuristic-vs-jev
+  document_id, path, heading, decision, score, confidence, heuristic-vs-jev
   high-confidence rejects are skipped
   low-confidence rows stay in review and are not retained
   Hindsight retain runs only for the rows the gate keeps

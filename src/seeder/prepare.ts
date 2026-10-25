@@ -84,14 +84,30 @@ export async function prepareSeed(input: {
       force,
     );
     skippedTombstoned += skipped;
+    const heuristicSkips = filterTombstonedFacts(
+      extracted.heuristicSkips,
+      extracted.contentHash,
+      tombstones,
+      force,
+    ).kept;
 
     if (kept.length === 0) {
       skippedEmpty += 1;
-      prepared.push({ ...extracted, facts: kept, unchanged: false });
+      prepared.push({
+        ...extracted,
+        facts: kept,
+        heuristicSkips,
+        unchanged: false,
+      });
       continue;
     }
 
-    prepared.push({ ...extracted, facts: kept, unchanged: false });
+    prepared.push({
+      ...extracted,
+      facts: kept,
+      heuristicSkips,
+      unchanged: false,
+    });
     factsToRetain.push(...kept);
   }
 

@@ -22,12 +22,13 @@ This is planned work:
 ## Why
 
 **Spend retain on durable knowledge.** Hindsight retain is the expensive step. Heuristics already drop a lot of noise, and changelogs, tables of contents, and boilerplate still get through often enough to matter. Jev scores a section before that spend.
-The relevance questions (`is_durable`, `is_ephemeral`, `in_scope`, and the durability score) and the `kind` choice run on `seed --judge jev` today.
-Dry-run prints the kind and its probabilities.
+The relevance questions (`is_durable`, `is_ephemeral`, `in_scope`, and the durability score), the `kind` choice, and the contradiction check run on `seed --judge jev` today.
+Dry-run prints the kind, its probabilities, and any supersede or contradict relation.
 A confident `noise` or `style_pref` is left out of the company bank.
+A confident `supersedes` or `contradicts` relation retains the section once and records the old observation id.
+The old observation is not deleted.
 These checks are still planned:
 
-- whether it contradicts observations already in the bank
 - whether a later reader can cite it
 - whether it carries a secret or personal data
 

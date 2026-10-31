@@ -32,7 +32,7 @@ Syncing the bank means running `seed` or `store` again after the docs change.
 | Choose how teammates reach it | `share` | `.nocciolo/share.json` deployment profile: local, LAN, VPN, public, or [Hindsight Cloud](./hindsight-cloud.md). See [team sharing](./team-sharing.md). |
 | Set up the server | `docker print` / `docker up` | A local Hindsight container when you self-host. Skip under Cloud profile, or point `seed` and `mcp` at an existing host. |
 | Set up agent wiring | `mcp` | Snippets, or written files, so Cursor, Claude Code, Roo, Codex, Kiro, and Firstmate call this bank (bank-scoped server names). API keys stay in the environment. |
-| Seed the bank | `seed --dry-run`, then `seed` | A first retain of high-signal sections. Dry-run lists candidates and skips. It does not call Hindsight. |
+| Seed the bank | `seed --dry-run`, then `seed` | A first retain of high-signal sections. Dry-run lists candidates and skips. It does not retain. With `--judge jev` it may recall observation summaries. |
 | Sync after edits | `seed` again, or `store` | Unchanged sources are skipped by content hash. Changed sections upsert on a stable `document_id`. |
 | Maintain the selection | `store` | Ongoing retain of files you have allowlisted in `.nocciolo/config.json`. New markdown is never stored unless you pick it. |
 
@@ -205,7 +205,7 @@ A low score stays a preview until someone confirms.
 
 | Decision | Today | With Jev |
 |----------|-------|----------|
-| What to retain | `seed --dry-run` lists a heuristic keep/skip. | `seed --dry-run --judge jev` adds a relevance decision, a durability score, a knowledge kind with probabilities, and confidence for each section. One file can mix retain and skip. A confident `noise` or `style_pref` is not retained. Contradiction, citation, and a secret second pass are still planned. |
+| What to retain | `seed --dry-run` lists a heuristic keep/skip. | `seed --dry-run --judge jev` adds a relevance decision, a durability score, a knowledge kind with probabilities, a relation to overlapping observations, and confidence for each section. One file can mix retain and skip. A confident `noise` or `style_pref` is not retained. A confident `supersedes` or `contradicts` answer records the old observation id on that retain. Citation and a secret second pass are still planned. |
 | What to spend retain on | Every candidate that passes is eligible. | Candidates are ranked under a retain budget, so a large diff retains the durable sections first. |
 | What `store` adopts | You pick every new file. The command never adopts one on its own. | Jev can propose allowlist entries, and it can hold an edit that does not look durable. You still confirm before anything is retained. |
 | Whether the template fits the repo | `configure` writes mission, directives, and starter mental models for you to review in git. | Jev scores that draft, suggests how aggressive extraction should be, proposes mental-model questions, and assigns tags the same way across sections. The prose stays in the template you commit. |

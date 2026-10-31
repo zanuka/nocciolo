@@ -29,7 +29,7 @@ Jev is an **opt-in judge** (`--judge jev` or key) for bounded decisions. Nocciol
 
 **Open / planned areas** (grouped):
 
-- Seed quality (JEV-6–9): knowledge-kind, contradiction vs existing observations, citation support, PII/secret second pass.
+- Seed quality: knowledge-kind and contradiction vs existing observations are on `seed --judge jev`. Citation support and the PII/secret second pass (JEV-8, JEV-9) are still open.
 - Store / retain budget (JEV-10–12): rank candidates, propose allowlist, gate edits.
 - Prune annotation (JEV-14–17): score still-on-disk items as outdated / irrelevant / contradicted (Jev annotates; you confirm delete).
 - Bank-template fitness (JEV-18–21): score mission/directives, extraction aggressiveness, etc. (does not author prose).
@@ -60,7 +60,7 @@ Hindsight’s Jev reranker makes *recall* better. It does not solve the upstream
 
 The highest-leverage remaining Nocciolo work is therefore:
 
-1. Finishing the pre-retain gates (knowledge-kind, contradiction, citation, PII) so the bank starts cleaner.
+1. Finishing the remaining pre-retain gates (citation, PII) so the bank starts cleaner.
 2. Prune annotation (so the bank stays clean).
 3. Treating Hindsight’s native Jev reranker as the default ranking path (JEV-23 can become “prefer Hindsight’s typesafe provider when available; add Nocciolo-specific still-true / routing checks on top”).
 4. MCP retain blocking and Firstmate routing (things Hindsight’s reranker never touches).

@@ -3,6 +3,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { KNOWLEDGE_KIND_IDS } from "../judge/knowledge-kinds.js";
+import {
+  OBSERVATION_RELATIONS,
+  type ObservationRelation,
+} from "../judge/relations.js";
 import type { ChoiceAnswer, Judge, JudgeEvaluateInput, JudgeResult } from "../judge/types.js";
 import type { ResolvedJudge } from "../judge/resolve.js";
 import type { HindsightClient } from "../providers/hindsight/client.js";
@@ -214,6 +218,7 @@ describe("seed relevance gate", () => {
       cwd: root,
       dryRun: true,
       resolvedJudge: resolved,
+      recallObservations: async () => [],
     });
 
     const output = logs.join("\n");
@@ -358,6 +363,7 @@ describe("seed relevance gate", () => {
       cwd: root,
       dryRun: true,
       resolvedJudge: resolved,
+      recallObservations: async () => [],
     });
 
     const output = logs.join("\n");
@@ -512,4 +518,92 @@ This kind split section mentions architecture and a standard so the heuristic ke
     expect(ids.some((id) => id.includes("docs/split.md"))).toBe(false);
     expect(ids.some((id) => id.includes("docs/adr/0001-local-bank.md"))).toBe(true);
   });
+
+  it("dry-run flags a Postgres ADR against a MySQL observation and does not retain", async () => {
+    const root = await tempProject();
+    const postgres = `# ADR 0008: Use Postgres
+
+## Decision
+
+We use Postgres. This architecture decision retires the previous database. It is a project invariant and a standard for later integrations.
+`;
+    await writeFile(join(root, "docs", "adr", "0008-postgres.md"), postgres, "utf8");
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(input) {
+        const state = input.state as { text?: string; overlaps?: unknown };
+        const base = answersFor(state.text ?? "");
+        if (input.questions.relation === undefined) {
+          return base;
+        }
+        const choice: ObservationRelation = /We use Postgres/.test(state.text ?? "")
+          ? "supersedes"
+          : "unrelated";
+        expect(state.overlaps).toEqual([
+          expect.objectContaining({ id: "obs-mysql", summary: "We use MySQL." }),
+        ]);
+        return {
+          ...base,
+          answers: {
+            ...base.answers,
+            relation: seedRelationAnswer(choice, 0.93),
+          },
+        };
+      },
+    };
+    const client = {
+      retain: vi.fn(async () => ({ success: true })),
+    } as unknown as HindsightClient & { retain: ReturnType<typeof vi.fn> };
+    captureLogs();
+
+    const result = await runSeed({
+      cwd: root,
+      dryRun: true,
+      resolvedJudge: {
+        judgeId: "jev",
+        confidence: 0.8,
+        strict: false,
+        judge,
+      },
+      client,
+      recallObservations: async () => [
+        { id: "obs-mysql", text: "We use MySQL." },
+      ],
+    });
+
+    expect(client.retain).not.toHaveBeenCalled();
+    expect(result.retained).toBe(0);
+    expect(result.dryRun).toBe(true);
+    const output = logs.join("\n");
+    expect(output).toContain("relation: supersedes");
+    expect(output).toContain("observations: obs-mysql");
+    expect(output).toContain("The old observation is not deleted.");
+    expect(output).toContain("recalled (read-only)");
+    const postgresFact = result.prepared.factsToRetain.find((item) =>
+      item.id.includes("0008-postgres.md"),
+    );
+    expect(postgresFact?.observationLinks).toEqual([
+      { relation: "supersedes", observationId: "obs-mysql" },
+    ]);
+    const local = result.prepared.factsToRetain.find((item) =>
+      item.id.includes("0001-local-bank.md"),
+    );
+    expect(local?.observationLinks).toBeUndefined();
+    const ids = result.prepared.factsToRetain.map((item) => item.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.filter((id) => id.includes("0008-postgres.md"))).toHaveLength(1);
+  });
 });
+
+function seedRelationAnswer(
+  choice: ObservationRelation,
+  confidence: number,
+): ChoiceAnswer {
+  const probabilities: Record<string, number> = {};
+  const rest = OBSERVATION_RELATIONS.filter((id) => id !== choice);
+  const share = (1 - confidence) / rest.length;
+  for (const id of OBSERVATION_RELATIONS) {
+    probabilities[id] = id === choice ? confidence : share;
+  }
+  return { type: "choice", choice, probabilities, confidence };
+}

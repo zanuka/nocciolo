@@ -11,7 +11,8 @@ Judge port: [JEV-2](https://github.com/zanuka/nocciolo/issues/21) (`src/judge/`,
 State sanitization: [JEV-3](https://github.com/zanuka/nocciolo/issues/22) (`buildJevState` before any TypeSafe call).
 Relevance gate: [JEV-4](https://github.com/zanuka/nocciolo/issues/30) (`seed --judge jev` before retain).
 Knowledge kind ships on that same call.
-Contradiction, citation, secret second pass, and prune annotation are still planned.
+The contradiction check ships on that same call.
+Citation, secret second pass, and prune annotation are still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
 ---
@@ -76,7 +77,8 @@ Bounded decisions where a typed answer plus confidence is enough:
 
 - Section relevance and keep/skip before retain (shipped on `seed --judge jev`)
 - Knowledge kind on that same call (shipped)
-- Contradiction, citation support, PII / secret second pass
+- Contradiction against overlapping observations on that same call (shipped)
+- Citation support, PII / secret second pass
 - Seed priority and retain budget; `store` allowlist proposals and durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
 - Bank-template fitness scores (mission / directives / tags / mental-model questions); prose stays in the template
@@ -128,6 +130,28 @@ Without `--judge jev`, retain tags stay on the offline heuristic labels (`knowle
 Starter mental models still filter on those heuristic labels.
 `knowledge:architecture` and `knowledge:standard` match the taxonomy ids of the same name.
 `knowledge:adr` does not match a model that only lists `knowledge:decision`.
+
+---
+
+## Contradiction check
+
+`seed --judge jev` recalls up to 5 overlapping observation summaries before the same judge call.
+The recall is read-only.
+Dry-run does not retain and does not delete.
+If recall fails, including a first seed before the bank exists, Nocciolo warns once and continues without the relation question.
+
+When one to three observations have ids, the call asks one `relation` choice: `supports`, `extends`, `supersedes`, `contradicts`, or `unrelated`.
+A confident `supersedes` or `contradicts` answer retains the section once and records those observation ids on the retain metadata (`supersedes` or `contradicts`).
+`supports`, `extends`, and `unrelated` retain the section normally, with no extra item and no observation metadata.
+A relation below `--confidence` does not stamp that metadata.
+
+Four or five observations are too many for one choice to name each id.
+Each one gets a `conflicts_with_<n>` noul instead.
+A confident yes records that id as `contradicts`.
+A confident no, or an uncertain score, adds no metadata for that id.
+
+The old observation stays in the bank.
+Deleting it is prune annotation ([JEV-14](https://github.com/zanuka/nocciolo/issues/32), [JEV-17](https://github.com/zanuka/nocciolo/issues/52)), after you confirm.
 
 ---
 

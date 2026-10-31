@@ -45,6 +45,7 @@ const SECRET_PATTERNS: ReadonlyArray<{ source: string; flags: string }> = [
 ];
 
 export interface JevOverlap {
+  id?: string;
   summary: string;
   documentId?: string;
 }
@@ -172,6 +173,9 @@ function candidateHasSecret(input: JevStateCandidate, path: string): boolean {
   }
   for (const overlap of input.overlaps ?? []) {
     texts.push(overlap.summary);
+    if (overlap.id !== undefined) {
+      texts.push(overlap.id);
+    }
     if (overlap.documentId !== undefined) {
       texts.push(overlap.documentId);
     }
@@ -239,6 +243,9 @@ export function buildJevState(input: JevStateCandidate): JevStateBuild {
       const overlap: JevOverlap = {
         summary: capText(item.summary, JEV_OVERLAP_SUMMARY_MAX_CHARS),
       };
+      if (item.id !== undefined && item.id.trim() !== "") {
+        overlap.id = capText(item.id, JEV_DOCUMENT_ID_MAX_CHARS);
+      }
       if (item.documentId !== undefined && item.documentId.trim() !== "") {
         overlap.documentId = capText(item.documentId, JEV_DOCUMENT_ID_MAX_CHARS);
       }

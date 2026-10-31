@@ -267,7 +267,7 @@ async function main(): Promise<void> {
       .description("Retain durable knowledge into the configured bank")
       .option(
         "--dry-run",
-        "Preview extracted candidates without calling Hindsight",
+        "Preview extracted candidates without retaining. With --judge jev, may recall observation summaries (read-only)",
       )
       .option("--force", "Re-seed even when source content is unchanged")
       .option(

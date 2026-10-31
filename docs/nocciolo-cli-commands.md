@@ -48,7 +48,9 @@ nocciolo docker down
 ```
 
 Mutating or network commands support `--dry-run` where practical.
-`seed --dry-run` previews candidates and never calls Hindsight.
+`seed --dry-run` previews candidates and does not retain or write the seed manifest.
+With `--judge jev` it may recall up to 5 observation summaries (read-only) for the contradiction check.
+Without that flag it does not call Hindsight.
 `prune --dry-run` lists bank candidates (read-only list) and never deletes or writes tombstones.
 
 ---
@@ -170,7 +172,7 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 
 | Flag | Description |
 |------|-------------|
-| `--dry-run` | Preview candidates without calling Hindsight or writing the seed manifest |
+| `--dry-run` | Preview candidates without retaining or writing the seed manifest. With `--judge jev`, may recall up to 5 observation summaries (read-only) |
 | `--force` | Re-seed even when source content hashes are unchanged |
 | `--refresh-mental-models` | After retain, refresh declared mental models (opt-in; may overlap `refresh_after_consolidation`) |
 | `--hindsight-url <url>` | Override Hindsight base URL |
@@ -181,13 +183,18 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 | `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
 `--judge jev` runs the relevance gate once per section (`nocciolo:<path>#<section>`).
-The dry-run prints `document_id`, path, heading, decisions, score, confidence, knowledge kind, probabilities, and heuristic-vs-jev, and it does not call Hindsight.
+The dry-run prints `document_id`, path, heading, decisions, score, confidence, knowledge kind, probabilities, relation, and heuristic-vs-jev.
+It does not retain.
+With `--judge jev` it may recall up to 5 observation summaries (read-only).
 One file can mix retain and skip.
 Headings the heuristic would drop are judged only when this flag is on.
 A confident reject is left out of retain.
 That includes a confident `noise` kind and a confident `style_pref` (personal taste stays out of the company bank).
 A score or kind below `--confidence` is listed as review and is not retained.
 Retained sections receive the stable tags for that kind (`knowledge:<kind>`).
+A confident `supersedes` or `contradicts` relation keeps that one retain and records the old observation id.
+`supports`, `extends`, and `unrelated` do not add another retain item.
+The old observation is not deleted.
 `document_id` stays `nocciolo:<path>#<section>`.
 Omit the flag to keep heuristics only.
 Incremental state lives in `.nocciolo/local/seed-manifest.json` (gitignored).

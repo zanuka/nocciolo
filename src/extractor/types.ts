@@ -18,6 +18,11 @@ export interface BankKindStamp {
   tags: string[];
 }
 
+export interface ObservationLink {
+  relation: "supersedes" | "contradicts";
+  observationId: string;
+}
+
 export interface CandidateFact {
   id: string;
   title: string;
@@ -26,6 +31,7 @@ export interface CandidateFact {
   score: number;
   provenance: Provenance;
   bankKind?: BankKindStamp;
+  observationLinks?: ObservationLink[];
 }
 
 export interface ExtractedSource {

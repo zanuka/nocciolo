@@ -29,6 +29,25 @@ export type {
   KnowledgeKindSpec,
 } from "./knowledge-kinds.js";
 export {
+  OBSERVATION_RELATIONS,
+  RELATION_CHOICE_MAX_OVERLAPS,
+  interpretRelation,
+  linkableOverlaps,
+  relationQuestions,
+} from "./relations.js";
+export type {
+  InterpretedRelation,
+  ObservationConflictRead,
+  ObservationRelation,
+  ObservationRelationRead,
+} from "./relations.js";
+export {
+  OBSERVATION_QUERY_MAX_CHARS,
+  observationRecallQuery,
+  recalledToOverlaps,
+} from "./overlaps.js";
+export type { RecalledObservationText } from "./overlaps.js";
+export {
   applyRelevanceRows,
   decideRelevance,
   formatRelevanceLines,

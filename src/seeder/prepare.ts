@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { extractFromSource } from "../extractor/extract.js";
-import type { CandidateFact, ExtractedSource } from "../extractor/types.js";
+import type { CandidateFact, ExtractedSource, ObservationLink } from "../extractor/types.js";
 import type { RetainItem } from "../providers/hindsight/client.js";
 import { findDurableSources } from "../scanner/durable-sources.js";
 import type { ScannerPolicy } from "../scanner/policy.js";
@@ -126,6 +126,20 @@ export async function prepareSeed(input: {
   return result;
 }
 
+function joinObservationIds(
+  fact: CandidateFact,
+  relation: ObservationLink["relation"],
+): string | undefined {
+  const ids = (fact.observationLinks ?? [])
+    .filter((link) => link.relation === relation)
+    .map((link) => link.observationId)
+    .filter((id) => id !== "" && !id.includes("|"));
+  if (ids.length === 0) {
+    return undefined;
+  }
+  return ids.join("|");
+}
+
 export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
   return facts.map((fact) => {
     const knowledgeTags =
@@ -141,6 +155,14 @@ export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
     };
     if (fact.provenance.commit) {
       metadata.commit = fact.provenance.commit;
+    }
+    const supersedes = joinObservationIds(fact, "supersedes");
+    const contradicts = joinObservationIds(fact, "contradicts");
+    if (supersedes !== undefined) {
+      metadata.supersedes = supersedes;
+    }
+    if (contradicts !== undefined) {
+      metadata.contradicts = contradicts;
     }
 
     return {

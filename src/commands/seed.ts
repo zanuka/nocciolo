@@ -6,17 +6,22 @@ import {
 import { bankTemplatePath } from "../config/paths.js";
 import {
   applyRelevanceRows,
+  containsInlineSecret,
   createJudge,
   formatRelevanceLines,
   judgeSeedRelevance,
+  observationRecallQuery,
+  recalledToOverlaps,
   type RelevanceReport,
   type ResolvedJudge,
 } from "../judge/index.js";
+import type { CandidateFact } from "../extractor/types.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import {
   formatPercent,
   HindsightClient,
   resolveHindsightApiKey,
+  type RecalledObservation,
   type RetainItem,
 } from "../providers/hindsight/client.js";
 import {
@@ -53,6 +58,10 @@ export interface SeedOptions {
   strict?: boolean;
   resolvedJudge?: ResolvedJudge;
   client?: HindsightClient;
+  recallObservations?: (
+    bankId: string,
+    query: string,
+  ) => Promise<readonly RecalledObservation[]>;
 }
 
 export interface SeedResult {
@@ -118,6 +127,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   });
 
   let relevance: RelevanceReport | undefined;
+  let recalledObservations = false;
   const heuristicSkips = prepared.sources
     .filter((source) => !source.unchanged)
     .flatMap((source) => source.heuristicSkips);
@@ -126,12 +136,55 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     (prepared.factsToRetain.length > 0 || heuristicSkips.length > 0)
   ) {
     const mission = await loadRetainMission(projectRoot);
+    const recall = resolveObservationRecall({
+      options,
+      baseUrl,
+      apiKey,
+    });
+    let recallDisabled = false;
+    const overlapsFor =
+      recall === undefined
+        ? undefined
+        : async (fact: CandidateFact) => {
+            if (recallDisabled) {
+              return [];
+            }
+            if (
+              containsInlineSecret(fact.content) ||
+              containsInlineSecret(fact.title) ||
+              containsInlineSecret(fact.provenance.sourcePath)
+            ) {
+              return [];
+            }
+            const query = observationRecallQuery(fact);
+            if (query === "") {
+              return [];
+            }
+            try {
+              const results = await recall(config.bankId, query);
+              const overlaps = recalledToOverlaps(results);
+              if (overlaps.length > 0) {
+                recalledObservations = true;
+              }
+              return overlaps;
+            } catch {
+              recallDisabled = true;
+              console.log(
+                "Warning: overlapping observations were not loaded, so the contradiction check was skipped.",
+              );
+              console.log(
+                "If this is the first seed, the bank may not exist yet. Retain still proceeds.",
+              );
+              return [];
+            }
+          };
     const rows = await judgeSeedRelevance({
       facts: prepared.factsToRetain,
       heuristicSkips,
       judge: resolved.judge,
       confidence: resolved.confidence,
       ...(mission !== undefined ? { mission } : {}),
+      ...(overlapsFor !== undefined ? { overlapsFor } : {}),
     });
     const applied = applyRelevanceRows(prepared, rows);
     prepared = applied.prepared;
@@ -161,6 +214,11 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   });
 
   if (dryRun) {
+    if (recalledObservations) {
+      console.log(
+        "Overlapping observations were recalled (read-only). Nothing was written.",
+      );
+    }
     console.log(
       "No memories were retained. Re-run without --dry-run to call Hindsight.",
     );
@@ -518,6 +576,9 @@ function printSeedPlan(input: {
         console.log(`      id: ${fact.id}`);
         const excerpt = fact.content.replace(/\s+/g, " ").trim().slice(0, 100);
         console.log(`      excerpt: ${excerpt}`);
+        for (const link of fact.observationLinks ?? []) {
+          console.log(`      ${link.relation}: ${link.observationId}`);
+        }
       }
       console.log("");
     }
@@ -553,6 +614,30 @@ function printSeedPlan(input: {
     }
     console.log("");
   }
+}
+
+function resolveObservationRecall(input: {
+  options: SeedOptions;
+  baseUrl: string;
+  apiKey: string | undefined;
+}):
+  | ((bankId: string, query: string) => Promise<readonly RecalledObservation[]>)
+  | undefined {
+  if (input.options.recallObservations !== undefined) {
+    return input.options.recallObservations;
+  }
+  const client = input.options.client;
+  if (client !== undefined && typeof client.recallObservations === "function") {
+    return (bankId, query) => client.recallObservations(bankId, query);
+  }
+  if (client !== undefined) {
+    return undefined;
+  }
+  const reader = new HindsightClient({
+    baseUrl: input.baseUrl,
+    ...(input.apiKey !== undefined ? { apiKey: input.apiKey } : {}),
+  });
+  return (bankId, query) => reader.recallObservations(bankId, query);
 }
 
 export async function runSeedCommand(options: SeedOptions = {}): Promise<void> {

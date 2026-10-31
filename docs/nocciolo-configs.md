@@ -196,7 +196,8 @@ Illustrative shape (from a dogfood project):
 }
 ```
 
-`seed --dry-run` previews candidates without writing the manifest or calling Hindsight.
+`seed --dry-run` previews candidates without writing the manifest or retaining.
+With `--judge jev` it may recall up to 5 observation summaries (read-only).
 
 ---
 

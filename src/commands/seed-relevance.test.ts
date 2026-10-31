@@ -221,6 +221,7 @@ describe("seed relevance gate", () => {
       dryRun: true,
       resolvedJudge: resolved,
       recallObservations: async () => [],
+      extractFacts: async () => [],
     });
 
     const output = logs.join("\n");
@@ -368,6 +369,7 @@ describe("seed relevance gate", () => {
       dryRun: true,
       resolvedJudge: resolved,
       recallObservations: async () => [],
+      extractFacts: async () => [],
     });
 
     const output = logs.join("\n");
@@ -657,7 +659,120 @@ We use Postgres. This architecture decision retires the previous database. It is
     expect(retained.some((item) => item.document_id.includes("0001.md"))).toBe(false);
     expect(retained.some((item) => item.document_id.includes("0002-clean.md"))).toBe(true);
   });
+
+  it("drops an extracted claim the section does not contain and keeps the quote in one Jev call", async () => {
+    const root = await tempProject();
+    await writeFile(
+      join(root, "docs", "adr", "0009-postgres.md"),
+      `# ADR 0009: Database
+
+## Decision
+
+We use Postgres. This architecture decision is a project invariant and a standard for later integrations.
+`,
+      "utf8",
+    );
+    const citationCalls: JudgeEvaluateInput[] = [];
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(input) {
+        if (input.questions.supported_by_source_0 !== undefined) {
+          citationCalls.push(input);
+          const facts = (input.state as { facts?: Array<{ text?: string }> }).facts ?? [];
+          const body: JudgeResult["answers"] = {};
+          facts.forEach((fact, index) => {
+            const quoted = (fact.text ?? "").includes("Postgres");
+            body[`supported_by_source_${index}`] = {
+              type: "noul",
+              noul: quoted ? 0.96 : 0.05,
+            };
+            body[`support_${index}`] = supportAnswer(
+              quoted ? "quoted" : "unsupported",
+              quoted ? 0.95 : 0.94,
+            );
+          });
+          return { judgeId: "jev", answers: body };
+        }
+        const state = input.state as { path?: string; text?: string };
+        return answersFor(`${state.path ?? ""}\n${state.text ?? ""}`);
+      },
+    };
+    const resolved: ResolvedJudge = {
+      judgeId: "jev",
+      confidence: 0.8,
+      strict: false,
+      judge,
+    };
+    const client = {
+      retain: vi.fn(async () => ({ success: true })),
+    } as unknown as HindsightClient & { retain: ReturnType<typeof vi.fn> };
+    captureLogs();
+
+    const dry = await runSeed({
+      cwd: root,
+      dryRun: true,
+      resolvedJudge: resolved,
+      client,
+      recallObservations: async () => [],
+      extractFacts: async (fact) =>
+        fact.content.includes("We use Postgres")
+          ? ["We use Postgres.", "We use MySQL."]
+          : [],
+    });
+
+    expect(client.retain).not.toHaveBeenCalled();
+    expect(citationCalls).toHaveLength(1);
+    expect(Object.keys(citationCalls[0]?.questions ?? {})).toEqual([
+      "supported_by_source_0",
+      "support_0",
+      "supported_by_source_1",
+      "support_1",
+    ]);
+    const preview = dry.prepared.factsToRetain.find((fact) =>
+      fact.id.includes("0009-postgres.md"),
+    );
+    expect(preview?.content).toBe("We use Postgres.");
+    expect(preview?.content).not.toContain("MySQL");
+    const dryOutput = logs.join("\n");
+    expect(dryOutput).toContain("keep quoted");
+    expect(dryOutput).toContain("drop unsupported");
+    expect(dryOutput).toContain("Extracted facts were previewed (read-only). Nothing was written.");
+    expect(dryOutput).toContain("No memories were retained.");
+
+    citationCalls.length = 0;
+    captureLogs();
+    await runSeed({
+      cwd: root,
+      resolvedJudge: resolved,
+      client,
+      recallObservations: async () => [],
+      extractFacts: async (fact) =>
+        fact.content.includes("We use Postgres")
+          ? ["We use Postgres.", "We use MySQL."]
+          : [],
+    });
+
+    expect(citationCalls).toHaveLength(1);
+    const retained = client.retain.mock.calls.flatMap((call) => {
+      const request = call[1] as { items?: Array<{ document_id: string; content: string }> };
+      return request.items ?? [];
+    });
+    const postgres = retained.find((item) => item.document_id.includes("0009-postgres.md"));
+    expect(postgres?.content).toBe("We use Postgres.");
+    expect(JSON.stringify(retained)).not.toContain("MySQL");
+  });
 });
+
+function supportAnswer(choice: string, confidence: number): ChoiceAnswer {
+  const ids = ["quoted", "implied", "unsupported"];
+  const probabilities: Record<string, number> = {};
+  const rest = ids.filter((id) => id !== choice);
+  const share = (1 - confidence) / rest.length;
+  for (const id of ids) {
+    probabilities[id] = id === choice ? confidence : share;
+  }
+  return { type: "choice", choice, probabilities, confidence };
+}
 
 function seedRelationAnswer(
   choice: ObservationRelation,

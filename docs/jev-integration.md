@@ -30,9 +30,12 @@ The old observation is not deleted.
 The same call asks `contains_secret` and `contains_pii`.
 A confident secret or personal-data answer is skipped, and a secret warning names the path without printing the secret.
 A mid-range score stays in review and is not retained.
-This check is still planned:
-
-- whether a later reader can cite it
+After that gate, Hindsight previews the facts it would extract (read-only).
+One Jev call per section asks whether each fact is in the source.
+A high-confidence unsupported fact is left out of retain.
+A quote of the section is kept.
+This checks the Hindsight extractor.
+It does not run a second extractor.
 
 The same pass can score the generated mission and directives, and can propose mental-model questions and tags. The wording stays in the template you commit. `seed --dry-run --judge jev` shows the keep, the skip, and the score.
 

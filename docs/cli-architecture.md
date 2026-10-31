@@ -103,7 +103,7 @@ flowchart TD
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
-| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; `seed --judge jev` runs the relevance gate, the knowledge-kind choice, a contradiction check, and `contains_secret` / `contains_pii` once per `document_id` (kind criteria in `knowledge-kinds.json`; up to 5 observation summaries). Confident supersedes or contradicts stamps observation metadata and does not delete the old item. A confident secret or personal-data answer is not retained. Hindsight code must not import TypeSafe |
+| `src/judge/` | Opt-in `Judge` port (`off` / `heuristic` / `jev`); `buildJevState` skips denylisted paths and inline secrets and caps state before the TypeSafe HTTP call; `seed --judge jev` runs the relevance gate, the knowledge-kind choice, a contradiction check, and `contains_secret` / `contains_pii` once per `document_id` (kind criteria in `knowledge-kinds.json`; up to 5 observation summaries). Confident supersedes or contradicts stamps observation metadata and does not delete the old item. A confident secret or personal-data answer is not retained. Citation then previews Hindsight's extracted facts (read-only) and asks once per section whether each fact is in the source. A high-confidence unsupported fact is not retained. Hindsight code must not import TypeSafe |
 | `src/seeder/` | Prepare retain payload, incremental manifest, prune planner, tombstones (shared by `seed`, `store`, `prune`) |
 | `src/integration/` | MCP URL + harness snippets + AGENTS/Cursor rule emitters + Firstmate `project-bank` skill |
 | `src/docker/` | Local Hindsight Docker run/stop/status plans |
@@ -137,7 +137,7 @@ node dist/cli.js mcp --write --dry-run
 | `share` | Write/validate `.nocciolo/share.json` deployment profile (local/LAN/VPN/public/cloud) |
 | `docs list` | Flat bank document inventory for scripts |
 | `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`); skipped under Cloud profile |
-| `seed --dry-run` | Scan + extract; print candidates; no retain. `--judge jev` prints the relevance gate, calls TypeSafe, and may recall up to 5 observation summaries (read-only) |
+| `seed --dry-run` | Scan + extract; print candidates; no retain. `--judge jev` prints the relevance gate, calls TypeSafe, and may recall up to 5 observation summaries and preview extracted facts (both read-only) |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
 | `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
 | `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path |
@@ -147,7 +147,7 @@ node dist/cli.js mcp --write --dry-run
 
 Common flags:
 
-- `--dry-run`: preview without mutating (`seed --dry-run` does not retain; with `--judge jev` it may recall observation summaries read-only; prune may list documents read-only)
+- `--dry-run`: preview without mutating (`seed --dry-run` does not retain; with `--judge jev` it may recall observation summaries and preview extracted facts, both read-only; prune may list documents read-only)
 - `--force`: overwrite config/template/MCP entry, or re-seed unchanged / tombstoned sources
 - `--yes` / `-y`: on `init`, accept defaults; on `prune`, apply an explicit `--source` / `--document-id` selection
 - `--bank-id <id>`: Hindsight bank id on `init` (project-specific; many banks can share one server)
@@ -393,7 +393,7 @@ node dist/cli.js --help
 - Extraction is conservative keyword heuristics, not ML
 - Single provider path: Hindsight first
 - Single bank per project config (multi-bank CLI is later; one Docker server can already host many banks)
-- Optional Jev judgment layer (Phase 7): seed relevance gate, knowledge-kind taxonomy, the contradiction check, and the secret / personal-data second pass are shipped. Citation and prune annotation are not wired yet
+- Optional Jev judgment layer (Phase 7): seed relevance gate, knowledge-kind taxonomy, the contradiction check, the secret / personal-data second pass, and citation support are shipped. Prune annotation is not wired yet
 
 ## Related docs
 

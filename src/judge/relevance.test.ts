@@ -93,6 +93,9 @@ function jevResult(input: {
   durabilityConfidence?: number;
   fellBack?: boolean;
   kind?: { choice: string; confidence: number };
+  containsSecret?: number;
+  containsPii?: number;
+  omitSafety?: boolean;
 }): JudgeResult {
   return {
     judgeId: "jev",
@@ -101,6 +104,12 @@ function jevResult(input: {
       is_durable: { type: "noul", noul: input.isDurable },
       is_ephemeral: { type: "noul", noul: input.isEphemeral },
       in_scope: { type: "noul", noul: input.inScope },
+      ...(input.omitSafety
+        ? {}
+        : {
+            contains_secret: { type: "noul" as const, noul: input.containsSecret ?? 0.02 },
+            contains_pii: { type: "noul" as const, noul: input.containsPii ?? 0.02 },
+          }),
       durability: {
         type: "score",
         score: input.durability ?? 3,
@@ -124,6 +133,8 @@ describe("relevanceQuestions", () => {
       "in_scope",
       "durability",
       "kind",
+      "contains_secret",
+      "contains_pii",
     ]);
     const kind = questions.kind;
     expect(kind?.type).toBe("choice");
@@ -285,6 +296,8 @@ describe("judgeSeedRelevance", () => {
       "in_scope",
       "durability",
       "kind",
+      "contains_secret",
+      "contains_pii",
     ]);
     expect(calls[0]?.state).toEqual({
       path: "docs/adr/0001-local-bank.md",
@@ -296,7 +309,7 @@ describe("judgeSeedRelevance", () => {
     expect(rows[0]?.action).toBe("retain");
   });
 
-  it("does not call Jev when the section contains a secret, and does not skip it", async () => {
+  it("does not call Jev when the section contains a secret, and skips it", async () => {
     let called = false;
     const judge: Judge = {
       id: "jev",
@@ -311,7 +324,7 @@ describe("judgeSeedRelevance", () => {
           id: "nocciolo:docs/adr/0002.md#document",
           path: "docs/adr/0002.md",
           title: "Decision",
-          content: `Keep the bank local.\n\nsk-test-abcdefghijklmnopqrstuvwxyz`,
+          content: `Keep the bank local.\n\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0123456789abcdef\n-----END RSA PRIVATE KEY-----\n\nsk-test-abcdefghijklmnopqrstuvwxyz`,
         }),
       ],
       judge,
@@ -319,10 +332,13 @@ describe("judgeSeedRelevance", () => {
       mission: "Hold durable decisions.",
     });
     expect(called).toBe(false);
-    expect(rows[0]?.action).toBe("retain");
+    expect(rows[0]?.action).toBe("skip");
+    expect(rows[0]?.warnSecret).toBe(true);
     expect(rows[0]?.heuristicVsJev).toBe("unjudged");
     expect(rows[0]?.reason).toMatch(/secret pattern/);
     expect(rows[0]?.reason).not.toContain("sk-test-abcdefghijklmnopqrstuvwxyz");
+    expect(rows[0]?.reason).not.toContain("MIIEow");
+    expect(rows[0]?.reason).not.toContain("BEGIN RSA PRIVATE KEY");
   });
 
   it("judges a heuristic skip on its own section and does not retain it on fallback", async () => {
@@ -848,5 +864,90 @@ describe("contradiction check against observations", () => {
     expect(items).toHaveLength(1);
     expect(items[0]?.metadata.contradicts).toBe("obs-a|obs-d");
     expect(items[0]?.metadata.supersedes).toBeUndefined();
+  });
+});
+
+describe("secret and personal-data second pass", () => {
+  const durable = {
+    isDurable: 0.96,
+    isEphemeral: 0.04,
+    inScope: 0.93,
+    kind: { choice: "adr" as const, confidence: 0.93 },
+  };
+
+  it("does not flag a clean ADR", () => {
+    const decision = decideRelevance(jevResult(durable), 0.8);
+    expect(decision.action).toBe("retain");
+    expect(decision.warnSecret).toBeUndefined();
+    expect(decision.safety).toEqual({
+      containsSecret: 0.02,
+      containsPii: 0.02,
+      secretBand: "no",
+      piiBand: "no",
+    });
+  });
+
+  it("skips a confident secret and drops supersession metadata", () => {
+    const decision = decideRelevance(
+      {
+        ...jevResult({ ...durable, containsSecret: 0.96 }),
+        answers: {
+          ...jevResult({ ...durable, containsSecret: 0.96 }).answers,
+          relation: relationAnswer("supersedes", 0.94),
+        },
+      },
+      0.8,
+      { overlaps: [MYSQL_OBSERVATION] },
+    );
+    expect(decision.action).toBe("skip");
+    expect(decision.reason).toBe("section contains a secret");
+    expect(decision.warnSecret).toBe(true);
+    expect(decision.observationLinks).toBeUndefined();
+    expect(decision.bankKind).toBeUndefined();
+  });
+
+  it("skips confident personal data without a secret warning", () => {
+    const decision = decideRelevance(jevResult({ ...durable, containsPii: 0.91 }), 0.8);
+    expect(decision.action).toBe("skip");
+    expect(decision.reason).toBe("section contains personal data");
+    expect(decision.warnSecret).toBeUndefined();
+  });
+
+  it("holds a mid-range secret score for review and does not retain", () => {
+    const decision = decideRelevance(jevResult({ ...durable, containsSecret: 0.5 }), 0.8);
+    expect(decision.action).toBe("review");
+    expect(decision.reason).toBe("secret or personal-data check below 0.80");
+    expect(decision.bankKind).toBeUndefined();
+  });
+
+  it("does not retain when the secret check is missing", () => {
+    const decision = decideRelevance(jevResult({ ...durable, omitSafety: true }), 0.8);
+    expect(decision.action).toBe("review");
+    expect(decision.reason).toBe("secret check did not return a score");
+  });
+
+  it("prints the safety scores and not the section text", () => {
+    const secret = "sk-test-abcdefghijklmnopqrstuvwxyz";
+    const decision = decideRelevance(jevResult({ ...durable, containsSecret: 0.97 }), 0.8);
+    const output = formatRelevanceLines({
+      rows: [
+        {
+          fact: fact({
+            id: "nocciolo:docs/adr/0001.md#decision",
+            path: "docs/adr/0001.md",
+            title: "Decision",
+            content: `We use Postgres.\n${secret}`,
+          }),
+          heuristicKept: true,
+          ...decision,
+        },
+      ],
+      confidence: 0.8,
+      dryRun: true,
+    }).join("\n");
+    expect(output).toContain("contains_secret: 0.97 yes");
+    expect(output).toContain("contains_pii: 0.02 no");
+    expect(output).toContain("docs/adr/0001.md");
+    expect(output).not.toContain(secret);
   });
 });

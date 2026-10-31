@@ -9,6 +9,7 @@ import {
   containsInlineSecret,
   createJudge,
   formatRelevanceLines,
+  formatSecretSkipWarning,
   judgeSeedRelevance,
   observationRecallQuery,
   recalledToOverlaps,
@@ -202,6 +203,11 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       ...(mission !== undefined ? { mission } : {}),
     })) {
       console.log(line);
+    }
+    for (const row of rows) {
+      if (row.warnSecret === true) {
+        console.error(formatSecretSkipWarning(row.fact.provenance.sourcePath));
+      }
     }
     console.log("");
   }

@@ -6,6 +6,7 @@ import type {
 import type { PreparedSeed } from "../seeder/prepare.js";
 import { knowledgeKindById, knowledgeKindQuestion, listKnowledgeKinds } from "./knowledge-kinds.js";
 import { interpretRelation, OBSERVATION_RELATIONS, relationQuestions } from "./relations.js";
+import { safetyQuestions } from "./safety.js";
 import { buildJevState, containsInlineSecret, type JevOverlap } from "./state.js";
 import type {
   Judge,
@@ -76,6 +77,13 @@ export interface RelevanceRow {
     band: NoulBand;
   }>;
   observationLinks?: ObservationLink[];
+  safety?: {
+    containsSecret: number;
+    containsPii: number;
+    secretBand: NoulBand;
+    piiBand: NoulBand;
+  };
+  warnSecret?: boolean;
 }
 
 export interface RelevanceReport {
@@ -127,6 +135,7 @@ export function relevanceQuestions(): Record<string, JudgeQuestion> {
       ],
     },
     kind: knowledgeKindQuestion(),
+    ...safetyQuestions(),
   };
 }
 
@@ -171,7 +180,7 @@ export function decideRelevance(
 
   const kind = readKind(result.answers.kind);
   if (isDurable === undefined || isEphemeral === undefined || inScope === undefined) {
-    return withRelation(
+    return finishDecision(
       applyKnowledgeKind(
         {
           ...base,
@@ -186,6 +195,7 @@ export function decideRelevance(
       result,
       overlaps,
       confidence,
+      heuristicKept,
     );
   }
 
@@ -212,7 +222,7 @@ export function decideRelevance(
     reasons.push("out of scope");
   }
   if (reasons.length > 0) {
-    return withRelation(
+    return finishDecision(
       applyKnowledgeKind(
         {
           ...scored,
@@ -227,6 +237,7 @@ export function decideRelevance(
       result,
       overlaps,
       confidence,
+      heuristicKept,
     );
   }
 
@@ -235,7 +246,7 @@ export function decideRelevance(
     bands.isEphemeral === "uncertain" ||
     bands.inScope === "uncertain"
   ) {
-    return withRelation(
+    return finishDecision(
       applyKnowledgeKind(
         {
           ...scored,
@@ -250,10 +261,11 @@ export function decideRelevance(
       result,
       overlaps,
       confidence,
+      heuristicKept,
     );
   }
 
-  return withRelation(
+  return finishDecision(
     applyKnowledgeKind(
       {
         ...scored,
@@ -268,6 +280,7 @@ export function decideRelevance(
     result,
     overlaps,
     confidence,
+    heuristicKept,
   );
 }
 
@@ -307,6 +320,17 @@ export async function judgeSeedRelevance(input: {
       ...(lookedUp.length > 0 ? { overlaps: lookedUp } : {}),
     });
     if (!built.ok) {
+      if (built.reason === "inline-secret") {
+        rows.push({
+          fact,
+          heuristicKept,
+          action: "skip",
+          reason: built.message,
+          heuristicVsJev: "unjudged",
+          warnSecret: true,
+        });
+        return;
+      }
       rows.push({
         fact,
         heuristicKept,
@@ -535,6 +559,12 @@ function formatRow(row: RelevanceRow, prefix: string, confidence: number): strin
       `${prefix}in_scope: ${row.noul.inScope.toFixed(2)} ${row.bands.inScope}`,
     );
   }
+  if (row.safety !== undefined) {
+    lines.push(
+      `${prefix}contains_secret: ${row.safety.containsSecret.toFixed(2)} ${row.safety.secretBand}`,
+      `${prefix}contains_pii: ${row.safety.containsPii.toFixed(2)} ${row.safety.piiBand}`,
+    );
+  }
   if (row.durability !== undefined) {
     lines.push(
       `${prefix}score: durability=${row.durability.score} confidence=${row.durability.confidence.toFixed(2)}`,
@@ -676,6 +706,90 @@ function applyKnowledgeKind(
     ...withKind,
     bankKind: { id: spec.id, tags: [...spec.tags] },
   };
+}
+
+function finishDecision(
+  decision: Omit<RelevanceRow, "fact" | "heuristicKept">,
+  result: JudgeResult,
+  overlaps: readonly JevOverlap[],
+  confidence: number,
+  heuristicKept: boolean,
+): Omit<RelevanceRow, "fact" | "heuristicKept"> {
+  return applySafety(
+    withRelation(decision, result, overlaps, confidence),
+    result,
+    confidence,
+    heuristicKept,
+  );
+}
+
+function applySafety(
+  decision: Omit<RelevanceRow, "fact" | "heuristicKept">,
+  result: JudgeResult,
+  confidence: number,
+  heuristicKept: boolean,
+): Omit<RelevanceRow, "fact" | "heuristicKept"> {
+  if (result.fellBackFromJev || result.judgeId !== "jev") {
+    return decision;
+  }
+  const containsSecret = readNoul(result.answers.contains_secret);
+  const containsPii = readNoul(result.answers.contains_pii);
+  const secretBand =
+    containsSecret === undefined ? undefined : noulBand(containsSecret, confidence);
+  const piiBand = containsPii === undefined ? undefined : noulBand(containsPii, confidence);
+  let next = decision;
+  if (
+    containsSecret !== undefined &&
+    containsPii !== undefined &&
+    secretBand !== undefined &&
+    piiBand !== undefined
+  ) {
+    next = {
+      ...next,
+      safety: { containsSecret, containsPii, secretBand, piiBand },
+    };
+  }
+  if (secretBand === "yes") {
+    return blockRetain(next, "skip", "section contains a secret", heuristicKept, true);
+  }
+  if (piiBand === "yes") {
+    return blockRetain(next, "skip", "section contains personal data", heuristicKept, false);
+  }
+  const uncertain = secretBand === "uncertain" || piiBand === "uncertain";
+  const missing = containsSecret === undefined || containsPii === undefined;
+  if ((uncertain || missing) && next.action === "retain") {
+    return blockRetain(
+      next,
+      "review",
+      missing
+        ? "secret check did not return a score"
+        : `secret or personal-data check below ${formatConfidence(confidence)}`,
+      heuristicKept,
+      false,
+    );
+  }
+  return next;
+}
+
+function blockRetain(
+  decision: Omit<RelevanceRow, "fact" | "heuristicKept">,
+  action: "skip" | "review",
+  reason: string,
+  heuristicKept: boolean,
+  warnSecret: boolean,
+): Omit<RelevanceRow, "fact" | "heuristicKept"> {
+  const next: Omit<RelevanceRow, "fact" | "heuristicKept"> = {
+    ...decision,
+    action,
+    reason,
+    heuristicVsJev: action === "skip" ? versusHeuristic("skip", heuristicKept) : "review",
+  };
+  if (warnSecret) {
+    next.warnSecret = true;
+  }
+  delete next.observationLinks;
+  delete next.bankKind;
+  return next;
 }
 
 function withRelation(

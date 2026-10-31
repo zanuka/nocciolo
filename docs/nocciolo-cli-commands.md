@@ -49,7 +49,7 @@ nocciolo docker down
 
 Mutating or network commands support `--dry-run` where practical.
 `seed --dry-run` previews candidates and does not retain or write the seed manifest.
-With `--judge jev` it may recall up to 5 observation summaries (read-only) for the contradiction check.
+With `--judge jev` it may recall up to 5 observation summaries and preview extracted facts (both read-only).
 Without that flag it does not call Hindsight.
 `prune --dry-run` lists bank candidates (read-only list) and never deletes or writes tombstones.
 
@@ -172,7 +172,7 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 
 | Flag | Description |
 |------|-------------|
-| `--dry-run` | Preview candidates without retaining or writing the seed manifest. With `--judge jev`, may recall up to 5 observation summaries (read-only) |
+| `--dry-run` | Preview candidates without retaining or writing the seed manifest. With `--judge jev`, may recall up to 5 observation summaries and preview extracted facts (both read-only) |
 | `--force` | Re-seed even when source content hashes are unchanged |
 | `--refresh-mental-models` | After retain, refresh declared mental models (opt-in; may overlap `refresh_after_consolidation`) |
 | `--hindsight-url <url>` | Override Hindsight base URL |
@@ -185,7 +185,7 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 `--judge jev` runs the relevance gate once per section (`nocciolo:<path>#<section>`).
 The dry-run prints `document_id`, path, heading, decisions, score, confidence, knowledge kind, probabilities, relation, and heuristic-vs-jev.
 It does not retain.
-With `--judge jev` it may recall up to 5 observation summaries (read-only).
+With `--judge jev` it may recall up to 5 observation summaries and preview extracted facts (both read-only).
 One file can mix retain and skip.
 Headings the heuristic would drop are judged only when this flag is on.
 A confident reject is left out of retain.
@@ -197,6 +197,12 @@ A confident secret is skipped, and the stderr warning names the path without pri
 A confident personal-data answer is skipped.
 A mid-range score stays in review and is not retained.
 An `sk-` token or PEM block in an otherwise seedable ADR is skipped before the TypeSafe call.
+After that gate, Hindsight previews the facts it would extract from each section still going to be retained.
+One Jev call covers every fact from that section.
+A high-confidence `unsupported` answer is not retained.
+A quote of the section is kept.
+Retain sends the kept fact text.
+If the preview returns no facts, or the preview fails, the section is retained as written.
 Retained sections receive the stable tags for that kind (`knowledge:<kind>`).
 A confident `supersedes` or `contradicts` relation keeps that one retain and records the old observation id.
 `supports`, `extends`, and `unrelated` do not add another retain item.

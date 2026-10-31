@@ -8,11 +8,15 @@ import {
   applyRelevanceRows,
   containsInlineSecret,
   createJudge,
+  formatCitationLines,
   formatRelevanceLines,
   formatSecretSkipWarning,
+  judgeSectionCitation,
   judgeSeedRelevance,
+  keptCitationText,
   observationRecallQuery,
   recalledToOverlaps,
+  type Judge,
   type RelevanceReport,
   type ResolvedJudge,
 } from "../judge/index.js";
@@ -63,6 +67,7 @@ export interface SeedOptions {
     bankId: string,
     query: string,
   ) => Promise<readonly RecalledObservation[]>;
+  extractFacts?: (fact: CandidateFact) => Promise<readonly string[]>;
 }
 
 export interface SeedResult {
@@ -129,6 +134,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
 
   let relevance: RelevanceReport | undefined;
   let recalledObservations = false;
+  let citationPreviewed = false;
   const heuristicSkips = prepared.sources
     .filter((source) => !source.unchanged)
     .flatMap((source) => source.heuristicSkips);
@@ -209,6 +215,32 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
         console.error(formatSecretSkipWarning(row.fact.provenance.sourcePath));
       }
     }
+    if (prepared.factsToRetain.length > 0) {
+      const extract = resolveFactExtract({
+        options,
+        baseUrl,
+        apiKey,
+        bankId: config.bankId,
+      });
+      if (extract !== undefined) {
+        const cited = await applyCitationGate({
+          prepared,
+          extract,
+          judge: resolved.judge,
+          confidence: resolved.confidence,
+          dryRun,
+        });
+        prepared = cited.prepared;
+        citationPreviewed = cited.previewed;
+        if (relevance !== undefined) {
+          relevance.settleEmptyPaths.push(...cited.settleEmptyPaths);
+          relevance.reopenPaths.push(...cited.reopenPaths);
+        }
+        for (const line of cited.lines) {
+          console.log(line);
+        }
+      }
+    }
     console.log("");
   }
 
@@ -223,6 +255,11 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     if (recalledObservations) {
       console.log(
         "Overlapping observations were recalled (read-only). Nothing was written.",
+      );
+    }
+    if (citationPreviewed) {
+      console.log(
+        "Extracted facts were previewed (read-only). Nothing was written.",
       );
     }
     console.log(
@@ -620,6 +657,205 @@ function printSeedPlan(input: {
     }
     console.log("");
   }
+}
+
+function resolveFactExtract(input: {
+  options: SeedOptions;
+  baseUrl: string;
+  apiKey: string | undefined;
+  bankId: string;
+}): ((fact: CandidateFact) => Promise<readonly string[]>) | undefined {
+  if (input.options.extractFacts !== undefined) {
+    return input.options.extractFacts;
+  }
+  const client = input.options.client;
+  const contextFor = (fact: CandidateFact): string =>
+    `durable project docs (${fact.provenance.kind}): ${fact.provenance.sourcePath}`;
+  if (client !== undefined && typeof client.dryRunExtract === "function") {
+    return (fact) =>
+      client.dryRunExtract(input.bankId, {
+        content: fact.content,
+        context: contextFor(fact),
+      });
+  }
+  if (client !== undefined) {
+    return undefined;
+  }
+  const reader = new HindsightClient({
+    baseUrl: input.baseUrl,
+    ...(input.apiKey !== undefined ? { apiKey: input.apiKey } : {}),
+  });
+  return (fact) =>
+    reader.dryRunExtract(input.bankId, {
+      content: fact.content,
+      context: contextFor(fact),
+    });
+}
+
+async function applyCitationGate(input: {
+  prepared: PreparedSeed;
+  extract: (fact: CandidateFact) => Promise<readonly string[]>;
+  judge: Judge;
+  confidence: number;
+  dryRun: boolean;
+}): Promise<{
+  prepared: PreparedSeed;
+  lines: string[];
+  settleEmptyPaths: string[];
+  reopenPaths: string[];
+  previewed: boolean;
+}> {
+  const updates = new Map<
+    string,
+    { drop: boolean; review: boolean; fact?: CandidateFact }
+  >();
+  const lines: string[] = [];
+  let previewed = false;
+  let warnedExtract = false;
+  let warnedFallback = false;
+  const prefix = input.dryRun ? "[dry-run] " : "";
+
+  for (const fact of input.prepared.factsToRetain) {
+    let texts: readonly string[];
+    try {
+      texts = await input.extract(fact);
+      previewed = true;
+    } catch {
+      if (!warnedExtract) {
+        console.log(
+          "Warning: citation check skipped because dry-run extract failed. Sections are retained as written.",
+        );
+        warnedExtract = true;
+      }
+      continue;
+    }
+    const cleaned = texts.map((text) => text.trim()).filter((text) => text !== "");
+    if (cleaned.length === 0) {
+      lines.push(
+        `${prefix}citation ${fact.id}: no extracted facts; section retained as written.`,
+      );
+      continue;
+    }
+    let judged;
+    try {
+      judged = await judgeSectionCitation({
+        path: fact.provenance.sourcePath,
+        section: fact.content,
+        facts: cleaned,
+        judge: input.judge,
+        confidence: input.confidence,
+      });
+    } catch {
+      if (!warnedExtract) {
+        console.log(
+          "Warning: citation check skipped because the judge refused the section. The section is retained as written.",
+        );
+        warnedExtract = true;
+      }
+      continue;
+    }
+    if (judged.fellBack) {
+      if (!warnedFallback) {
+        console.log(
+          "Warning: citation check did not return Jev scores. Sections are retained as written.",
+        );
+        warnedFallback = true;
+      }
+      continue;
+    }
+    lines.push(
+      ...formatCitationLines({
+        factId: fact.id,
+        decisions: judged.decisions,
+        dryRun: input.dryRun,
+        calls: judged.calls,
+      }),
+    );
+    const kept = keptCitationText(judged.decisions);
+    const review = judged.decisions.some((decision) => decision.verdict === "review");
+    if (kept === undefined) {
+      updates.set(fact.id, { drop: true, review });
+      continue;
+    }
+    updates.set(fact.id, {
+      drop: false,
+      review,
+      fact: { ...fact, content: kept },
+    });
+  }
+
+  if (updates.size === 0) {
+    return {
+      prepared: input.prepared,
+      lines,
+      settleEmptyPaths: [],
+      reopenPaths: [],
+      previewed,
+    };
+  }
+
+  const reviewPaths = new Set<string>();
+  for (const fact of input.prepared.factsToRetain) {
+    const update = updates.get(fact.id);
+    if (update?.review === true) {
+      reviewPaths.add(fact.provenance.sourcePath);
+    }
+  }
+
+  const settleEmptyPaths: string[] = [];
+  const sources = input.prepared.sources.map((source) => {
+    if (!source.facts.some((fact) => updates.has(fact.id))) {
+      return source;
+    }
+    const facts = source.facts.flatMap((fact) => {
+      const update = updates.get(fact.id);
+      if (update === undefined) {
+        return [fact];
+      }
+      if (update.drop || update.fact === undefined) {
+        return [];
+      }
+      return [update.fact];
+    });
+    const review = reviewPaths.has(source.relativePath);
+    if (!review && facts.length === 0) {
+      settleEmptyPaths.push(source.relativePath);
+    }
+    const next: PreparedSeed["sources"][number] = {
+      ...source,
+      facts,
+      skipped: facts.length === 0,
+    };
+    if (facts.length === 0) {
+      next.skipReason = review
+        ? "citation held every extracted fact for review"
+        : "citation dropped every extracted fact";
+    } else {
+      delete next.skipReason;
+    }
+    return next;
+  });
+
+  return {
+    prepared: {
+      ...input.prepared,
+      sources,
+      factsToRetain: input.prepared.factsToRetain.flatMap((fact) => {
+        const update = updates.get(fact.id);
+        if (update === undefined) {
+          return [fact];
+        }
+        if (update.drop || update.fact === undefined) {
+          return [];
+        }
+        return [update.fact];
+      }),
+    },
+    lines,
+    settleEmptyPaths,
+    reopenPaths: [...reviewPaths],
+    previewed,
+  };
 }
 
 function resolveObservationRecall(input: {

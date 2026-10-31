@@ -43,6 +43,21 @@ export type {
 } from "./relations.js";
 export { formatSecretSkipWarning, safetyQuestions } from "./safety.js";
 export {
+  CITATION_FACT_MAX,
+  CITATION_SUPPORTS,
+  citationQuestions,
+  formatCitationLines,
+  interpretCitation,
+  judgeSectionCitation,
+  keptCitationText,
+} from "./citation.js";
+export type {
+  CitationFactRead,
+  CitationSupport,
+  CitationVerdict,
+  SectionCitation,
+} from "./citation.js";
+export {
   OBSERVATION_QUERY_MAX_CHARS,
   observationRecallQuery,
   recalledToOverlaps,

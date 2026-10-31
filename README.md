@@ -209,7 +209,7 @@ pnpm nocciolo seed --dry-run --judge jev   # optional relevance gate; needs NOCC
 
 The first command shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections.
 It does not call Hindsight.
-The second command adds the Jev relevance table, calls TypeSafe, and may recall up to 5 observation summaries (read-only).
+The second command adds the Jev relevance table, calls TypeSafe, and may recall up to 5 observation summaries and preview extracted facts (both read-only).
 It does not retain.
 See [Jev](#jev).
 
@@ -489,6 +489,9 @@ nocciolo seed --dry-run --judge jev
   the old observation is not deleted
   a confident secret or personal-data answer is skipped
   a secret warning names the path and does not print the secret
+  extracted facts are checked against the source section in one Jev call
+  a high-confidence unsupported fact is not retained
+  a quote of the section is kept
   Hindsight retain runs only for the rows the gate keeps
 ```
 

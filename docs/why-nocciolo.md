@@ -43,7 +43,7 @@ Nocciolo’s Jev layer is the pre-retain and runtime gate:
 | A README is 20% architecture, 80% badges | Section-level keep/skip (`path#section`) so one file can produce mixed rows |
 | Agents `retain` “I just tried X” through MCP | JEV-22: deny session fluff; suggest `seed` / `store` instead. Default deny on low confidence |
 | Huge monorepo diff, only a few real decisions | Rank candidates against a retain budget; you confirm |
-| Extracted facts that the source doesn’t actually support | Optional citation-support check after extract |
+| Extracted facts that the source does not actually support | Citation check after the extract preview: a high-confidence unsupported fact is not retained |
 | You don’t know if the filter is better than heuristics | Golden-set (JEV-34) so offline keep/skip can improve even if most users never enable Jev |
 
 **The operator loop:**

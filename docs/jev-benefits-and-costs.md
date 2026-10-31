@@ -422,7 +422,7 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 | `seed --judge jev` | Skip high-confidence junk; review the rest | Yes |
 | MCP retain gate | Stop session fluff entering the bank | Yes (JEV-22) |
 | Golden-set eval | Know whether Jev beats heuristics; improve offline path | Yes (JEV-34) |
-| Kind / tags / contradiction | Cleaner bank, supersession instead of duplicate facts | Shipped for kind ([JEV-6](https://github.com/zanuka/nocciolo/issues/37)) and contradiction ([JEV-7](https://github.com/zanuka/nocciolo/issues/38)). Citation and PII are still open |
+| Kind / tags / contradiction / secrets | Cleaner bank, supersession instead of duplicate facts, secrets and personal data stay out | Shipped for kind ([JEV-6](https://github.com/zanuka/nocciolo/issues/37)), contradiction ([JEV-7](https://github.com/zanuka/nocciolo/issues/38)), and the secret / personal-data check ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)). Citation is still open |
 | `audit --judge jev` + confirm | Structured prune; tombstones | After |
 | Firstmate routing | Bank only when the task needs it | After |
 | Recall rerank / still-true | Safer context; extra latency and tokens | After, flag-gated |

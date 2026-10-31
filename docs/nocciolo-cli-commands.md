@@ -191,6 +191,12 @@ Headings the heuristic would drop are judged only when this flag is on.
 A confident reject is left out of retain.
 That includes a confident `noise` kind and a confident `style_pref` (personal taste stays out of the company bank).
 A score or kind below `--confidence` is listed as review and is not retained.
+`contains_secret` and `contains_pii` run on the same call.
+A high score means unsafe.
+A confident secret is skipped, and the stderr warning names the path without printing the secret.
+A confident personal-data answer is skipped.
+A mid-range score stays in review and is not retained.
+An `sk-` token or PEM block in an otherwise seedable ADR is skipped before the TypeSafe call.
 Retained sections receive the stable tags for that kind (`knowledge:<kind>`).
 A confident `supersedes` or `contradicts` relation keeps that one retain and records the old observation id.
 `supports`, `extends`, and `unrelated` do not add another retain item.

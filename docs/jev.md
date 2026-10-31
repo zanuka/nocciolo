@@ -12,7 +12,8 @@ State sanitization: [JEV-3](https://github.com/zanuka/nocciolo/issues/22) (`buil
 Relevance gate: [JEV-4](https://github.com/zanuka/nocciolo/issues/30) (`seed --judge jev` before retain).
 Knowledge kind ships on that same call.
 The contradiction check ships on that same call.
-Citation, secret second pass, and prune annotation are still planned.
+The secret and personal-data second pass ships on that same call.
+Citation and prune annotation are still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
 ---
@@ -78,7 +79,8 @@ Bounded decisions where a typed answer plus confidence is enough:
 - Section relevance and keep/skip before retain (shipped on `seed --judge jev`)
 - Knowledge kind on that same call (shipped)
 - Contradiction against overlapping observations on that same call (shipped)
-- Citation support, PII / secret second pass
+- Citation support
+- PII / secret second pass (shipped on `seed --judge jev`)
 - Seed priority and retain budget; `store` allowlist proposals and durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
 - Bank-template fitness scores (mission / directives / tags / mental-model questions); prose stays in the template
@@ -155,6 +157,20 @@ Deleting it is prune annotation ([JEV-14](https://github.com/zanuka/nocciolo/iss
 
 ---
 
+## Secret and personal data
+
+The same `seed --judge jev` call asks `contains_secret` and `contains_pii`.
+A high score means the section is unsafe.
+A confident secret is a hard skip.
+The stderr warning names the path and does not print the secret.
+A confident personal-data answer is also skipped.
+There is no `--allow-pii` flag.
+A score between `--confidence` and `1 - confidence` stays in review and is not retained.
+A local match for an `sk-` token or a PEM private-key block skips before any TypeSafe call, so that text is not sent.
+A clean ADR is not flagged ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)).
+
+---
+
 ## State budget
 
 `buildJevState` in `src/judge/` is the only supported way to fill TypeSafe `state`.
@@ -172,7 +188,7 @@ Do not send the full repo tree, a full file, a bank export, a git patch, or MCP 
 Two local checks run before any HTTP body is built:
 
 - Denylist: reuse `src/scanner/sensitive.ts`. If a path is not seedable, it is not judgeable.
-- Inline secrets: a token, private key, credential connection string, or assignment-shaped API key skips the section. The warning names the path and does not include the secret. The later Noul secret question ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)) runs only on text that already passed this gate.
+- Inline secrets: a token, private key, credential connection string, or assignment-shaped API key skips the section before the TypeSafe call. The warning names the path and does not include the secret. The Noul questions `contains_secret` and `contains_pii` ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)) run only on text that already passed this gate.
 
 Jev allows 32k tokens for state plus the longest question.
 The builder reserves 8k tokens for questions and caps state at 24k tokens, counted as 4 characters per token (96k characters).

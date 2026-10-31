@@ -27,10 +27,12 @@ Dry-run prints the kind, its probabilities, and any supersede or contradict rela
 A confident `noise` or `style_pref` is left out of the company bank.
 A confident `supersedes` or `contradicts` relation retains the section once and records the old observation id.
 The old observation is not deleted.
-These checks are still planned:
+The same call asks `contains_secret` and `contains_pii`.
+A confident secret or personal-data answer is skipped, and a secret warning names the path without printing the secret.
+A mid-range score stays in review and is not retained.
+This check is still planned:
 
 - whether a later reader can cite it
-- whether it carries a secret or personal data
 
 The same pass can score the generated mission and directives, and can propose mental-model questions and tags. The wording stays in the template you commit. `seed --dry-run --judge jev` shows the keep, the skip, and the score.
 

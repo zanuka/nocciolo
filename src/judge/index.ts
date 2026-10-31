@@ -41,6 +41,7 @@ export type {
   ObservationRelation,
   ObservationRelationRead,
 } from "./relations.js";
+export { formatSecretSkipWarning, safetyQuestions } from "./safety.js";
 export {
   OBSERVATION_QUERY_MAX_CHARS,
   observationRecallQuery,

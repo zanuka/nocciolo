@@ -109,6 +109,8 @@ function answersFor(text: string): JudgeResult {
         confidence: uncertain ? 0.4 : 0.91,
       },
       kind: kindAnswer(kind.choice, kind.confidence),
+      contains_secret: { type: "noul", noul: 0.02 },
+      contains_pii: { type: "noul", noul: 0.02 },
     },
   };
 }
@@ -258,6 +260,8 @@ describe("seed relevance gate", () => {
       "in_scope",
       "durability",
       "kind",
+      "contains_secret",
+      "contains_pii",
     ]);
     const kindQuestion = judge.calls[0]?.questions.kind;
     expect(kindQuestion?.type).toBe("choice");
@@ -592,6 +596,66 @@ We use Postgres. This architecture decision retires the previous database. It is
     const ids = result.prepared.factsToRetain.map((item) => item.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.filter((id) => id.includes("0008-postgres.md"))).toHaveLength(1);
+  });
+
+  it("skips a pasted key in an ADR, warns with the path, and still retains a clean ADR", async () => {
+    const root = await tempProject();
+    const secret = "sk-test-abcdefghijklmnopqrstuvwxyz";
+    const pem = "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0123456789abcdef\n-----END RSA PRIVATE KEY-----";
+    await writeFile(
+      join(root, "docs", "adr", "0001.md"),
+      `# ADR 0001\n\n## Decision\n\nWe keep the Hindsight bank on the machine. This architecture decision is a project invariant and a standard for later integrations.\n\n${pem}\n\n${secret}\n`,
+      "utf8",
+    );
+    await writeFile(join(root, "docs", "adr", "0002-clean.md"), ADR, "utf8");
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(input) {
+        const encoded = JSON.stringify(input.state);
+        if (
+          encoded.includes(secret) ||
+          encoded.includes("BEGIN RSA PRIVATE KEY") ||
+          encoded.includes("MIIEow")
+        ) {
+          throw new Error("secret reached the judge");
+        }
+        const state = input.state as { text?: string };
+        return answersFor(state.text ?? "");
+      },
+    };
+    const client = {
+      retain: vi.fn(async () => ({ success: true })),
+    } as unknown as HindsightClient & { retain: ReturnType<typeof vi.fn> };
+    const errors: string[] = [];
+    vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+      errors.push(args.map((part) => String(part)).join(" "));
+    });
+    captureLogs();
+
+    const result = await runSeed({
+      cwd: root,
+      resolvedJudge: {
+        judgeId: "jev",
+        confidence: 0.8,
+        strict: false,
+        judge,
+      },
+      client,
+      recallObservations: async () => [],
+    });
+
+    const stderr = errors.join("\n");
+    const stdout = logs.join("\n");
+    expect(stderr).toContain("Warning: skipped docs/adr/0001.md: section contains a secret.");
+    expect(stderr).not.toContain(secret);
+    expect(stderr).not.toContain("MIIEow");
+    expect(stdout).not.toContain(secret);
+    expect(stdout).not.toContain("MIIEow");
+    expect(result.prepared.factsToRetain.some((fact) => fact.id.includes("0001.md"))).toBe(false);
+    expect(result.prepared.factsToRetain.some((fact) => fact.id.includes("0002-clean.md"))).toBe(true);
+    const retained = retainedItems(client);
+    expect(retained.some((item) => item.document_id.includes("0001.md"))).toBe(false);
+    expect(retained.some((item) => item.document_id.includes("0002-clean.md"))).toBe(true);
   });
 });
 

@@ -487,6 +487,8 @@ nocciolo seed --dry-run --judge jev
   retained rows get stable knowledge:<kind> tags
   a confident supersedes or contradicts relation records the old observation id on that one retain
   the old observation is not deleted
+  a confident secret or personal-data answer is skipped
+  a secret warning names the path and does not print the secret
   Hindsight retain runs only for the rows the gate keeps
 ```
 

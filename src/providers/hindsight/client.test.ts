@@ -225,3 +225,55 @@ describe("HindsightClient.deleteDocument", () => {
     );
   });
 });
+
+describe("HindsightClient.recallObservations", () => {
+  it("posts a low-budget observation recall and keeps observation ids", async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      calls.push({
+        url: String(input),
+        body: JSON.parse(String(init?.body)),
+      });
+      return new Response(
+        JSON.stringify({
+          results: [
+            {
+              id: "obs-mysql",
+              text: "We use MySQL.",
+              type: "observation",
+              document_id: "doc-mysql",
+            },
+            {
+              id: "world-1",
+              text: "A raw fact",
+              type: "world",
+            },
+            { id: "", text: "missing" },
+          ],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    };
+    const client = new HindsightClient({
+      baseUrl: "http://localhost:8888/",
+      apiKey: "test-key",
+      fetchImpl,
+    });
+    const results = await client.recallObservations("nocciolo", "We use Postgres.");
+    expect(calls[0]?.url).toBe(
+      "http://localhost:8888/v1/default/banks/nocciolo/memories/recall",
+    );
+    expect(calls[0]?.body).toMatchObject({
+      query: "We use Postgres.",
+      types: ["observation"],
+      budget: "low",
+    });
+    expect(results).toEqual([
+      {
+        id: "obs-mysql",
+        text: "We use MySQL.",
+        documentId: "doc-mysql",
+      },
+    ]);
+  });
+});

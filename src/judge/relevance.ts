@@ -1,7 +1,12 @@
-import type { BankKindStamp, CandidateFact } from "../extractor/types.js";
+import type {
+  BankKindStamp,
+  CandidateFact,
+  ObservationLink,
+} from "../extractor/types.js";
 import type { PreparedSeed } from "../seeder/prepare.js";
 import { knowledgeKindById, knowledgeKindQuestion, listKnowledgeKinds } from "./knowledge-kinds.js";
-import { buildJevState, containsInlineSecret } from "./state.js";
+import { interpretRelation, OBSERVATION_RELATIONS, relationQuestions } from "./relations.js";
+import { buildJevState, containsInlineSecret, type JevOverlap } from "./state.js";
 import type {
   Judge,
   JudgeAnswer,
@@ -29,6 +34,7 @@ export interface RelevanceState {
   text: string;
   bankMission?: string;
   sourceCommit?: string;
+  overlaps?: JevOverlap[];
 }
 
 export interface RelevanceRow {
@@ -58,6 +64,18 @@ export interface RelevanceRow {
     probabilities: Record<string, number>;
   };
   bankKind?: BankKindStamp;
+  relation?: {
+    choice: string;
+    confidence: number;
+    probabilities: Record<string, number>;
+    observationIds: string[];
+  };
+  conflicts?: Array<{
+    observationId: string;
+    noul: number;
+    band: NoulBand;
+  }>;
+  observationLinks?: ObservationLink[];
 }
 
 export interface RelevanceReport {
@@ -127,9 +145,10 @@ export function noulBand(noul: number, confidence: number): NoulBand {
 export function decideRelevance(
   result: JudgeResult,
   confidence: number,
-  options?: { heuristicKept?: boolean },
+  options?: { heuristicKept?: boolean; overlaps?: readonly JevOverlap[] },
 ): Omit<RelevanceRow, "fact" | "heuristicKept"> {
   const heuristicKept = options?.heuristicKept ?? true;
+  const overlaps = options?.overlaps ?? [];
   if (result.fellBackFromJev || result.judgeId !== "jev") {
     return {
       action: heuristicKept ? "retain" : "skip",
@@ -152,16 +171,21 @@ export function decideRelevance(
 
   const kind = readKind(result.answers.kind);
   if (isDurable === undefined || isEphemeral === undefined || inScope === undefined) {
-    return applyKnowledgeKind(
-      {
-        ...base,
-        action: "review",
-        reason: `confidence below ${formatConfidence(confidence)}`,
-        heuristicVsJev: "review",
-      },
-      kind,
+    return withRelation(
+      applyKnowledgeKind(
+        {
+          ...base,
+          action: "review",
+          reason: `confidence below ${formatConfidence(confidence)}`,
+          heuristicVsJev: "review",
+        },
+        kind,
+        confidence,
+        heuristicKept,
+      ),
+      result,
+      overlaps,
       confidence,
-      heuristicKept,
     );
   }
 
@@ -188,16 +212,21 @@ export function decideRelevance(
     reasons.push("out of scope");
   }
   if (reasons.length > 0) {
-    return applyKnowledgeKind(
-      {
-        ...scored,
-        action: "skip",
-        reason: reasons.join("; "),
-        heuristicVsJev: versusHeuristic("skip", heuristicKept),
-      },
-      kind,
+    return withRelation(
+      applyKnowledgeKind(
+        {
+          ...scored,
+          action: "skip",
+          reason: reasons.join("; "),
+          heuristicVsJev: versusHeuristic("skip", heuristicKept),
+        },
+        kind,
+        confidence,
+        heuristicKept,
+      ),
+      result,
+      overlaps,
       confidence,
-      heuristicKept,
     );
   }
 
@@ -206,29 +235,39 @@ export function decideRelevance(
     bands.isEphemeral === "uncertain" ||
     bands.inScope === "uncertain"
   ) {
-    return applyKnowledgeKind(
+    return withRelation(
+      applyKnowledgeKind(
+        {
+          ...scored,
+          action: "review",
+          reason: `confidence below ${formatConfidence(confidence)}`,
+          heuristicVsJev: "review",
+        },
+        kind,
+        confidence,
+        heuristicKept,
+      ),
+      result,
+      overlaps,
+      confidence,
+    );
+  }
+
+  return withRelation(
+    applyKnowledgeKind(
       {
         ...scored,
-        action: "review",
-        reason: `confidence below ${formatConfidence(confidence)}`,
-        heuristicVsJev: "review",
+        action: "retain",
+        reason: "not a high-confidence reject",
+        heuristicVsJev: versusHeuristic("retain", heuristicKept),
       },
       kind,
       confidence,
       heuristicKept,
-    );
-  }
-
-  return applyKnowledgeKind(
-    {
-      ...scored,
-      action: "retain",
-      reason: "not a high-confidence reject",
-      heuristicVsJev: versusHeuristic("retain", heuristicKept),
-    },
-    kind,
+    ),
+    result,
+    overlaps,
     confidence,
-    heuristicKept,
   );
 }
 
@@ -238,8 +277,8 @@ export async function judgeSeedRelevance(input: {
   judge: Judge;
   confidence: number;
   mission?: string;
+  overlapsFor?: (fact: CandidateFact) => Promise<readonly JevOverlap[]>;
 }): Promise<RelevanceRow[]> {
-  const questions = relevanceQuestions();
   const rows: RelevanceRow[] = [];
   let fellBack = false;
 
@@ -252,11 +291,20 @@ export async function judgeSeedRelevance(input: {
       return;
     }
 
+    const secret =
+      containsInlineSecret(fact.content) ||
+      containsInlineSecret(fact.title) ||
+      containsInlineSecret(fact.provenance.sourcePath);
+    const lookedUp =
+      input.overlapsFor !== undefined && !secret
+        ? await input.overlapsFor(fact)
+        : [];
     const built = buildJevState({
       path: fact.provenance.sourcePath,
       heading: fact.title,
       sectionText: fact.content,
       ...(input.mission !== undefined ? { mission: input.mission } : {}),
+      ...(lookedUp.length > 0 ? { overlaps: lookedUp } : {}),
     });
     if (!built.ok) {
       rows.push({
@@ -269,6 +317,11 @@ export async function judgeSeedRelevance(input: {
       return;
     }
 
+    const sentOverlaps = built.state.overlaps ?? [];
+    const questions = {
+      ...relevanceQuestions(),
+      ...relationQuestions(sentOverlaps),
+    };
     const state = toRelevanceState(built.state, fact.provenance.commit);
     const result = await input.judge.evaluate({ state, questions });
     if (result.fellBackFromJev) {
@@ -276,6 +329,7 @@ export async function judgeSeedRelevance(input: {
     }
     const decision = decideRelevance(result, input.confidence, {
       heuristicKept,
+      overlaps: sentOverlaps,
     });
     rows.push({ fact, heuristicKept, ...decision });
   };
@@ -303,17 +357,38 @@ export function applyRelevanceRows(
     rows.filter((row) => row.action === "retain").map((row) => row.fact.id),
   );
   const bankKindById = new Map<string, BankKindStamp>();
+  const linksById = new Map<string, ObservationLink[]>();
   for (const row of rows) {
-    if (row.action === "retain" && row.bankKind !== undefined) {
+    if (row.action !== "retain") {
+      continue;
+    }
+    if (row.bankKind !== undefined) {
       bankKindById.set(row.fact.id, row.bankKind);
+    }
+    if (row.observationLinks !== undefined && row.observationLinks.length > 0) {
+      linksById.set(row.fact.id, row.observationLinks);
     }
   }
   const stamp = (fact: CandidateFact): CandidateFact => {
     const bankKind = bankKindById.get(fact.id);
-    if (bankKind === undefined) {
+    const links = linksById.get(fact.id);
+    if (bankKind === undefined && links === undefined) {
       return fact;
     }
-    return { ...fact, bankKind: { id: bankKind.id, tags: [...bankKind.tags] } };
+    return {
+      ...fact,
+      ...(bankKind !== undefined
+        ? { bankKind: { id: bankKind.id, tags: [...bankKind.tags] } }
+        : {}),
+      ...(links !== undefined
+        ? {
+            observationLinks: links.map((link) => ({
+              relation: link.relation,
+              observationId: link.observationId,
+            })),
+          }
+        : {}),
+    };
   };
   const heuristicSkipIds = new Set(
     prepared.sources.flatMap((source) =>
@@ -409,8 +484,8 @@ export function formatRelevanceLines(input: {
   }
   lines.push("");
 
-  for (const row of input.rows) {
-    lines.push(...formatRow(row, prefix));
+    for (const row of input.rows) {
+    lines.push(...formatRow(row, prefix, input.confidence));
     lines.push("");
   }
 
@@ -432,10 +507,18 @@ export function formatRelevanceLines(input: {
         : `${prefix}Review rows were not retained. They will be judged again on the next seed.`,
     );
   }
+  const linked = input.rows.filter(
+    (row) => (row.observationLinks?.length ?? 0) > 0,
+  ).length;
+  if (linked > 0) {
+    lines.push(
+      `${prefix}Supersession metadata points at the old observation id. The old observation is not deleted.`,
+    );
+  }
   return lines;
 }
 
-function formatRow(row: RelevanceRow, prefix: string): string[] {
+function formatRow(row: RelevanceRow, prefix: string, confidence: number): string[] {
   const heuristic = row.heuristicKept ? "keep" : "skip";
   const lines = [
     `${prefix}document_id: ${row.fact.id}`,
@@ -463,6 +546,33 @@ function formatRow(row: RelevanceRow, prefix: string): string[] {
       `${prefix}probabilities: ${formatKindProbabilities(row.kind.probabilities)}`,
     );
   }
+  if (row.relation !== undefined) {
+    const linking =
+      row.relation.choice === "supersedes" || row.relation.choice === "contradicts";
+    const applied = (row.observationLinks?.length ?? 0) > 0;
+    const below = row.relation.confidence + 1e-9 < confidence;
+    const label = `${prefix}relation: ${row.relation.choice} confidence=${row.relation.confidence.toFixed(2)}`;
+    lines.push(
+      linking && !applied && below
+        ? `${label} (below ${formatConfidence(confidence)}, no supersession metadata)`
+        : label,
+    );
+    lines.push(
+      `${prefix}relation probabilities: ${formatRelationProbabilities(row.relation.probabilities)}`,
+    );
+    if (row.relation.observationIds.length > 0) {
+      lines.push(
+        `${prefix}observations: ${row.relation.observationIds.join(" ")}`,
+      );
+    }
+  }
+  if (row.conflicts !== undefined) {
+    for (const conflict of row.conflicts) {
+      lines.push(
+        `${prefix}conflicts_with: ${conflict.observationId} ${conflict.noul.toFixed(2)} ${conflict.band}`,
+      );
+    }
+  }
   lines.push(`${prefix}decision: ${row.action} (${row.reason})`);
   return lines;
 }
@@ -473,6 +583,7 @@ function toRelevanceState(
     heading?: string;
     section: string;
     mission?: string;
+    overlaps?: JevOverlap[];
   },
   sourceCommit: string | undefined,
 ): RelevanceState {
@@ -485,6 +596,9 @@ function toRelevanceState(
   }
   if (state.mission !== undefined) {
     relevance.bankMission = state.mission;
+  }
+  if (state.overlaps !== undefined && state.overlaps.length > 0) {
+    relevance.overlaps = state.overlaps;
   }
   if (sourceCommit === undefined) {
     return relevance;
@@ -562,6 +676,48 @@ function applyKnowledgeKind(
     ...withKind,
     bankKind: { id: spec.id, tags: [...spec.tags] },
   };
+}
+
+function withRelation(
+  decision: Omit<RelevanceRow, "fact" | "heuristicKept">,
+  result: JudgeResult,
+  overlaps: readonly JevOverlap[],
+  confidence: number,
+): Omit<RelevanceRow, "fact" | "heuristicKept"> {
+  const interpreted = interpretRelation({
+    answers: result.answers,
+    overlaps,
+    confidence,
+    retain: decision.action === "retain",
+  });
+  return {
+    ...decision,
+    ...(interpreted.relation !== undefined ? { relation: interpreted.relation } : {}),
+    ...(interpreted.conflicts !== undefined ? { conflicts: interpreted.conflicts } : {}),
+    ...(interpreted.observationLinks !== undefined
+      ? { observationLinks: interpreted.observationLinks }
+      : {}),
+  };
+}
+
+function formatRelationProbabilities(probabilities: Record<string, number>): string {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const id of OBSERVATION_RELATIONS) {
+    const value = probabilities[id];
+    if (value === undefined) {
+      continue;
+    }
+    seen.add(id);
+    parts.push(`${id}=${value.toFixed(2)}`);
+  }
+  for (const [id, value] of Object.entries(probabilities)) {
+    if (seen.has(id)) {
+      continue;
+    }
+    parts.push(`${id}=${value.toFixed(2)}`);
+  }
+  return parts.join(" ");
 }
 
 function formatKindProbabilities(probabilities: Record<string, number>): string {

@@ -51,7 +51,7 @@ For Firstmate, `nocciolo mcp --harness firstmate --write-firstmate` registers th
 - **Scans** your project for durable knowledge (READMEs, ADRs, standards, domain docs, schemas)
 - **Configures** a Hindsight memory bank with a clear mission, directives, and extraction settings tuned for software projects
 - **Seeds** the bank with high-signal facts and decisions via Hindsight **retain**: not by uploading raw markdown like a file-sync script
-- **Adds an optional Jev judgment layer** so `seed --judge jev` can skip changelogs, tables of contents, and other ephemeral sections before retain. Recall rerank, prune annotation, and routing are still planned: see [Jev](#jev)
+- **Adds an optional Jev judgment layer** so `seed --judge jev` can skip changelogs, tables of contents, and other ephemeral sections before retain, and can flag a section that supersedes or contradicts an observation already in the bank. Recall rerank, prune annotation, and routing are still planned: see [Jev](#jev)
 - **Emits** MCP config so each harness shares one project bank. See [One memory across your agents](#one-memory-across-your-agents)
 - **Shares** knowledgebases across teams with explicit deployment profiles: local/LAN, VPN, public self-host, or [Hindsight Cloud](https://docs.hindsight.vectorize.io/): so the company brain reaches the agents that need it
 - **Stays local-first**: self-host by default; Cloud is opt-in, never required
@@ -209,7 +209,8 @@ pnpm nocciolo seed --dry-run --judge jev   # optional relevance gate; needs NOCC
 
 The first command shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections.
 It does not call Hindsight.
-The second command adds the Jev relevance table and calls TypeSafe only.
+The second command adds the Jev relevance table, calls TypeSafe, and may recall up to 5 observation summaries (read-only).
+It does not retain.
 See [Jev](#jev).
 
 **Retain with clear progress**
@@ -480,10 +481,12 @@ Nocciolo's Jev layer is the gate in front of retain: it decides which section is
 
 ```text
 nocciolo seed --dry-run --judge jev
-  document_id, path, heading, decision, score, confidence, kind, probabilities, heuristic-vs-jev
+  document_id, path, heading, decision, score, confidence, kind, probabilities, relation, heuristic-vs-jev
   high-confidence rejects are skipped, including confident noise and style_pref
   low-confidence rows stay in review and are not retained
   retained rows get stable knowledge:<kind> tags
+  a confident supersedes or contradicts relation records the old observation id on that one retain
+  the old observation is not deleted
   Hindsight retain runs only for the rows the gate keeps
 ```
 

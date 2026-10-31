@@ -72,7 +72,7 @@ See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank
 Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones).
 Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `nocciolo share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `nocciolo docs list`.
 Phase 6 (mental models) shipped: seed-aligned tags, differentiated refresh presets, interactive `configure` wizard, `nocciolo mental-model` lifecycle CLI, opt-in `seed --refresh-mental-models`, and agent snippets preferring `reflect` for playbook questions.
-Phase 7 (current): optional Jev judgment layer. `seed --judge jev` runs the relevance gate and a knowledge-kind choice before retain, one decision per section. Later judges and prune annotation are still open, then reliability and DX.
+Phase 7 (current): optional Jev judgment layer. `seed --judge jev` runs the relevance gate, a knowledge-kind choice, and a contradiction check against overlapping observations before retain, one decision per section. Later judges and prune annotation are still open, then reliability and DX.
 
 <!-- nocciolo:hindsight-bank -->
 

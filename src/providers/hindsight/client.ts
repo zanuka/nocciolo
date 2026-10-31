@@ -150,6 +150,15 @@ export interface BankTagsResponse {
   [key: string]: unknown;
 }
 
+export interface RecalledObservation {
+  id: string;
+  text: string;
+  documentId?: string;
+}
+
+export const OBSERVATION_RECALL_MAX_TOKENS = 800;
+export const OBSERVATION_RECALL_TIMEOUT_MS = 8_000;
+
 export interface HindsightClientOptions {
   baseUrl: string;
   apiKey?: string;
@@ -664,11 +673,33 @@ export class HindsightClient {
     );
   }
 
+  async recallObservations(
+    bankId: string,
+    query: string,
+    options: { maxTokens?: number; timeoutMs?: number } = {},
+  ): Promise<RecalledObservation[]> {
+    const timeoutMs = options.timeoutMs ?? OBSERVATION_RECALL_TIMEOUT_MS;
+    const raw = await this.requestJson<unknown>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/memories/recall`,
+      {
+        query,
+        types: ["observation"],
+        budget: "low",
+        max_tokens: options.maxTokens ?? OBSERVATION_RECALL_MAX_TOKENS,
+      },
+      `recall observations for bank "${bankId}"`,
+      AbortSignal.timeout(timeoutMs),
+    );
+    return parseRecalledObservations(raw);
+  }
+
   private async requestJson<T>(
     method: string,
     path: string,
     body: unknown,
     action: string,
+    signal?: AbortSignal,
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`;
     let response: Response;
@@ -677,8 +708,18 @@ export class HindsightClient {
         method,
         headers: this.headers(),
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        ...(signal !== undefined ? { signal } : {}),
       });
     } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError")
+      ) {
+        throw new NoccioloError(
+          `Hindsight ${action} timed out`,
+          "Check that Hindsight is running. Seed can continue without the contradiction check.",
+        );
+      }
       throw new NoccioloError(
         `Failed to reach Hindsight at ${this.baseUrl}`,
         `Could not ${action}. (${error instanceof Error ? error.message : String(error)})`,
@@ -770,4 +811,38 @@ async function safeReadText(response: Response): Promise<string> {
   } catch {
     return "";
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseRecalledObservations(value: unknown): RecalledObservation[] {
+  if (!isRecord(value) || !Array.isArray(value.results)) {
+    return [];
+  }
+  const out: RecalledObservation[] = [];
+  for (const item of value.results) {
+    if (!isRecord(item)) {
+      continue;
+    }
+    if (typeof item.id !== "string" || item.id.trim() === "") {
+      continue;
+    }
+    if (typeof item.text !== "string" || item.text.trim() === "") {
+      continue;
+    }
+    if (typeof item.type === "string" && item.type !== "observation") {
+      continue;
+    }
+    const row: RecalledObservation = {
+      id: item.id.trim(),
+      text: item.text.trim(),
+    };
+    if (typeof item.document_id === "string" && item.document_id.trim() !== "") {
+      row.documentId = item.document_id.trim();
+    }
+    out.push(row);
+  }
+  return out;
 }

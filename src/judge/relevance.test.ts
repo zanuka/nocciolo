@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import type { CandidateFact } from "../extractor/types.js";
 import type { Judge, JudgeResult } from "./types.js";
 import type { PreparedSeed } from "../seeder/prepare.js";
+import { toRetainItems } from "../seeder/prepare.js";
 import { KNOWLEDGE_KIND_IDS, knowledgeKindById } from "./knowledge-kinds.js";
+import {
+  OBSERVATION_RELATIONS,
+  RELATION_CHOICE_MAX_OVERLAPS,
+  type ObservationRelation,
+} from "./relations.js";
 import {
   applyRelevanceRows,
   decideRelevance,
@@ -612,5 +618,235 @@ describe("knowledge kind on the relevance call", () => {
     expect(applied.prepared.factsToRetain[0]?.id).toBe(
       "nocciolo:README.md#architecture",
     );
+  });
+});
+
+const POSTGRES_ADR = `# ADR 0008: Use Postgres
+
+## Decision
+
+We use Postgres.
+`;
+
+const MYSQL_OBSERVATION = {
+  id: "obs-mysql",
+  summary: "We use MySQL.",
+};
+
+function relationAnswer(
+  choice: ObservationRelation,
+  confidence: number,
+): JudgeResult["answers"][string] {
+  const probabilities: Record<string, number> = {};
+  const rest = OBSERVATION_RELATIONS.filter((id) => id !== choice);
+  const share = rest.length === 0 ? 0 : (1 - confidence) / rest.length;
+  for (const id of OBSERVATION_RELATIONS) {
+    probabilities[id] = id === choice ? confidence : share;
+  }
+  return {
+    type: "choice",
+    choice,
+    probabilities,
+    confidence,
+  };
+}
+
+function postgresFact(): CandidateFact {
+  return fact({
+    id: "nocciolo:docs/adr/0008-postgres.md#decision",
+    path: "docs/adr/0008-postgres.md",
+    title: "ADR 0008: Use Postgres",
+    content: POSTGRES_ADR,
+  });
+}
+
+describe("contradiction check against observations", () => {
+  const durable = {
+    isDurable: 0.96,
+    isEphemeral: 0.04,
+    inScope: 0.93,
+    durability: 4,
+    kind: { choice: "adr", confidence: 0.93 },
+  };
+
+  it("flags ADR-0008 Postgres against a MySQL observation as supersede or contradict", () => {
+    for (const relation of ["supersedes", "contradicts"] as const) {
+      const decision = decideRelevance(
+        {
+          ...jevResult(durable),
+          answers: {
+            ...jevResult(durable).answers,
+            relation: relationAnswer(relation, 0.91),
+          },
+        },
+        0.8,
+        { overlaps: [MYSQL_OBSERVATION] },
+      );
+      expect(decision.action).toBe("retain");
+      expect(decision.observationLinks).toEqual([
+        { relation, observationId: "obs-mysql" },
+      ]);
+      const links = decision.observationLinks;
+      if (links === undefined) {
+        throw new Error("expected observation links");
+      }
+      const items = toRetainItems([
+        { ...postgresFact(), observationLinks: links },
+      ]);
+      expect(items).toHaveLength(1);
+      expect(items[0]?.document_id).toBe(
+        "nocciolo:docs/adr/0008-postgres.md#decision",
+      );
+      expect(items[0]?.metadata[relation]).toBe("obs-mysql");
+      expect(POSTGRES_ADR).toMatch(/We use Postgres/);
+      expect(MYSQL_OBSERVATION.summary).toBe("We use MySQL.");
+    }
+  });
+
+  it("does not add a retain item when the relation is unrelated, supports, or extends", () => {
+    const section = postgresFact();
+    for (const relation of ["unrelated", "supports", "extends"] as const) {
+      const decision = decideRelevance(
+        {
+          ...jevResult(durable),
+          answers: {
+            ...jevResult(durable).answers,
+            relation: relationAnswer(relation, 0.9),
+          },
+        },
+        0.8,
+        { overlaps: [MYSQL_OBSERVATION] },
+      );
+      expect(decision.action).toBe("retain");
+      expect(decision.observationLinks).toBeUndefined();
+      const items = toRetainItems([{ ...section, ...decision }]);
+      expect(items).toHaveLength(1);
+      expect(items[0]?.document_id).toBe(section.id);
+      expect(items[0]?.metadata.supersedes).toBeUndefined();
+      expect(items[0]?.metadata.contradicts).toBeUndefined();
+    }
+  });
+
+  it("prints the relation on dry-run and does not describe a delete", () => {
+    const decision = decideRelevance(
+      {
+        ...jevResult(durable),
+        answers: {
+          ...jevResult(durable).answers,
+          relation: relationAnswer("supersedes", 0.94),
+        },
+      },
+      0.8,
+      { overlaps: [MYSQL_OBSERVATION] },
+    );
+    const lines = formatRelevanceLines({
+      rows: [{ fact: postgresFact(), heuristicKept: true, ...decision }],
+      confidence: 0.8,
+      dryRun: true,
+    });
+    const output = lines.join("\n");
+    expect(output).toContain("[dry-run] relation: supersedes confidence=0.94");
+    expect(output).toContain("[dry-run] observations: obs-mysql");
+    expect(output).toContain("The old observation is not deleted.");
+    expect(output).not.toMatch(/deleteDocument|deleted the old/);
+  });
+
+  it("does not stamp supersession metadata when relation confidence is low", () => {
+    const decision = decideRelevance(
+      {
+        ...jevResult(durable),
+        answers: {
+          ...jevResult(durable).answers,
+          relation: relationAnswer("supersedes", 0.4),
+        },
+      },
+      0.8,
+      { overlaps: [MYSQL_OBSERVATION] },
+    );
+    expect(decision.action).toBe("retain");
+    expect(decision.observationLinks).toBeUndefined();
+    const output = formatRelevanceLines({
+      rows: [{ fact: postgresFact(), heuristicKept: true, ...decision }],
+      confidence: 0.8,
+      dryRun: true,
+    }).join("\n");
+    expect(output).toContain("below 0.80, no supersession metadata");
+    expect(output).not.toContain("The old observation is not deleted.");
+  });
+
+  it("asks one relation choice for a short overlap list and nouls when there are many", async () => {
+    const calls: Array<{ questionIds: string[] }> = [];
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(input) {
+        calls.push({ questionIds: Object.keys(input.questions) });
+        const many = input.questions.conflicts_with_0 !== undefined;
+        if (many) {
+          return {
+            ...jevResult(durable),
+            answers: {
+              ...jevResult(durable).answers,
+              conflicts_with_0: { type: "noul", noul: 0.93 },
+              conflicts_with_1: { type: "noul", noul: 0.05 },
+              conflicts_with_2: { type: "noul", noul: 0.5 },
+              conflicts_with_3: { type: "noul", noul: 0.91 },
+            },
+          };
+        }
+        return {
+          ...jevResult(durable),
+          answers: {
+            ...jevResult(durable).answers,
+            relation: relationAnswer("supersedes", 0.92),
+          },
+        };
+      },
+    };
+    const short = await judgeSeedRelevance({
+      facts: [postgresFact()],
+      judge,
+      confidence: 0.8,
+      overlapsFor: async () => [MYSQL_OBSERVATION],
+    });
+    expect(calls[0]?.questionIds).toContain("relation");
+    expect(calls[0]?.questionIds).not.toContain("conflicts_with_0");
+    expect(short[0]?.observationLinks).toEqual([
+      { relation: "supersedes", observationId: "obs-mysql" },
+    ]);
+    expect(RELATION_CHOICE_MAX_OVERLAPS).toBe(3);
+
+    const manyOverlaps = ["a", "b", "c", "d"].map((id) => ({
+      id: `obs-${id}`,
+      summary: `We use ${id}.`,
+    }));
+    const wide = await judgeSeedRelevance({
+      facts: [postgresFact()],
+      judge,
+      confidence: 0.8,
+      overlapsFor: async () => manyOverlaps,
+    });
+    expect(calls[1]?.questionIds).toEqual(
+      expect.arrayContaining([
+        "conflicts_with_0",
+        "conflicts_with_1",
+        "conflicts_with_2",
+        "conflicts_with_3",
+      ]),
+    );
+    expect(calls[1]?.questionIds).not.toContain("relation");
+    expect(wide[0]?.observationLinks).toEqual([
+      { relation: "contradicts", observationId: "obs-a" },
+      { relation: "contradicts", observationId: "obs-d" },
+    ]);
+    const links = wide[0]?.observationLinks;
+    if (links === undefined) {
+      throw new Error("expected observation links");
+    }
+    const items = toRetainItems([
+      { ...postgresFact(), observationLinks: links },
+    ]);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.metadata.contradicts).toBe("obs-a|obs-d");
+    expect(items[0]?.metadata.supersedes).toBeUndefined();
   });
 });

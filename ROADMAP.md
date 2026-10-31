@@ -128,8 +128,7 @@ Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
 Tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
 The checklist groups those tickets.
 The [issue index](#jev-issue-index) lists the epic.
-JEV-1 through JEV-7 are done in the checklist.
-JEV-1 through JEV-5 are closed on GitHub.
+JEV-1 through JEV-7 are done in the checklist and closed on GitHub.
 
 - [x] Product rule: `docs/jev.md` states Jev is a judge, not a backend (opt-in, offline fallback, do-not-build, confidence gate, state budget). ([JEV-1](https://github.com/zanuka/nocciolo/issues/20))
 - [x] Judge port: `Judge` interface (`off` / `heuristic` / `jev`), `--judge` / `--confidence` / `--strict` on seed/store/prune, TypeSafe HTTP client with offline fallback. Missing key with `--judge jev` is a hard error; network/429/5xx fall back to heuristics unless `--strict`. Default path makes no TypeSafe calls. ([JEV-2](https://github.com/zanuka/nocciolo/issues/21))
@@ -155,9 +154,8 @@ Deferred (still tracked under the Jev epic; land with later phases):
 
 ### Jev issue index
 
-Issue index as of 25 October 2026.
-JEV-1 through JEV-7 are done in the checklist.
-JEV-1 through JEV-5 are closed on GitHub.
+Issue index as of 31 October 2026.
+JEV-1 through JEV-7 are done in the checklist and closed on GitHub.
 Open [`jev`-labeled issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) are the rest of the table.
 Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is superseded by [#58](https://github.com/zanuka/nocciolo/issues/58).
 
@@ -169,8 +167,8 @@ Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is sup
 | JEV-3 | [#22](https://github.com/zanuka/nocciolo/issues/22) | Sanitize Jev state (secrets, denylist, size) (closed) |
 | JEV-4 | [#30](https://github.com/zanuka/nocciolo/issues/30) | Relevance gate before retain (closed) |
 | JEV-5 | [#36](https://github.com/zanuka/nocciolo/issues/36) | Section-level keep/skip (not file-level) (closed) |
-| JEV-6 | [#37](https://github.com/zanuka/nocciolo/issues/37) | Knowledge-kind taxonomy |
-| JEV-7 | [#38](https://github.com/zanuka/nocciolo/issues/38) | Contradiction check against existing observations |
+| JEV-6 | [#37](https://github.com/zanuka/nocciolo/issues/37) | Knowledge-kind taxonomy (closed) |
+| JEV-7 | [#38](https://github.com/zanuka/nocciolo/issues/38) | Contradiction check against existing observations (closed) |
 | JEV-8 | [#39](https://github.com/zanuka/nocciolo/issues/39) | PII / secret second pass |
 | JEV-9 | [#40](https://github.com/zanuka/nocciolo/issues/40) | Citation support check after retain / extract |
 | JEV-10 | [#41](https://github.com/zanuka/nocciolo/issues/41) | Propose `store` allowlist adoption for new durable files |

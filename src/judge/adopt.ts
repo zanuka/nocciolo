@@ -1,3 +1,18 @@
+/*
+Allowlist adoption proposes new durable files for store.allowlist.
+Store calls this once per file that the scanner found and the allowlist does
+not already contain. One Jev call asks whether the file belongs on the
+allowlist (should_adopt) and what kind of knowledge it is (kind, the same
+choice used at seed time).
+
+A confident durable kind, with should_adopt at or above the confidence
+threshold, is a proposal. A confident no, or a confident noise or style_pref
+kind, is not proposed. A mid-range or missing answer stays in review and is
+not written. A file that matches a secret pattern is skipped and is not sent
+to Jev. The caller prints the list. The allowlist changes only when the
+operator passes --apply, and that write does not retain.
+*/
+
 import { knowledgeKindById, knowledgeKindQuestion } from "./knowledge-kinds.js";
 import { noulBand, type NoulBand } from "./relevance.js";
 import {

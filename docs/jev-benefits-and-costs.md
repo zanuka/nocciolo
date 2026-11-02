@@ -97,7 +97,7 @@ A README is often 20% durable architecture and 80% badges, TOC, and contributor 
 
 ### 3.3 Put the durable part of a large diff first
 
-A monorepo change can touch dozens of markdown files and contain only a few decisions. Jev ranks candidates against a retain budget and can propose which new files belong on the `store` allowlist. You confirm before retain.
+A monorepo change can touch dozens of markdown files and contain only a few decisions. Ranking those candidates against a retain budget is still planned. `store --propose-adopt --judge jev` can propose which new files belong on the `store` allowlist. You confirm with `--apply` before the allowlist changes, and that write does not retain.
 
 **User-visible result:** incremental `seed` and `store` spend the budget on ADRs and standards first, not on every touched doc.
 

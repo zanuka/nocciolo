@@ -11,6 +11,9 @@ import {
   it,
   vi,
 } from "vitest";
+import { KNOWLEDGE_KIND_IDS } from "../judge/knowledge-kinds.js";
+import type { ChoiceAnswer, Judge, JudgeEvaluateInput, JudgeResult } from "../judge/types.js";
+import type { ResolvedJudge } from "../judge/resolve.js";
 import { runStore } from "./store.js";
 
 const execFileAsync = promisify(execFile);
@@ -218,4 +221,137 @@ describe("runStore", () => {
       /disposable git worktree/,
     );
   });
+
+  it("proposes a new ADR and does not propose a dependency readme or scratch markdown", async () => {
+    const root = await tempProject();
+    await writeConfig(root, { store: { allowlist: [] } });
+    await mkdir(join(root, "docs", "adr"), { recursive: true });
+    await mkdir(join(root, "node_modules", "left-pad"), { recursive: true });
+    await mkdir(join(root, "notes"), { recursive: true });
+    await writeFile(
+      join(root, "docs", "adr", "0002-keep-local.md"),
+      "# ADR 0002\n\n## Decision\n\nWe keep the Hindsight bank on the machine. This is a project invariant.\n",
+    );
+    await writeFile(
+      join(root, "docs", "scratch.md"),
+      "# Scratch\n\nTODO dump and a badge wall. Not a decision.\n",
+    );
+    await writeFile(
+      join(root, "node_modules", "left-pad", "README.md"),
+      "# left-pad\n\nA dependency readme.\n",
+    );
+    await writeFile(join(root, "notes", "random.md"), "# Random\n\nMeeting notes.\n");
+    const calls: string[] = [];
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(input: JudgeEvaluateInput): Promise<JudgeResult> {
+        const path = (input.state as { path?: string }).path ?? "";
+        calls.push(path);
+        const adopt = path.includes("docs/adr/");
+        return {
+          judgeId: "jev",
+          answers: {
+            should_adopt: { type: "noul", noul: adopt ? 0.96 : 0.04 },
+            kind: adoptKind(adopt ? "adr" : "noise", adopt ? 0.93 : 0.95),
+          },
+        };
+      },
+    };
+    const resolvedJudge: ResolvedJudge = {
+      judgeId: "jev",
+      confidence: 0.8,
+      strict: false,
+      judge,
+    };
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+
+    const result = await runStore({
+      cwd: root,
+      proposeAdopt: true,
+      resolvedJudge,
+    });
+
+    expect(calls.sort()).toEqual([
+      "docs/adr/0002-keep-local.md",
+      "docs/scratch.md",
+    ]);
+    expect(result.proposals?.filter((proposal) => proposal.verdict === "propose").map((proposal) => proposal.path)).toEqual([
+      "docs/adr/0002-keep-local.md",
+    ]);
+    expect(result.addedToAllowlist).toEqual([]);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    const config = JSON.parse(
+      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+    ) as { store?: { allowlist: string[] } };
+    expect(config.store?.allowlist).toEqual([]);
+  });
+
+  it("--apply writes only the proposed ADR and does not retain", async () => {
+    const root = await tempProject();
+    await writeConfig(root, { store: { allowlist: [] } });
+    await mkdir(join(root, "docs", "adr"), { recursive: true });
+    await writeFile(
+      join(root, "docs", "adr", "0002-keep-local.md"),
+      "# ADR 0002\n\n## Decision\n\nWe keep the Hindsight bank on the machine.\n",
+    );
+    const judge: Judge = {
+      id: "jev",
+      async evaluate(): Promise<JudgeResult> {
+        return {
+          judgeId: "jev",
+          answers: {
+            should_adopt: { type: "noul", noul: 0.96 },
+            kind: adoptKind("adr", 0.93),
+          },
+        };
+      },
+    };
+    const fetchImpl = vi.fn();
+    vi.stubGlobal("fetch", fetchImpl);
+    const resolvedJudge: ResolvedJudge = {
+      judgeId: "jev",
+      confidence: 0.8,
+      strict: false,
+      judge,
+    };
+
+    const preview = await runStore({
+      cwd: root,
+      proposeAdopt: true,
+      apply: true,
+      dryRun: true,
+      resolvedJudge,
+    });
+    expect(preview.addedToAllowlist).toEqual([]);
+    let config = JSON.parse(
+      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+    ) as { store?: { allowlist: string[] } };
+    expect(config.store?.allowlist).toEqual([]);
+
+    const result = await runStore({
+      cwd: root,
+      proposeAdopt: true,
+      apply: true,
+      resolvedJudge,
+    });
+
+    expect(result.addedToAllowlist).toEqual(["docs/adr/0002-keep-local.md"]);
+    expect(result.retained).toBe(0);
+    expect(fetchImpl).not.toHaveBeenCalled();
+    config = JSON.parse(
+      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+    ) as { store?: { allowlist: string[] } };
+    expect(config.store?.allowlist).toEqual(["docs/adr/0002-keep-local.md"]);
+  });
 });
+
+function adoptKind(choice: string, confidence: number): ChoiceAnswer {
+  const probabilities: Record<string, number> = {};
+  const rest = KNOWLEDGE_KIND_IDS.filter((id) => id !== choice);
+  const share = (1 - confidence) / rest.length;
+  for (const id of KNOWLEDGE_KIND_IDS) {
+    probabilities[id] = id === choice ? confidence : share;
+  }
+  return { type: "choice", choice, probabilities, confidence };
+}

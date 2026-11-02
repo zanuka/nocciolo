@@ -14,6 +14,7 @@ Knowledge kind ships on that same call.
 The contradiction check ships on that same call.
 The secret and personal-data second pass ships on that same call.
 Citation support ships after that gate, on the facts Hindsight would extract.
+Allowlist proposals ship on `store --propose-adopt --judge jev`.
 Prune annotation is still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
@@ -82,7 +83,8 @@ Bounded decisions where a typed answer plus confidence is enough:
 - Contradiction against overlapping observations on that same call (shipped)
 - Citation support on the facts Hindsight would extract (shipped on `seed --judge jev`)
 - PII / secret second pass (shipped on `seed --judge jev`)
-- Seed priority and retain budget; `store` allowlist proposals and durability gates
+- Store allowlist proposals (shipped on `store --propose-adopt --judge jev`)
+- Seed priority and retain budget; `store` edit durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
 - Bank-template fitness scores (mission / directives / tags / mental-model questions); prose stays in the template
 - MCP `retain` guardrails, recall rerank, still-true checks, `reflect` vs `recall` vs mental-model routing
@@ -192,6 +194,19 @@ A fact that matches a secret pattern is dropped and is not sent to Jev.
 The log redacts that fact.
 `document_id` stays `nocciolo:<path>#<section>`.
 Dry-run may run this preview and still must not retain or write the manifest ([JEV-9](https://github.com/zanuka/nocciolo/issues/40)).
+
+---
+
+## Allowlist proposals
+
+`store --propose-adopt --judge jev` looks at durable files that are not on `store.allowlist` yet.
+One Jev call per file asks `should_adopt` and the same knowledge `kind` used at seed time.
+A confident durable kind is printed as a proposal.
+A confident `noise` or `style_pref`, or a confident no on `should_adopt`, is not proposed.
+A dependency readme and markdown outside the durable scan are not considered.
+The allowlist changes only when you pass `--apply`.
+That write does not retain.
+Default `store` still never adopts a new file on its own ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)).
 
 ---
 

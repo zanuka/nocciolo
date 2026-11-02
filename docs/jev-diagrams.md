@@ -8,7 +8,8 @@ Judge port: `src/judge/` ([JEV-2](https://github.com/zanuka/nocciolo/issues/21))
 The seed relevance gate is shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
 Section-level keep/skip is shipped with it ([JEV-5](https://github.com/zanuka/nocciolo/issues/36)).
 One file can retain one section and skip another.
-`store` durability gates are still planned ([JEV-10](https://github.com/zanuka/nocciolo/issues/41), [JEV-12](https://github.com/zanuka/nocciolo/issues/31)).
+`store --propose-adopt` can propose new allowlist files ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)).
+Edit durability gates are still planned ([JEV-12](https://github.com/zanuka/nocciolo/issues/31)).
 The diagrams show that intended `store` experience with `--judge jev`.
 
 Without `--judge jev`, solid boxes still run. Dotted Jev steps are skipped and offline heuristics decide keep/skip.

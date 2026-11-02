@@ -41,8 +41,8 @@ The same pass can score the generated mission and directives, and can propose me
 
 **Put the durable part of a large diff first.** A monorepo change can touch dozens of markdown files and contain only a few decisions. Jev ranks those candidates against a retain budget, and it can:
 
-- propose which new files belong on the `store` allowlist
-- hold an edit that does not look durable
+- propose which new files belong on the `store` allowlist (`store --propose-adopt --judge jev` prints the list; `--apply` writes it and does not retain)
+- hold an edit that does not look durable (still planned)
 
 You confirm before anything is retained.
 

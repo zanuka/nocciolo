@@ -25,12 +25,12 @@ Source posts: [What’s new in Hindsight 0.10.1](https://hindsight.vectorize.io/
 
 Jev is an **opt-in judge** (`--judge jev` or key) for bounded decisions. Nocciolo owns scanning, side effects, and apply; Jev returns typed Choice/Score/Noul + confidence. Offline heuristics remain the default (zero TypeSafe calls).
 
-**Already closed (JEV-1 through JEV-8)**: product rules, judge interface and offline fallback, state sanitization, relevance gate before retain, section-level keep/skip, knowledge kind, the contradiction check, and the secret / personal-data check.
+**Already closed (JEV-1 through JEV-9)**: product rules, judge interface and offline fallback, state sanitization, relevance gate before retain, section-level keep/skip, knowledge kind, the contradiction check, the secret / personal-data check, and citation support.
 
 **Open / planned areas** (grouped):
 
-- Seed quality: knowledge-kind, contradiction vs existing observations, the secret / personal-data check, and citation support are on `seed --judge jev`. [JEV-9](https://github.com/zanuka/nocciolo/issues/40) tracks the citation check.
-- Store / retain budget (JEV-10–12): rank candidates, propose allowlist, gate edits.
+- Seed quality: knowledge-kind, contradiction vs existing observations, the secret / personal-data check, and citation support are on `seed --judge jev`.
+- Store: allowlist proposals are on `store --propose-adopt --judge jev` ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)). Retain budget and edit durability gates (JEV-11, JEV-12) are still open.
 - Prune annotation (JEV-14–17): score still-on-disk items as outdated / irrelevant / contradicted (Jev annotates; you confirm delete).
 - Bank-template fitness (JEV-18–21): score mission/directives, extraction aggressiveness, etc. (does not author prose).
 - **Recall & MCP guards** (JEV-22–25): block unsafe MCP retain, rerank recalled passages (overlaps Hindsight’s feature), check “still true?”, route reflect vs recall vs mental-model lookup.

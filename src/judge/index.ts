@@ -58,6 +58,13 @@ export type {
   SectionCitation,
 } from "./citation.js";
 export {
+  adoptQuestions,
+  formatAdoptLines,
+  interpretAdopt,
+  judgeAllowlistAdoption,
+} from "./adopt.js";
+export type { AdoptProposal, AdoptVerdict } from "./adopt.js";
+export {
   OBSERVATION_QUERY_MAX_CHARS,
   observationRecallQuery,
   recalledToOverlaps,

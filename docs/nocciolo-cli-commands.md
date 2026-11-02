@@ -248,6 +248,8 @@ Retain operator-selected durable markdown into the configured bank, on an ongoin
 | `-y, --yes` | Store changed known files only; print and skip new files rather than adopting them |
 | `--files <list>` | Comma-separated paths to store exactly (must pass the scanner/denylist); persists them onto `store.allowlist` |
 | `--add-files <list>` | Comma-separated paths to add to `store.allowlist` only; never retains |
+| `--propose-adopt` | With `--judge jev`, print new durable files that belong on the allowlist. Does not retain or change the allowlist |
+| `--apply` | With `--propose-adopt`, write the proposed paths onto `store.allowlist`. Does not retain |
 | `--project <path>` | Project root (default: cwd, walking out of a disposable git worktree to the durable clone) |
 | `--hindsight-url <url>` | Override Hindsight base URL |
 | `--api-key <key>` | Hindsight API key (or set env vars above) |
@@ -256,6 +258,12 @@ Retain operator-selected durable markdown into the configured bank, on an ongoin
 | `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
 Selection when neither `--yes` nor `--files` is given: in an interactive terminal, `store` prompts a multi-select over new files (changed known files are included by default); otherwise it behaves like `--yes` and never silently adopts new files.
+
+`--propose-adopt --judge jev` does not use that selection.
+It prints new durable files Jev would add to the allowlist.
+A dependency readme and other non-durable markdown are not proposed.
+`--apply` writes the proposed paths and does not retain.
+`--dry-run` with `--apply` prints the paths and does not write the allowlist.
 
 The allowlist is `store.allowlist` in `.nocciolo/config.json` (version-controlled). The first `store` after a `seed` bootstraps it from `.nocciolo/local/seed-manifest.json`'s sources, so already-seeded files read as known, not new. Content hashes for incremental skip live in the same seed manifest `store` reuses.
 

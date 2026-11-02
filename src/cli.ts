@@ -608,6 +608,14 @@ async function main(): Promise<void> {
         "Comma-separated paths to add to store.allowlist without retaining",
       )
       .option(
+        "--propose-adopt",
+        "With --judge jev, print new files that belong on store.allowlist. Does not retain or change the allowlist",
+      )
+      .option(
+        "--apply",
+        "With --propose-adopt, write the proposed paths onto store.allowlist. Does not retain",
+      )
+      .option(
         "--project <path>",
         "Project root (defaults to cwd, walking out of a disposable worktree to the durable clone)",
       )
@@ -627,6 +635,8 @@ async function main(): Promise<void> {
       yes?: boolean;
       files?: string;
       addFiles?: string;
+      proposeAdopt?: boolean;
+      apply?: boolean;
       project?: string;
       hindsightUrl?: string;
       apiKey?: string;
@@ -640,6 +650,8 @@ async function main(): Promise<void> {
         force: Boolean(opts.force),
         async: Boolean(opts.async),
         yes: Boolean(opts.yes),
+        proposeAdopt: Boolean(opts.proposeAdopt),
+        apply: Boolean(opts.apply),
         ...(opts.files !== undefined ? { files: opts.files } : {}),
         ...(opts.addFiles !== undefined ? { addFiles: opts.addFiles } : {}),
         ...(opts.project !== undefined ? { project: opts.project } : {}),

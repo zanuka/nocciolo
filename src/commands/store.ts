@@ -31,7 +31,13 @@ import {
 import { nextManifest, prepareSeed, toRetainItems } from "../seeder/prepare.js";
 import { clearTombstonesForIds } from "../seeder/tombstones.js";
 import { retainPreparedItems } from "./seed.js";
-import { createJudge } from "../judge/index.js";
+import {
+  createJudge,
+  formatAdoptLines,
+  judgeAllowlistAdoption,
+  type AdoptProposal,
+  type ResolvedJudge,
+} from "../judge/index.js";
 import { NoccioloError } from "../utils/errors.js";
 import { isInteractive, promptMultiSelect } from "../utils/prompt.js";
 
@@ -49,6 +55,9 @@ export interface StoreOptions {
   judge?: string;
   confidence?: number;
   strict?: boolean;
+  proposeAdopt?: boolean;
+  apply?: boolean;
+  resolvedJudge?: ResolvedJudge;
 }
 
 export interface StoreBucketEntry {
@@ -76,6 +85,7 @@ export interface StoreResult {
   failed: number;
   async: boolean;
   addFilesOnly: boolean;
+  proposals?: AdoptProposal[];
 }
 
 function parsePathList(raw: string | undefined): string[] {
@@ -179,14 +189,18 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
   const force = options.force ?? false;
   const asyncRetain = options.async ?? false;
   const yes = options.yes ?? false;
+  const proposeAdopt = options.proposeAdopt === true;
+  const applyProposals = options.apply === true;
 
-  createJudge({
-    ...(options.judge !== undefined ? { judge: options.judge } : {}),
-    ...(options.confidence !== undefined
-      ? { confidence: options.confidence }
-      : {}),
-    ...(options.strict !== undefined ? { strict: options.strict } : {}),
-  });
+  const resolved =
+    options.resolvedJudge ??
+    createJudge({
+      ...(options.judge !== undefined ? { judge: options.judge } : {}),
+      ...(options.confidence !== undefined
+        ? { confidence: options.confidence }
+        : {}),
+      ...(options.strict !== undefined ? { strict: options.strict } : {}),
+    });
 
   const projectRoot = await resolveStoreProjectRoot(options);
   const config = await loadConfig(projectRoot);
@@ -202,7 +216,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
   const apiKey = resolveHindsightApiKey({
     ...(options.apiKey !== undefined ? { cliKey: options.apiKey } : {}),
   });
-  if (!dryRun) {
+  if (!dryRun && !proposeAdopt) {
     assertApiKeyForConnection({ connection, ...(apiKey ? { apiKey } : {}) });
   }
 
@@ -218,6 +232,25 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
 
   const explicitFiles = parsePathList(options.files);
   const addFiles = parsePathList(options.addFiles);
+
+  if (proposeAdopt && (explicitFiles.length > 0 || addFiles.length > 0 || yes)) {
+    throw new NoccioloError(
+      "--propose-adopt does not retain, and it does not combine with --files, --add-files, or --yes.",
+      "Run nocciolo store --propose-adopt --judge jev. Add confirmed paths with --apply.",
+    );
+  }
+  if (applyProposals && !proposeAdopt) {
+    throw new NoccioloError(
+      "--apply only writes allowlist proposals.",
+      "Re-run with nocciolo store --propose-adopt --judge jev --apply.",
+    );
+  }
+  if (proposeAdopt && resolved.judgeId !== "jev") {
+    throw new NoccioloError(
+      "Allowlist proposals require --judge jev.",
+      "Re-run: nocciolo store --propose-adopt --judge jev",
+    );
+  }
 
   // --add-files: allowlist only, no retain, no scanning of buckets required.
   if (addFiles.length > 0) {
@@ -279,6 +312,75 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     manifest,
     config.scanner,
   );
+
+  if (proposeAdopt) {
+    const proposals: AdoptProposal[] = [];
+    for (const entry of buckets.new) {
+      let text = "";
+      try {
+        text = await readFile(entry.absolutePath, "utf8");
+      } catch {
+        proposals.push({
+          path: entry.relativePath,
+          verdict: "skip",
+          reason: "file could not be read",
+        });
+        continue;
+      }
+      proposals.push(
+        await judgeAllowlistAdoption({
+          path: entry.relativePath,
+          text,
+          judge: resolved.judge,
+          confidence: resolved.confidence,
+        }),
+      );
+    }
+    const proposed = proposals.filter((proposal) => proposal.verdict === "propose");
+    for (const line of formatAdoptLines({ proposals, dryRun })) {
+      console.log(line);
+    }
+    const added = proposed.map((proposal) => proposal.path);
+    if (applyProposals && added.length > 0 && !dryRun) {
+      const nextAllowlist = [...new Set([...allowlist, ...added])].sort();
+      await saveConfig(
+        projectRoot,
+        { ...config, store: { allowlist: nextAllowlist } },
+        false,
+      );
+      console.log("");
+      console.log(`Added ${added.length} file(s) to store.allowlist (no retain).`);
+      for (const path of added) {
+        console.log(`  + ${path}`);
+      }
+    } else if (applyProposals && added.length > 0) {
+      console.log("");
+      console.log(
+        `${dryRun ? "[dry-run] Would add" : "Added"} ${added.length} file(s) to store.allowlist (no retain).`,
+      );
+    } else {
+      console.log("");
+      console.log(
+        "The allowlist was not changed. Re-run with --propose-adopt --apply to add the proposed paths.",
+      );
+    }
+    console.log("Nothing was retained.");
+    return {
+      projectRoot,
+      bankId: config.bankId,
+      baseUrl,
+      dryRun,
+      buckets,
+      selected: [],
+      skippedNew: buckets.new.map((entry) => entry.relativePath),
+      addedToAllowlist: applyProposals && !dryRun ? added : [],
+      retained: 0,
+      failed: 0,
+      async: false,
+      addFilesOnly: false,
+      proposals,
+    };
+  }
 
   let selected: string[] = [];
   let skippedNew: string[] = [];

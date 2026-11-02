@@ -319,6 +319,8 @@ pnpm nocciolo store --dry-run   # known / new / changed / unchanged, with explic
 pnpm nocciolo store --yes       # store changed known files only; never adopts new files silently
 pnpm nocciolo store --files docs/architecture.md   # store exactly these; allowlists them
 pnpm nocciolo store --add-files docs/roadmap-notes.md        # allowlist only, no retain
+pnpm nocciolo store --propose-adopt --judge jev            # print new files Jev would allowlist; no write
+pnpm nocciolo store --propose-adopt --judge jev --apply   # write those paths; still no retain
 pnpm nocciolo prune --dry-run   # after retain: review path-gone / section-gone leftovers
 ```
 

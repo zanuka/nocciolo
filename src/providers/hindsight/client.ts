@@ -694,6 +694,30 @@ export class HindsightClient {
     return parseRecalledObservations(raw);
   }
 
+  /*
+  Preview the facts Hindsight would extract from one section, without writing
+  them. Retain does not return those facts, so citation calls this first and
+  then asks Jev whether each fact is in the source. The response is only the
+  fact text. Empty and non-text entries are dropped.
+  */
+  async dryRunExtract(
+    bankId: string,
+    input: { content: string; context?: string },
+  ): Promise<string[]> {
+    const body: { content: string; context?: string } = { content: input.content };
+    if (input.context !== undefined && input.context !== "") {
+      body.context = input.context;
+    }
+    const raw = await this.requestJson<unknown>(
+      "POST",
+      `/v1/default/banks/${encodeURIComponent(bankId)}/memories/dry-run-extract`,
+      body,
+      `dry-run extract for bank "${bankId}"`,
+      AbortSignal.timeout(20_000),
+    );
+    return parseExtractedFactTexts(raw);
+  }
+
   private async requestJson<T>(
     method: string,
     path: string,
@@ -845,4 +869,21 @@ function parseRecalledObservations(value: unknown): RecalledObservation[] {
     out.push(row);
   }
   return out;
+}
+
+function parseExtractedFactTexts(value: unknown): string[] {
+  if (!isRecord(value) || !Array.isArray(value.facts)) {
+    return [];
+  }
+  const texts: string[] = [];
+  for (const item of value.facts) {
+    if (!isRecord(item) || typeof item.text !== "string") {
+      continue;
+    }
+    const text = item.text.trim();
+    if (text !== "") {
+      texts.push(text);
+    }
+  }
+  return texts;
 }

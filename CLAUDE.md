@@ -56,7 +56,7 @@ Commands may call modules; modules must not depend on Commander. Integration emi
 ### Happy Path Invariants
 
 - Mutating or network commands support `--dry-run` where practical
-- `seed --dry-run` previews candidates and does not retain or write the manifest. It does not call Hindsight unless `--judge jev` is set, in which case it may recall up to 5 observation summaries (read-only) and still must not retain or delete
+- `seed --dry-run` previews candidates and does not retain or write the manifest. It does not call Hindsight unless `--judge jev` is set, in which case it may recall up to 5 observation summaries and may preview extracted facts (both read-only) and still must not retain or delete
 - `prune --dry-run` may list documents (read-only) but must not delete or write tombstones
 - Live `seed` uses stable `document_id`s and writes incremental state only under `.nocciolo/local/` (gitignored)
 - Live `prune` deletes selected documents and writes tombstones under `.nocciolo/local/` (gitignored)

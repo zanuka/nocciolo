@@ -13,7 +13,8 @@ Relevance gate: [JEV-4](https://github.com/zanuka/nocciolo/issues/30) (`seed --j
 Knowledge kind ships on that same call.
 The contradiction check ships on that same call.
 The secret and personal-data second pass ships on that same call.
-Citation and prune annotation are still planned.
+Citation support ships after that gate, on the facts Hindsight would extract.
+Prune annotation is still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
 ---
@@ -79,7 +80,7 @@ Bounded decisions where a typed answer plus confidence is enough:
 - Section relevance and keep/skip before retain (shipped on `seed --judge jev`)
 - Knowledge kind on that same call (shipped)
 - Contradiction against overlapping observations on that same call (shipped)
-- Citation support
+- Citation support on the facts Hindsight would extract (shipped on `seed --judge jev`)
 - PII / secret second pass (shipped on `seed --judge jev`)
 - Seed priority and retain budget; `store` allowlist proposals and durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
@@ -168,6 +169,29 @@ There is no `--allow-pii` flag.
 A score between `--confidence` and `1 - confidence` stays in review and is not retained.
 A local match for an `sk-` token or a PEM private-key block skips before any TypeSafe call, so that text is not sent.
 A clean ADR is not flagged ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)).
+
+---
+
+## Citation support
+
+After the relevance gate, `seed --judge jev` asks Hindsight to preview the facts it would extract from each section that is still going to be retained.
+That preview is `dry-run-extract`.
+It does not persist anything.
+One Jev call per section asks `supported_by_source_<n>` and a `support_<n>` choice (`quoted`, `implied`, `unsupported`) for those facts together.
+A high-confidence `unsupported` answer is not retained.
+A confident "no" on the noul is not retained either.
+A quote or a direct implication at or above `--confidence` is kept.
+A mid-range answer stays in review, and that fact is not retained.
+Retain sends the kept fact text, so an unsupported claim is absent from the payload.
+Hindsight extracts again from that filtered text.
+This is a check on the Hindsight extractor, not a second extractor.
+At most 12 facts are judged in that call.
+Further facts stay in review.
+If the preview returns no facts, or the preview fails, the section is retained as written.
+A fact that matches a secret pattern is dropped and is not sent to Jev.
+The log redacts that fact.
+`document_id` stays `nocciolo:<path>#<section>`.
+Dry-run may run this preview and still must not retain or write the manifest ([JEV-9](https://github.com/zanuka/nocciolo/issues/40)).
 
 ---
 

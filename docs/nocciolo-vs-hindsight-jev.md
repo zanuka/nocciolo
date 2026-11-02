@@ -25,11 +25,11 @@ Source posts: [What’s new in Hindsight 0.10.1](https://hindsight.vectorize.io/
 
 Jev is an **opt-in judge** (`--judge jev` or key) for bounded decisions. Nocciolo owns scanning, side effects, and apply; Jev returns typed Choice/Score/Noul + confidence. Offline heuristics remain the default (zero TypeSafe calls).
 
-**Already closed (JEV-1 through JEV-7)**: product rules, judge interface and offline fallback, state sanitization, relevance gate before retain, section-level keep/skip, knowledge kind, and the contradiction check.
+**Already closed (JEV-1 through JEV-8)**: product rules, judge interface and offline fallback, state sanitization, relevance gate before retain, section-level keep/skip, knowledge kind, the contradiction check, and the secret / personal-data check.
 
 **Open / planned areas** (grouped):
 
-- Seed quality: knowledge-kind, contradiction vs existing observations, and the secret / personal-data check are on `seed --judge jev`. Citation support (JEV-9) is still open.
+- Seed quality: knowledge-kind, contradiction vs existing observations, the secret / personal-data check, and citation support are on `seed --judge jev`. [JEV-9](https://github.com/zanuka/nocciolo/issues/40) tracks the citation check.
 - Store / retain budget (JEV-10–12): rank candidates, propose allowlist, gate edits.
 - Prune annotation (JEV-14–17): score still-on-disk items as outdated / irrelevant / contradicted (Jev annotates; you confirm delete).
 - Bank-template fitness (JEV-18–21): score mission/directives, extraction aggressiveness, etc. (does not author prose).
@@ -60,10 +60,9 @@ Hindsight’s Jev reranker makes *recall* better. It does not solve the upstream
 
 The highest-leverage remaining Nocciolo work is therefore:
 
-1. Finishing the remaining pre-retain gates (citation, PII) so the bank starts cleaner.
-2. Prune annotation (so the bank stays clean).
-3. Treating Hindsight’s native Jev reranker as the default ranking path (JEV-23 can become “prefer Hindsight’s typesafe provider when available; add Nocciolo-specific still-true / routing checks on top”).
-4. MCP retain blocking and Firstmate routing (things Hindsight’s reranker never touches).
+1. Prune annotation (so the bank stays clean).
+2. Treating Hindsight’s native Jev reranker as the default ranking path (JEV-23 can become “prefer Hindsight’s typesafe provider when available; add Nocciolo-specific still-true / routing checks on top”).
+3. MCP retain blocking and Firstmate routing (things Hindsight’s reranker never touches).
 
 That positioning keeps Nocciolo relevant: developers get a curated, provenance-aware company brain whose contents are worth ranking, rather than just a better sort of whatever happened to land in retain.
 

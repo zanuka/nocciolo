@@ -277,3 +277,47 @@ describe("HindsightClient.recallObservations", () => {
     ]);
   });
 });
+
+describe("HindsightClient.dryRunExtract", () => {
+  it("posts a read-only extract and returns fact text", async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      calls.push({
+        url: String(input),
+        body: JSON.parse(String(init?.body)),
+      });
+      return new Response(
+        JSON.stringify({
+          facts: [
+            { text: "We use Postgres.", fact_type: "world" },
+            { text: "   ", fact_type: "world" },
+            { fact_type: "experience" },
+            { text: "The bank stays on the machine.", fact_type: "world" },
+          ],
+          chunks: [],
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    };
+    const client = new HindsightClient({
+      baseUrl: "http://localhost:8888/",
+      apiKey: "test-key",
+      fetchImpl,
+    });
+    const facts = await client.dryRunExtract("nocciolo", {
+      content: "We use Postgres.",
+      context: "durable project docs (adr): docs/adr/0001.md",
+    });
+    expect(calls[0]?.url).toBe(
+      "http://localhost:8888/v1/default/banks/nocciolo/memories/dry-run-extract",
+    );
+    expect(calls[0]?.body).toEqual({
+      content: "We use Postgres.",
+      context: "durable project docs (adr): docs/adr/0001.md",
+    });
+    expect(facts).toEqual([
+      "We use Postgres.",
+      "The bank stays on the machine.",
+    ]);
+  });
+});

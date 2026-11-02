@@ -25,6 +25,7 @@ import {
   addJudgeCliOptions,
   judgeOptionsFromCli,
 } from "./judge/cli.js";
+import { parseBudget } from "./judge/index.js";
 import { formatError } from "./utils/errors.js";
 
 function readPackageVersion(): string {
@@ -282,7 +283,11 @@ async function main(): Promise<void> {
         "--api-key <key>",
         "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
       )
-      .option("--async", "Submit retain asynchronously to Hindsight"),
+      .option("--async", "Submit retain asynchronously to Hindsight")
+      .option(
+        "--budget <n>",
+        "With --judge jev, retain the top N ranked candidates this run. The rest stay pending",
+      ),
   ).action(
     async (opts: {
       dryRun?: boolean;
@@ -291,6 +296,7 @@ async function main(): Promise<void> {
       hindsightUrl?: string;
       apiKey?: string;
       async?: boolean;
+      budget?: string;
       judge?: string;
       confidence?: string;
       strict?: boolean;
@@ -301,6 +307,7 @@ async function main(): Promise<void> {
         force: Boolean(opts.force),
         async: Boolean(opts.async),
         refreshMentalModels: Boolean(opts.refreshMentalModels),
+        ...(opts.budget !== undefined ? { budget: parseBudget(opts.budget) } : {}),
         ...(opts.hindsightUrl !== undefined
           ? { hindsightUrl: opts.hindsightUrl }
           : {}),

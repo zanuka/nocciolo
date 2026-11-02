@@ -5,6 +5,7 @@ import type {
 } from "../extractor/types.js";
 import type { PreparedSeed } from "../seeder/prepare.js";
 import { knowledgeKindById, knowledgeKindQuestion, listKnowledgeKinds } from "./knowledge-kinds.js";
+import { priorityQuestions, readPrioritySignals } from "./priority.js";
 import { interpretRelation, OBSERVATION_RELATIONS, relationQuestions } from "./relations.js";
 import { safetyQuestions } from "./safety.js";
 import { buildJevState, containsInlineSecret, type JevOverlap } from "./state.js";
@@ -56,6 +57,15 @@ export interface RelevanceRow {
     inScope: number;
   };
   durability?: {
+    score: number;
+    confidence: number;
+  };
+  centrality?: {
+    score: number;
+    confidence: number;
+  };
+  supersedesExisting?: number;
+  fanout?: {
     score: number;
     confidence: number;
   };
@@ -291,6 +301,7 @@ export async function judgeSeedRelevance(input: {
   confidence: number;
   mission?: string;
   overlapsFor?: (fact: CandidateFact) => Promise<readonly JevOverlap[]>;
+  includePriority?: boolean;
 }): Promise<RelevanceRow[]> {
   const rows: RelevanceRow[] = [];
   let fellBack = false;
@@ -344,6 +355,7 @@ export async function judgeSeedRelevance(input: {
     const sentOverlaps = built.state.overlaps ?? [];
     const questions = {
       ...relevanceQuestions(),
+      ...(input.includePriority ? priorityQuestions() : {}),
       ...relationQuestions(sentOverlaps),
     };
     const state = toRelevanceState(built.state, fact.provenance.commit);
@@ -355,7 +367,8 @@ export async function judgeSeedRelevance(input: {
       heuristicKept,
       overlaps: sentOverlaps,
     });
-    rows.push({ fact, heuristicKept, ...decision });
+    const signals = readPrioritySignals(result.answers);
+    rows.push({ fact, heuristicKept, ...decision, ...signals });
   };
 
   for (const fact of input.facts) {

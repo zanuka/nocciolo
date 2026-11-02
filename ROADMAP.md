@@ -128,8 +128,8 @@ Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
 Tracked in [JEV-0](https://github.com/zanuka/nocciolo/issues/58) and the [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
 The checklist groups those tickets.
 The [issue index](#jev-issue-index) lists the epic.
-JEV-1 through JEV-10 are done in the checklist.
-JEV-1 through JEV-9 are closed on GitHub.
+JEV-1 through JEV-11 are done in the checklist.
+JEV-1 through JEV-10 are closed on GitHub.
 
 - [x] Product rule: `docs/jev.md` states Jev is a judge, not a backend (opt-in, offline fallback, do-not-build, confidence gate, state budget). ([JEV-1](https://github.com/zanuka/nocciolo/issues/20))
 - [x] Judge port: `Judge` interface (`off` / `heuristic` / `jev`), `--judge` / `--confidence` / `--strict` on seed/store/prune, TypeSafe HTTP client with offline fallback. Missing key with `--judge jev` is a hard error; network/429/5xx fall back to heuristics unless `--strict`. Default path makes no TypeSafe calls. ([JEV-2](https://github.com/zanuka/nocciolo/issues/21))
@@ -141,7 +141,8 @@ JEV-1 through JEV-9 are closed on GitHub.
 - [x] PII / secret second pass: the same `seed --judge jev` call asks `contains_secret` and `contains_pii`, where a high score means unsafe. A confident secret is a hard skip, with a stderr warning that names the path and does not print the secret. A confident personal-data answer is skipped. A mid-range score stays in review and is not retained. A local `sk-` token or PEM block skips before the TypeSafe call. A clean ADR is not flagged. ([JEV-8](https://github.com/zanuka/nocciolo/issues/39))
 - [x] Citation support after extract: when `seed --judge jev` keeps a section, Hindsight previews the facts it would extract (read-only, no persistence). One Jev call per section asks `supported_by_source_<n>` and a `support_<n>` choice (`quoted`, `implied`, `unsupported`) for those facts together. A high-confidence `unsupported` answer is not retained. A quote of the section is kept. Retain sends the kept fact text, so this filters the Hindsight extractor and does not run a second one. At most 12 facts are judged in that call. Dry-run does not retain or write the manifest. If the preview returns no facts, or the preview fails, the section is retained as written. ([JEV-9](https://github.com/zanuka/nocciolo/issues/40))
 - [x] Propose allowlist adoption: `store --propose-adopt --judge jev` asks `should_adopt` and the knowledge `kind` once per new durable file. A confident durable kind is printed as a proposal. A dependency readme or other non-durable markdown is not proposed. The allowlist changes only with `--apply`, and nothing is retained. Default `store` does not adopt new files. ([JEV-10](https://github.com/zanuka/nocciolo/issues/41))
-- [ ] Store and retain budget: rank candidates under a retain budget, and gate `store` edits on durability. The operator still confirms. ([JEV-11](https://github.com/zanuka/nocciolo/issues/50), [JEV-12](https://github.com/zanuka/nocciolo/issues/31))
+- [x] Composite seed priority and retain budget: `seed --budget N --judge jev` ranks changed sections from durability, centrality, supersession, fanout, and secret risk. Weights live in `judge.priorityWeights`. Dry-run prints the ordered queue and a cutoff. Only the top N are retained. The rest stay pending in the seed manifest. ([JEV-11](https://github.com/zanuka/nocciolo/issues/50))
+- [ ] `store` edit durability gate: hold an edit that does not look durable until the operator confirms. ([JEV-12](https://github.com/zanuka/nocciolo/issues/31))
 - [ ] Optional `--judge jev` prune annotation: score items that are still on disk but no longer true (outdated / irrelevant / contradicted). Jev annotates only; Nocciolo deletes after confirm. Low confidence is listed and left unchecked. ([JEV-14](https://github.com/zanuka/nocciolo/issues/32), [JEV-15](https://github.com/zanuka/nocciolo/issues/43), [JEV-16](https://github.com/zanuka/nocciolo/issues/51), [JEV-17](https://github.com/zanuka/nocciolo/issues/52))
 - [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. ([JEV-18](https://github.com/zanuka/nocciolo/issues/23), [JEV-19](https://github.com/zanuka/nocciolo/issues/24), [JEV-20](https://github.com/zanuka/nocciolo/issues/53), [JEV-21](https://github.com/zanuka/nocciolo/issues/54))
 - [ ] Recall and MCP guards: block unsafe MCP `retain`, rerank recalled passages, check whether a memory is still true, and route `reflect` vs `recall` vs mental-model lookup. ([JEV-22](https://github.com/zanuka/nocciolo/issues/44), [JEV-23](https://github.com/zanuka/nocciolo/issues/25), [JEV-24](https://github.com/zanuka/nocciolo/issues/45), [JEV-25](https://github.com/zanuka/nocciolo/issues/26))
@@ -158,8 +159,8 @@ Deferred (still tracked under the Jev epic; land with later phases):
 ### Jev issue index
 
 Issue index as of 2 November 2026.
-JEV-1 through JEV-10 are done in the checklist.
-JEV-1 through JEV-9 are closed on GitHub.
+JEV-1 through JEV-11 are done in the checklist.
+JEV-1 through JEV-10 are closed on GitHub.
 Open [`jev`-labeled issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) are the rest of the table.
 Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is superseded by [#58](https://github.com/zanuka/nocciolo/issues/58).
 
@@ -175,7 +176,7 @@ Closed duplicate epic [#19](https://github.com/zanuka/nocciolo/issues/19) is sup
 | JEV-7 | [#38](https://github.com/zanuka/nocciolo/issues/38) | Contradiction check against existing observations (closed) |
 | JEV-8 | [#39](https://github.com/zanuka/nocciolo/issues/39) | PII / secret second pass (closed) |
 | JEV-9 | [#40](https://github.com/zanuka/nocciolo/issues/40) | Citation support check after retain / extract (closed) |
-| JEV-10 | [#41](https://github.com/zanuka/nocciolo/issues/41) | Propose `store` allowlist adoption for new durable files |
+| JEV-10 | [#41](https://github.com/zanuka/nocciolo/issues/41) | Propose `store` allowlist adoption for new durable files (closed) |
 | JEV-11 | [#50](https://github.com/zanuka/nocciolo/issues/50) | Composite seed priority + retain budget |
 | JEV-12 | [#31](https://github.com/zanuka/nocciolo/issues/31) | `store` edit durability gate |
 | JEV-13 | [#42](https://github.com/zanuka/nocciolo/issues/42) | Watcher / event-driven re-seed: high-signal gate (Phase 8) |

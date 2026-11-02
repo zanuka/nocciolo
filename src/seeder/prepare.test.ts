@@ -102,4 +102,96 @@ describe("nextManifest", () => {
     );
     expect(manifest.sources["docs/review.md"]).toBeUndefined();
   });
+
+  it("keeps deferred budget facts pending and clears them after they are retained", () => {
+    const prepared: PreparedSeed = {
+      projectRoot: "/tmp/p",
+      bankId: "bank",
+      sources: [
+        {
+          relativePath: "docs/adr/0001.md",
+          contentHash: "hash-adr",
+          facts: [
+            {
+              id: "nocciolo:docs/adr/0001.md#decision",
+              title: "Decision",
+              content: "Keep it local.",
+              knowledgeKind: "decision",
+              score: 8,
+              provenance: { sourcePath: "docs/adr/0001.md", kind: "adr" },
+            },
+          ],
+          heuristicSkips: [],
+          skipped: false,
+          unchanged: false,
+        },
+        {
+          relativePath: "docs/changelog.md",
+          contentHash: "hash-changelog",
+          facts: [
+            {
+              id: "nocciolo:docs/changelog.md#notes",
+              title: "Notes",
+              content: "Wording only.",
+              knowledgeKind: "overview",
+              score: 2,
+              provenance: { sourcePath: "docs/changelog.md", kind: "docs" },
+            },
+          ],
+          heuristicSkips: [],
+          skipped: false,
+          unchanged: false,
+        },
+      ],
+      factsToRetain: [],
+      skippedUnchanged: 0,
+      skippedEmpty: 0,
+      skippedTombstoned: 0,
+    };
+    const budgetFactIds = new Set([
+      "nocciolo:docs/adr/0001.md#decision",
+      "nocciolo:docs/changelog.md#notes",
+    ]);
+    const first = nextManifest(
+      createEmptyManifest("bank"),
+      "bank",
+      prepared,
+      new Set(["nocciolo:docs/adr/0001.md#decision"]),
+      { budgetFactIds },
+    );
+    expect(first.sources["docs/changelog.md"]?.pendingFactIds).toEqual([
+      "nocciolo:docs/changelog.md#notes",
+    ]);
+    expect(first.sources["docs/adr/0001.md"]?.factIds).toEqual([
+      "nocciolo:docs/adr/0001.md#decision",
+    ]);
+
+    const followUp: PreparedSeed = {
+      ...prepared,
+      sources: [
+        {
+          relativePath: "docs/changelog.md",
+          contentHash: "hash-changelog",
+          facts: prepared.sources[1]?.facts ?? [],
+          heuristicSkips: [],
+          skipped: false,
+          unchanged: false,
+        },
+      ],
+    };
+    const second = nextManifest(
+      first,
+      "bank",
+      followUp,
+      new Set(["nocciolo:docs/changelog.md#notes"]),
+      { budgetFactIds: new Set(["nocciolo:docs/changelog.md#notes"]) },
+    );
+    expect(second.sources["docs/changelog.md"]?.pendingFactIds).toBeUndefined();
+    expect(second.sources["docs/changelog.md"]?.factIds).toEqual([
+      "nocciolo:docs/changelog.md#notes",
+    ]);
+    expect(second.sources["docs/adr/0001.md"]?.factIds).toEqual([
+      "nocciolo:docs/adr/0001.md#decision",
+    ]);
+  });
 });

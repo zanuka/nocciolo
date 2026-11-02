@@ -10,6 +10,18 @@ export const StoreConfigSchema = z.object({
   allowlist: z.array(z.string().min(1)).default([]),
 });
 
+export const PriorityWeightsSchema = z.object({
+  durability: z.number().nonnegative(),
+  centrality: z.number().nonnegative(),
+  supersession: z.number().nonnegative(),
+  fanout: z.number().nonnegative(),
+  secretRisk: z.number().nonnegative(),
+});
+
+export const JudgeConfigSchema = z.object({
+  priorityWeights: PriorityWeightsSchema.optional(),
+});
+
 export const ScannerConfigSchema = z.object({
   include: z.array(z.string().min(1)).optional(),
   exclude: z.array(z.string().min(1)).optional(),
@@ -30,10 +42,13 @@ export const NoccioloConfigSchema = z.object({
   docker: DockerConfigSchema.optional(),
   store: StoreConfigSchema.optional(),
   scanner: ScannerConfigSchema.optional(),
+  judge: JudgeConfigSchema.optional(),
 });
 
 export type DockerConfig = z.infer<typeof DockerConfigSchema>;
 export type StoreConfig = z.infer<typeof StoreConfigSchema>;
+export type PriorityWeightsConfig = z.infer<typeof PriorityWeightsSchema>;
+export type JudgeConfig = z.infer<typeof JudgeConfigSchema>;
 export type ScannerConfig = z.infer<typeof ScannerConfigSchema>;
 export type NoccioloConfig = z.infer<typeof NoccioloConfigSchema>;
 

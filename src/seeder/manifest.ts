@@ -11,6 +11,7 @@ export const SeedManifestSchema = z.object({
     z.object({
       contentHash: z.string(),
       factIds: z.array(z.string()),
+      pendingFactIds: z.array(z.string()).optional(),
       seededAt: z.string(),
     }),
   ),

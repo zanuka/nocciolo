@@ -65,6 +65,18 @@ export {
 } from "./adopt.js";
 export type { AdoptProposal, AdoptVerdict } from "./adopt.js";
 export {
+  assertRetainBudget,
+  compositePriority,
+  DEFAULT_PRIORITY_WEIGHTS,
+  formatBudgetLines,
+  parseBudget,
+  priorityQuestions,
+  rankByPriority,
+  readPrioritySignals,
+  resolvePriorityWeights,
+} from "./priority.js";
+export type { PrioritySignals, PriorityWeights, RankedItem } from "./priority.js";
+export {
   OBSERVATION_QUERY_MAX_CHARS,
   observationRecallQuery,
   recalledToOverlaps,

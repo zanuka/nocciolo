@@ -6,8 +6,10 @@ import {
 import { bankTemplatePath } from "../config/paths.js";
 import {
   applyRelevanceRows,
+  assertRetainBudget,
   containsInlineSecret,
   createJudge,
+  formatBudgetLines,
   formatCitationLines,
   formatRelevanceLines,
   formatSecretSkipWarning,
@@ -15,9 +17,13 @@ import {
   judgeSeedRelevance,
   keptCitationText,
   observationRecallQuery,
+  rankByPriority,
   recalledToOverlaps,
+  resolvePriorityWeights,
   type Judge,
+  type PrioritySignals,
   type RelevanceReport,
+  type RelevanceRow,
   type ResolvedJudge,
 } from "../judge/index.js";
 import type { CandidateFact } from "../extractor/types.js";
@@ -61,6 +67,7 @@ export interface SeedOptions {
   judge?: string;
   confidence?: number;
   strict?: boolean;
+  budget?: number;
   resolvedJudge?: ResolvedJudge;
   client?: HindsightClient;
   recallObservations?: (
@@ -96,6 +103,10 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
         : {}),
       ...(options.strict !== undefined ? { strict: options.strict } : {}),
     });
+
+  if (options.budget !== undefined) {
+    assertRetainBudget(options.budget, resolved.judgeId);
+  }
 
   const projectRoot = await detectProjectRoot(cwd);
   const config = await loadConfig(projectRoot);
@@ -133,6 +144,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
   });
 
   let relevance: RelevanceReport | undefined;
+  let budgetFactIds: Set<string> | undefined;
   let recalledObservations = false;
   let citationPreviewed = false;
   const heuristicSkips = prepared.sources
@@ -192,6 +204,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       confidence: resolved.confidence,
       ...(mission !== undefined ? { mission } : {}),
       ...(overlapsFor !== undefined ? { overlapsFor } : {}),
+      ...(options.budget !== undefined ? { includePriority: true } : {}),
     });
     const applied = applyRelevanceRows(prepared, rows);
     prepared = applied.prepared;
@@ -240,6 +253,35 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
           console.log(line);
         }
       }
+    }
+    console.log("");
+  }
+
+  if (options.budget !== undefined) {
+    const weights = resolvePriorityWeights(config.judge?.priorityWeights);
+    const rows = relevance?.rows ?? [];
+    const ranked = rankByPriority(
+      prepared.factsToRetain,
+      (fact) => prioritySignalsFor(fact, rows),
+      (fact) => ({ path: fact.provenance.sourcePath, id: fact.id }),
+      weights,
+    );
+    prepared = {
+      ...prepared,
+      factsToRetain: ranked.slice(0, options.budget).map((row) => row.item),
+    };
+    budgetFactIds = new Set(ranked.map((row) => row.item.id));
+    for (const line of formatBudgetLines({
+      ranked: ranked.map((row) => ({
+        id: row.item.id,
+        priority: row.priority,
+        signals: row.signals,
+      })),
+      budget: options.budget,
+      weights,
+      dryRun,
+    })) {
+      console.log(line);
     }
     console.log("");
   }
@@ -325,6 +367,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       prepared,
       retainedIds,
       ...(relevance !== undefined ? { relevance } : {}),
+      ...(budgetFactIds !== undefined ? { budgetFactIds } : {}),
     });
     if (retainedIds.size > 0) {
       console.log(
@@ -396,12 +439,37 @@ function shouldPersistSeedManifest(
   );
 }
 
+function prioritySignalsFor(
+  fact: CandidateFact,
+  rows: readonly RelevanceRow[],
+): PrioritySignals {
+  const row = rows.find((item) => item.fact.id === fact.id);
+  if (row === undefined) {
+    return {};
+  }
+  return {
+    ...(row.durability !== undefined ? { durability: row.durability.score } : {}),
+    ...(row.centrality !== undefined ? { centrality: row.centrality.score } : {}),
+    ...(row.supersedesExisting !== undefined
+      ? { supersedesExisting: row.supersedesExisting }
+      : {}),
+    ...(row.fanout !== undefined ? { fanout: row.fanout.score } : {}),
+    ...(row.safety !== undefined
+      ? {
+          containsSecret: row.safety.containsSecret,
+          containsPii: row.safety.containsPii,
+        }
+      : {}),
+  };
+}
+
 async function persistSeedManifest(input: {
   projectRoot: string;
   bankId: string;
   prepared: PreparedSeed;
   retainedIds: Set<string>;
   relevance?: RelevanceReport;
+  budgetFactIds?: Set<string>;
 }): Promise<void> {
   const previous =
     (await loadSeedManifest(input.projectRoot)) ??
@@ -411,10 +479,17 @@ async function persistSeedManifest(input: {
     input.bankId,
     input.prepared,
     input.retainedIds,
-    input.relevance
+    input.relevance || input.budgetFactIds
       ? {
-          settleEmptyPaths: new Set(input.relevance.settleEmptyPaths),
-          reopenPaths: new Set(input.relevance.reopenPaths),
+          ...(input.relevance
+            ? {
+                settleEmptyPaths: new Set(input.relevance.settleEmptyPaths),
+                reopenPaths: new Set(input.relevance.reopenPaths),
+              }
+            : {}),
+          ...(input.budgetFactIds !== undefined
+            ? { budgetFactIds: input.budgetFactIds }
+            : {}),
         }
       : undefined,
   );
@@ -598,8 +673,9 @@ function printSeedPlan(input: {
     return;
   }
 
+  const retainIds = new Set(prepared.factsToRetain.map((fact) => fact.id));
   const actionable = prepared.sources.filter(
-    (s) => !s.unchanged && s.facts.length > 0,
+    (s) => !s.unchanged && s.facts.some((fact) => retainIds.has(fact.id)),
   );
   const unchanged = prepared.sources.filter((s) => s.unchanged);
   const empty = prepared.sources.filter(
@@ -611,8 +687,9 @@ function printSeedPlan(input: {
       `${prefix}${input.dryRun ? "Would retain" : "Will retain"} ${prepared.factsToRetain.length} candidate(s) from ${actionable.length} source(s):\n`,
     );
     for (const source of actionable) {
-      console.log(`  ${source.relativePath} (${source.facts.length} fact(s))`);
-      for (const fact of source.facts) {
+      const facts = source.facts.filter((fact) => retainIds.has(fact.id));
+      console.log(`  ${source.relativePath} (${facts.length} fact(s))`);
+      for (const fact of facts) {
         console.log(
           `    - [${fact.bankKind?.id ?? fact.knowledgeKind} score=${fact.score}] ${fact.title}`,
         );

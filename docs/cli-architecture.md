@@ -137,7 +137,7 @@ node dist/cli.js mcp --write --dry-run
 | `share` | Write/validate `.nocciolo/share.json` deployment profile (local/LAN/VPN/public/cloud) |
 | `docs list` | Flat bank document inventory for scripts |
 | `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`); skipped under Cloud profile |
-| `seed --dry-run` | Scan + extract; print candidates; no retain. `--judge jev` prints the relevance gate, calls TypeSafe, and may recall up to 5 observation summaries and preview extracted facts (both read-only) |
+| `seed --dry-run` | Scan + extract; print candidates; no retain. `--judge jev` prints the relevance gate, calls TypeSafe, and may recall up to 5 observation summaries and preview extracted facts (both read-only). `--budget N` prints the ranked queue and a cutoff |
 | `seed` | Retain candidates into Hindsight; update local seed manifest |
 | `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
 | `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path. `--propose-adopt --judge jev` prints new files to consider; `--apply` writes those paths and does not retain |

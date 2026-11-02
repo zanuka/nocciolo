@@ -62,6 +62,7 @@ temp/
 
 # dev notes
 /docs/dev/
+/dev-docs/
 
 # Mac OS
 .DS_Store

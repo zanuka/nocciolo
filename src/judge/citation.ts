@@ -1,3 +1,19 @@
+/*
+Citation checks Hindsight's extracted facts against the source section.
+Seed calls this once per section after the relevance gate, using the fact
+texts from a read-only dry-run extract. One Jev call covers every fact from
+that section. For each fact it asks whether the fact appears in the section
+(supported_by_source_<n>) and how it is supported (support_<n>: quoted,
+implied, or unsupported).
+
+A high-confidence unsupported answer, or a confident no on the noul, drops
+that fact so retain never sends it. A quote or a direct implication at or
+above the confidence threshold is kept. A mid-range or missing answer stays
+in review and is not retained. At most 12 facts are sent. A fact that matches
+a secret pattern is dropped and is not included in the Jev state. If Jev
+falls back, this returns no decisions and the caller keeps the original section.
+*/
+
 import { noulBand, type NoulBand } from "./relevance.js";
 import {
   assertJevStateSendable,

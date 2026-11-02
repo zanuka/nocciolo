@@ -694,6 +694,12 @@ export class HindsightClient {
     return parseRecalledObservations(raw);
   }
 
+  /*
+  Preview the facts Hindsight would extract from one section, without writing
+  them. Retain does not return those facts, so citation calls this first and
+  then asks Jev whether each fact is in the source. The response is only the
+  fact text. Empty and non-text entries are dropped.
+  */
   async dryRunExtract(
     bankId: string,
     input: { content: string; context?: string },

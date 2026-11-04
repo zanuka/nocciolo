@@ -180,11 +180,15 @@ Scan durable sources, extract high-signal candidates, and retain them into the c
 | `--async` | Submit retain asynchronously to Hindsight |
 | `--judge <id>` | `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional; needs `NOCCIOLO_TYPESAFE_API_KEY`) |
 | `--confidence <n>` | Minimum confidence to apply a Jev decision (default `0.8`; see [jev.md](./jev.md)) |
+| `--budget <n>` | With `--judge jev`, retain the top N ranked candidates this run. The rest stay pending. Dry-run prints the queue and a cutoff |
 | `--strict` | With `--judge jev`, fail on TypeSafe errors instead of falling back to heuristics |
 
 `--judge jev` runs the relevance gate once per section (`nocciolo:<path>#<section>`).
 The dry-run prints `document_id`, path, heading, decisions, score, confidence, knowledge kind, probabilities, relation, and heuristic-vs-jev.
 It does not retain.
+`--budget N` prints that retain queue in priority order and marks the cutoff.
+Only the top N are retained on a live seed.
+The rest stay pending in the seed manifest.
 With `--judge jev` it may recall up to 5 observation summaries and preview extracted facts (both read-only).
 One file can mix retain and skip.
 Headings the heuristic would drop are judged only when this flag is on.

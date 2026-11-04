@@ -71,6 +71,7 @@ Written by `nocciolo init`. Portable project identity for this repo.
 | `scanner.include` | Optional globs. When set, `seed` and `store` discover these paths instead of the default README / docs / ADR walk. |
 | `scanner.exclude` | Optional globs removed after discovery (default scan or `include`). |
 | `scanner.extensions` | Optional suffixes. Default is `.md` and `.markdown`. Add `.mdx` to retain MDX. |
+| `judge.priorityWeights` | Optional weights for `seed --budget`. Keys: `durability`, `centrality`, `supersession`, `fanout`, `secretRisk`. Defaults are in [jev.md](./jev.md). |
 
 ### `share.json`
 

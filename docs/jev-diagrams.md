@@ -95,6 +95,7 @@ flowchart TD
 
 Notes:
 
+- `seed --budget N --judge jev` ranks kept sections and retains the top N. Without `--budget`, every kept section is still eligible. Weights are in [jev.md](./jev.md).
 - Default `--confidence` is `0.8` ([jev.md](./jev.md)).
 - Missing `NOCCIOLO_TYPESAFE_API_KEY` with `--judge jev` is a hard error.
 - Network / 429 / 5xx: warn once and fall back to heuristics unless `--strict`.

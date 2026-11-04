@@ -18,6 +18,27 @@ describe("NoccioloConfigSchema", () => {
     expect(config.deploymentProfile).toBe("local");
   });
 
+  it("accepts retain-budget weights", () => {
+    const parsed = NoccioloConfigSchema.parse({
+      version: 1,
+      name: "fixture",
+      provider: "hindsight",
+      bankId: "fixture",
+      root: ".",
+      createdAt: new Date().toISOString(),
+      judge: {
+        priorityWeights: {
+          durability: 0.4,
+          centrality: 0.3,
+          supersession: 0.15,
+          fanout: 0.15,
+          secretRisk: 0.25,
+        },
+      },
+    });
+    expect(parsed.judge?.priorityWeights?.durability).toBe(0.4);
+  });
+
   it("accepts an optional deploymentProfile", () => {
     const parsed = NoccioloConfigSchema.parse({
       version: 1,

@@ -66,10 +66,10 @@ export async function prepareSeed(input: {
     );
 
     const previous = manifest.sources[source.relativePath];
-    const unchanged =
-      !force &&
-      previous !== undefined &&
-      previous.contentHash === extracted.contentHash;
+    const hashMatch =
+      previous !== undefined && previous.contentHash === extracted.contentHash;
+    const pendingIds = previous?.pendingFactIds ?? [];
+    const unchanged = !force && hashMatch && pendingIds.length === 0;
 
     if (unchanged) {
       skippedUnchanged += 1;
@@ -90,6 +90,27 @@ export async function prepareSeed(input: {
       tombstones,
       force,
     ).kept;
+
+    if (!force && hashMatch && pendingIds.length > 0) {
+      const pending = new Set(pendingIds);
+      const keptPending = [
+        ...kept.filter((fact) => pending.has(fact.id)),
+        ...heuristicSkips.filter((fact) => pending.has(fact.id)),
+      ];
+      if (keptPending.length === 0) {
+        skippedUnchanged += 1;
+        prepared.push({ ...extracted, unchanged: true });
+        continue;
+      }
+      prepared.push({
+        ...extracted,
+        facts: keptPending,
+        heuristicSkips: [],
+        unchanged: false,
+      });
+      factsToRetain.push(...keptPending);
+      continue;
+    }
 
     if (kept.length === 0) {
       skippedEmpty += 1;
@@ -179,6 +200,7 @@ export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
 export interface NextManifestOptions {
   settleEmptyPaths?: ReadonlySet<string>;
   reopenPaths?: ReadonlySet<string>;
+  budgetFactIds?: ReadonlySet<string>;
 }
 
 export function nextManifest(
@@ -213,15 +235,45 @@ export function nextManifest(
       delete sources[source.relativePath];
       continue;
     }
-    const factIds = source.facts
-      .map((f) => f.id)
+    const prior =
+      previous?.bankId === bankId ? previous.sources[source.relativePath] : undefined;
+    const hashContinues =
+      prior !== undefined && prior.contentHash === source.contentHash;
+    const budgetIds = options?.budgetFactIds;
+    const inBudget =
+      budgetIds === undefined
+        ? []
+        : source.facts.filter((fact) => budgetIds.has(fact.id));
+    const deferredIds = inBudget
+      .map((fact) => fact.id)
+      .filter((id) => !retainedFactIds.has(id));
+    const selectedIds = source.facts
+      .map((fact) => fact.id)
       .filter((id) => retainedFactIds.has(id));
-    if (factIds.length === 0) {
+    const priorPending = prior?.pendingFactIds?.length ?? 0;
+    if (deferredIds.length > 0 || (hashContinues && priorPending > 0)) {
+      const already = hashContinues ? (prior?.factIds ?? []) : [];
+      const deferred = new Set(deferredIds);
+      const factIds = [...new Set([...already, ...selectedIds])].filter(
+        (id) => !deferred.has(id),
+      );
+      const entry: SeedManifest["sources"][string] = {
+        contentHash: source.contentHash,
+        factIds,
+        seededAt: now,
+      };
+      if (deferredIds.length > 0) {
+        entry.pendingFactIds = deferredIds;
+      }
+      sources[source.relativePath] = entry;
+      continue;
+    }
+    if (selectedIds.length === 0) {
       continue;
     }
     sources[source.relativePath] = {
       contentHash: source.contentHash,
-      factIds,
+      factIds: selectedIds,
       seededAt: now,
     };
   }

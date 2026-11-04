@@ -39,7 +39,7 @@ It does not run a second extractor.
 
 The same pass can score the generated mission and directives, and can propose mental-model questions and tags. The wording stays in the template you commit. `seed --dry-run --judge jev` shows the keep, the skip, and the score.
 
-**Put the durable part of a large diff first.** A monorepo change can touch dozens of markdown files and contain only a few decisions. Jev ranks those candidates against a retain budget, and it can:
+**Put the durable part of a large diff first.** A monorepo change can touch dozens of markdown files and contain only a few decisions. `seed --budget N --judge jev` ranks the retain queue and keeps the top N. The rest stay pending in the seed manifest. Dry-run prints the order and the cutoff. The same layer can also:
 
 - propose which new files belong on the `store` allowlist (`store --propose-adopt --judge jev` prints the list; `--apply` writes it and does not retain)
 - hold an edit that does not look durable (still planned)

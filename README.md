@@ -205,6 +205,7 @@ Every `seed` run **reads all durable sources locally** (to compute hashes), but 
 ```bash
 pnpm nocciolo seed --dry-run
 pnpm nocciolo seed --dry-run --judge jev   # optional relevance gate; needs NOCCIOLO_TYPESAFE_API_KEY
+pnpm nocciolo seed --dry-run --judge jev --budget 5   # ranked queue and cutoff; does not retain
 ```
 
 The first command shows scored candidates from durable docs (README, docs, ADRs), with provenance and skips for empty or low-signal sections.
@@ -494,6 +495,8 @@ nocciolo seed --dry-run --judge jev
   extracted facts are checked against the source section in one Jev call
   a high-confidence unsupported fact is not retained
   a quote of the section is kept
+  --budget N ranks the keep rows and retains the top N
+  the rest stay pending until a later seed
   Hindsight retain runs only for the rows the gate keeps
 ```
 

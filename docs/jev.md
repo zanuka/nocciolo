@@ -15,6 +15,8 @@ The contradiction check ships on that same call.
 The secret and personal-data second pass ships on that same call.
 Citation support ships after that gate, on the facts Hindsight would extract.
 Allowlist proposals ship on `store --propose-adopt --judge jev`.
+A retain budget ships on `seed --budget N --judge jev`.
+`store` edit durability gates are still planned.
 Prune annotation is still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
 
@@ -84,7 +86,8 @@ Bounded decisions where a typed answer plus confidence is enough:
 - Citation support on the facts Hindsight would extract (shipped on `seed --judge jev`)
 - PII / secret second pass (shipped on `seed --judge jev`)
 - Store allowlist proposals (shipped on `store --propose-adopt --judge jev`)
-- Seed priority and retain budget; `store` edit durability gates
+- Seed priority and retain budget (shipped on `seed --budget N --judge jev`)
+- `store` edit durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
 - Bank-template fitness scores (mission / directives / tags / mental-model questions); prose stays in the template
 - MCP `retain` guardrails, recall rerank, still-true checks, `reflect` vs `recall` vs mental-model routing
@@ -207,6 +210,49 @@ A dependency readme and markdown outside the durable scan are not considered.
 The allowlist changes only when you pass `--apply`.
 That write does not retain.
 Default `store` still never adopts a new file on its own ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)).
+
+---
+
+## Retain budget
+
+`seed --budget N --judge jev` ranks the sections that survived the relevance gate and retains the top N this run.
+The rest stay pending in `.nocciolo/local/seed-manifest.json`.
+The next seed judges those pending sections again.
+Dry-run prints the ordered queue and a cutoff, and it does not retain or write the manifest.
+Without `--budget`, seed still retains every section the gate keeps.
+
+Jev supplies the atomic scores.
+Nocciolo combines them.
+The same judge call already returns `durability` (0 ephemeral through 4 constitutional).
+When `--budget` is set, that call also asks `centrality` (0 buried note through 4 ADR, AGENTS.md, or constitutional standard), `agent_fanout` (0 none through 4 shared context), and the noul `supersedes_existing`.
+`secret_risk` is the higher of `contains_secret` and `contains_pii`.
+It is not a separate model weight.
+
+Each score is scaled to 0 through 1 (`durability`, `centrality`, and `agent_fanout` are divided by 4).
+The noul and `secret_risk` are already 0 through 1.
+Missing answers count as 0.
+The formula is:
+
+```text
+priority = w1*durability + w2*centrality + w3*supersession + w4*fanout - w5*secret_risk
+```
+
+Weights live in `.nocciolo/config.json` under `judge.priorityWeights`.
+They are not chosen by the model.
+When the block is omitted, the defaults are:
+
+| Weight | Key | Default |
+|--------|-----|---------|
+| w1 | `durability` | 0.40 |
+| w2 | `centrality` | 0.30 |
+| w3 | `supersession` | 0.15 |
+| w4 | `fanout` | 0.15 |
+| w5 | `secretRisk` | 0.25 |
+
+A changed ADR, with high durability and centrality, ranks above a wording-only changelog.
+Ties break by source path, then document id.
+`--budget` requires `--judge jev`.
+`N` is a positive integer ([JEV-11](https://github.com/zanuka/nocciolo/issues/50)).
 
 ---
 

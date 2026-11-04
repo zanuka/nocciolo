@@ -128,7 +128,7 @@ Where it sits: [docs/jev-integration.md](./docs/jev-integration.md).
 Tracked in [JEV-0](https://github.com/zanuka/orto/issues/58) and the [open `jev` issues](https://github.com/zanuka/orto/issues?q=is%3Aissue+is%3Aopen+label%3Ajev).
 The checklist groups those tickets.
 The [issue index](#jev-issue-index) lists the epic.
-JEV-1 through JEV-11 are done in the checklist.
+JEV-1 through JEV-11 are done in the checklist, and the JEV-13 watcher gate helper is done.
 JEV-1 through JEV-10 are closed on GitHub.
 
 - [x] Product rule: `docs/jev.md` states Jev is a judge, not a backend (opt-in, offline fallback, do-not-build, confidence gate, state budget). ([JEV-1](https://github.com/zanuka/orto/issues/20))
@@ -143,6 +143,7 @@ JEV-1 through JEV-10 are closed on GitHub.
 - [x] Propose allowlist adoption: `store --propose-adopt --judge jev` asks `should_adopt` and the knowledge `kind` once per new durable file. A confident durable kind is printed as a proposal. A dependency readme or other non-durable markdown is not proposed. The allowlist changes only with `--apply`, and nothing is retained. Default `store` does not adopt new files. ([JEV-10](https://github.com/zanuka/orto/issues/41))
 - [x] Composite seed priority and retain budget: `seed --budget N --judge jev` ranks changed sections from durability, centrality, supersession, fanout, and secret risk. Weights live in `judge.priorityWeights`. Dry-run prints the ordered queue and a cutoff. Only the top N are retained. The rest stay pending in the seed manifest. ([JEV-11](https://github.com/zanuka/orto/issues/50))
 - [ ] `store` edit durability gate: hold an edit that does not look durable until the operator confirms. ([JEV-12](https://github.com/zanuka/orto/issues/31))
+- [x] Watcher high-signal gate helper: `judgeWatcherGate` asks `durable_claim_changed` and `behavior_delta`. Formatting-only changes skip. High `behavior_delta` enqueues a seed path. No `watch` CLI command ships with this helper. ([JEV-13](https://github.com/zanuka/orto/issues/42))
 - [ ] Optional `--judge jev` prune annotation: score items that are still on disk but no longer true (outdated / irrelevant / contradicted). Jev annotates only; Orto deletes after confirm. Low confidence is listed and left unchecked. ([JEV-14](https://github.com/zanuka/orto/issues/32), [JEV-15](https://github.com/zanuka/orto/issues/43), [JEV-16](https://github.com/zanuka/orto/issues/51), [JEV-17](https://github.com/zanuka/orto/issues/52))
 - [ ] Bank-template fitness: score mission and directives, choose extraction aggressiveness from repo shape, propose mental-model catalog questions, and assign tags consistently. Jev does not author the prose. ([JEV-18](https://github.com/zanuka/orto/issues/23), [JEV-19](https://github.com/zanuka/orto/issues/24), [JEV-20](https://github.com/zanuka/orto/issues/53), [JEV-21](https://github.com/zanuka/orto/issues/54))
 - [ ] Recall and MCP guards: block unsafe MCP `retain`, rerank recalled passages, check whether a memory is still true, and route `reflect` vs `recall` vs mental-model lookup. ([JEV-22](https://github.com/zanuka/orto/issues/44), [JEV-23](https://github.com/zanuka/orto/issues/25), [JEV-24](https://github.com/zanuka/orto/issues/45), [JEV-25](https://github.com/zanuka/orto/issues/26))
@@ -152,14 +153,13 @@ JEV-1 through JEV-10 are closed on GitHub.
 
 Deferred (still tracked under the Jev epic; land with later phases):
 
-- Watcher high-signal gate ([JEV-13](https://github.com/zanuka/orto/issues/42)): with event-driven re-seed in Phase 8
 - Multi-bank fact routing ([JEV-32](https://github.com/zanuka/orto/issues/47)): with multi-bank support in Phase 8
 - Maglio and Strumentario product judges ([JEV-36](https://github.com/zanuka/orto/issues/28), [JEV-37](https://github.com/zanuka/orto/issues/29)): adjacent dogfood
 
 ### Jev issue index
 
 Issue index as of 2 November 2026.
-JEV-1 through JEV-11 are done in the checklist.
+JEV-1 through JEV-11 are done in the checklist, and the JEV-13 watcher gate helper is done.
 JEV-1 through JEV-10 are closed on GitHub.
 Open [`jev`-labeled issues](https://github.com/zanuka/orto/issues?q=is%3Aissue+is%3Aopen+label%3Ajev) are the rest of the table.
 Closed duplicate epic [#19](https://github.com/zanuka/orto/issues/19) is superseded by [#58](https://github.com/zanuka/orto/issues/58).
@@ -218,7 +218,7 @@ Closed duplicate epic [#19](https://github.com/zanuka/orto/issues/19) is superse
 
 ## Phase 8: Advanced & Extensibility
 
-- [ ] File watcher / event-driven re-seeding (high-signal Jev gate: [JEV-13](https://github.com/zanuka/orto/issues/42))
+- [ ] File watcher / event-driven re-seeding (wire `judgeWatcherGate` / `collectSeedEnqueue` into an opt-in watch loop; gate helper: [JEV-13](https://github.com/zanuka/orto/issues/42))
 - [ ] Multi-provider support: Hindsight remains first-class and the default; other backends are opt-in CLI options
   - [ ] Multi-provider foundation (extract `HindsightProvider`, `--provider` dispatch; destination-kind router: [JEV-31](https://github.com/zanuka/orto/issues/55))
   - [ ] Mem0 adapter

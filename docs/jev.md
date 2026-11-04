@@ -16,6 +16,8 @@ The secret and personal-data second pass ships on that same call.
 Citation support ships after that gate, on the facts Hindsight would extract.
 Allowlist proposals ship on `store --propose-adopt --judge jev`.
 A retain budget ships on `seed --budget N --judge jev`.
+The watcher high-signal gate helper ships in `src/judge/watcher-gate.ts`.
+There is no `watch` CLI command yet.
 `store` edit durability gates are still planned.
 Prune annotation is still planned.
 **Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/orto/issues/58).
@@ -87,6 +89,7 @@ Bounded decisions where a typed answer plus confidence is enough:
 - PII / secret second pass (shipped on `seed --judge jev`)
 - Store allowlist proposals (shipped on `store --propose-adopt --judge jev`)
 - Seed priority and retain budget (shipped on `seed --budget N --judge jev`)
+- Watcher high-signal gate (helper shipped; no default `watch` CLI yet)
 - `store` edit durability gates
 - Prune / audit plans for outdated, irrelevant, or contradicted items (including when the file is still on disk)
 - Bank-template fitness scores (mission / directives / tags / mental-model questions); prose stays in the template
@@ -253,6 +256,29 @@ A changed ADR, with high durability and centrality, ranks above a wording-only c
 Ties break by source path, then document id.
 `--budget` requires `--judge jev`.
 `N` is a positive integer ([JEV-11](https://github.com/zanuka/orto/issues/50)).
+
+---
+
+## Watcher high-signal gate
+
+A future file watcher will fire often.
+Jev answers whether that change should enqueue a seed, so Orto does not retain on every typo.
+
+`judgeWatcherGate` in `src/judge/watcher-gate.ts` takes the previous and current text for one durable path.
+One call asks:
+
+- Noul `durable_claim_changed`: did the durable claim change, or is the edit only wording or formatting?
+- Score `behavior_delta` (0 none through 4 agents must see the new claim): how much agent behavior changes if we skip re-seed today.
+
+A confident no on the claim is a skip.
+Whitespace-only edits are skipped locally before any TypeSafe call.
+A confident yes with `behavior_delta` at or above 3, and score confidence at or above `--confidence`, enqueues a real seed for that path via `collectSeedEnqueue` in `src/watcher/`.
+Mid-range answers stay in review.
+A secret match is skipped and is not sent to Jev.
+
+There is no `orto watch` command on the default CLI.
+Phase 8 can wire an event loop to this helper.
+Until then, tests cover the gate with fixtures ([JEV-13](https://github.com/zanuka/orto/issues/42)).
 
 ---
 

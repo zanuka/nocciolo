@@ -10,6 +10,7 @@ Section-level keep/skip is shipped with it ([JEV-5](https://github.com/zanuka/or
 One file can retain one section and skip another.
 `store --propose-adopt` can propose new allowlist files ([JEV-10](https://github.com/zanuka/orto/issues/41)).
 Edit durability gates are still planned ([JEV-12](https://github.com/zanuka/orto/issues/31)).
+The watcher high-signal gate helper ships ([JEV-13](https://github.com/zanuka/orto/issues/42)); there is no default `watch` CLI yet.
 The diagrams show that intended `store` experience with `--judge jev`.
 
 Without `--judge jev`, solid boxes still run. Dotted Jev steps are skipped and offline heuristics decide keep/skip.

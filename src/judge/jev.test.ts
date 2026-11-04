@@ -94,7 +94,7 @@ describe("JevJudge", () => {
 
     const resolved = createJudge({
       judge: "jev",
-      env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
+      env: { ORTO_TYPESAFE_API_KEY: "test-key" },
       fetchImpl,
       log: () => undefined,
       warn: (message) => warnings.push(message),
@@ -129,7 +129,7 @@ describe("JevJudge", () => {
     const resolved = createJudge({
       judge: "jev",
       strict: true,
-      env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
+      env: { ORTO_TYPESAFE_API_KEY: "test-key" },
       fetchImpl,
       log: () => undefined,
     });
@@ -171,7 +171,7 @@ describe("JevJudge", () => {
 
     const resolved = createJudge({
       judge: "jev",
-      env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
+      env: { ORTO_TYPESAFE_API_KEY: "test-key" },
       fetchImpl,
       timeoutMs: 10,
       log: () => undefined,
@@ -196,7 +196,7 @@ describe("JevJudge", () => {
     let called = false;
     const resolved = createJudge({
       judge: "jev",
-      env: { NOCCIOLO_TYPESAFE_API_KEY: "test-key" },
+      env: { ORTO_TYPESAFE_API_KEY: "test-key" },
       log: () => undefined,
       fetchImpl: async () => {
         called = true;

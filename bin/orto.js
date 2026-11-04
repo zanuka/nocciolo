@@ -12,7 +12,7 @@ try {
   await access(cli);
 } catch {
   console.error(
-    "Nocciolo CLI is not built yet. Run `pnpm build` first, then retry.",
+    "Orto CLI is not built yet. Run `pnpm build` first, then retry.",
   );
   process.exit(1);
 }

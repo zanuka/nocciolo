@@ -6,15 +6,15 @@ import { buildPrunePlan, parseDocumentId } from "./prune-plan.js";
 
 describe("parseDocumentId", () => {
   it("parses section, path, and other ids", () => {
-    expect(parseDocumentId("nocciolo:docs/a.md#goal")).toEqual({
+    expect(parseDocumentId("orto:docs/a.md#goal")).toEqual({
       kind: "section",
-      documentId: "nocciolo:docs/a.md#goal",
+      documentId: "orto:docs/a.md#goal",
       sourcePath: "docs/a.md",
       sectionSlug: "goal",
     });
-    expect(parseDocumentId("nocciolo:docs/a.md")).toEqual({
+    expect(parseDocumentId("orto:docs/a.md")).toEqual({
       kind: "path",
-      documentId: "nocciolo:docs/a.md",
+      documentId: "orto:docs/a.md",
       sourcePath: "docs/a.md",
     });
     expect(parseDocumentId("docs/a.md")).toEqual({
@@ -39,13 +39,13 @@ describe("buildPrunePlan", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-prune-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-prune-"));
     dirs.push(dir);
     await mkdir(join(dir, "docs"), { recursive: true });
     return dir;
   }
 
-  it("groups path-gone and section-gone without false-positive nocciolo ids", async () => {
+  it("groups path-gone and section-gone without false-positive orto ids", async () => {
     const root = await tempProject();
     await writeFile(
       join(root, "docs", "live.md"),
@@ -56,28 +56,28 @@ describe("buildPrunePlan", () => {
     const plan = await buildPrunePlan({
       projectRoot: root,
       documentIds: [
-        "nocciolo:docs/missing.md#gone",
+        "orto:docs/missing.md#gone",
         "docs/missing-legacy.md",
         "docs/live.md",
-        "nocciolo:docs/live.md#goal",
-        "nocciolo:docs/live.md#removed-heading",
+        "orto:docs/live.md#goal",
+        "orto:docs/live.md#removed-heading",
       ],
     });
 
     expect(plan.pathGone.map((c) => c.documentId).sort()).toEqual([
       "docs/missing-legacy.md",
-      "nocciolo:docs/missing.md#gone",
+      "orto:docs/missing.md#gone",
     ]);
     expect(plan.sectionGone.map((c) => c.documentId)).toEqual([
-      "nocciolo:docs/live.md#removed-heading",
+      "orto:docs/live.md#removed-heading",
     ]);
     expect(
-      plan.all.some((c) => c.documentId === "nocciolo:docs/live.md#goal"),
+      plan.all.some((c) => c.documentId === "orto:docs/live.md#goal"),
     ).toBe(false);
     expect(plan.all.some((c) => c.documentId === "docs/live.md")).toBe(false);
   });
 
-  it("does not false path-gone nocciolo:path ids when the file still exists", async () => {
+  it("does not false path-gone orto:path ids when the file still exists", async () => {
     const root = await tempProject();
     await writeFile(
       join(root, "docs", "live.md"),
@@ -88,16 +88,16 @@ describe("buildPrunePlan", () => {
     const plan = await buildPrunePlan({
       projectRoot: root,
       documentIds: [
-        "nocciolo:docs/live.md",
-        "nocciolo:docs/missing-whole.md",
+        "orto:docs/live.md",
+        "orto:docs/missing-whole.md",
       ],
     });
 
     expect(plan.pathGone.map((c) => c.documentId)).toEqual([
-      "nocciolo:docs/missing-whole.md",
+      "orto:docs/missing-whole.md",
     ]);
     expect(plan.pathGone[0]?.sourcePath).toBe("docs/missing-whole.md");
-    expect(plan.all.some((c) => c.documentId === "nocciolo:docs/live.md")).toBe(
+    expect(plan.all.some((c) => c.documentId === "orto:docs/live.md")).toBe(
       false,
     );
   });
@@ -113,9 +113,9 @@ describe("buildPrunePlan", () => {
     const plan = await buildPrunePlan({
       projectRoot: root,
       documentIds: [
-        "nocciolo:docs/live.md#goal",
+        "orto:docs/live.md#goal",
         "docs/live.md",
-        "nocciolo:docs/other.md#x",
+        "orto:docs/other.md#x",
       ],
       source: "docs/live.md",
       documentId: "session_custom",
@@ -123,11 +123,11 @@ describe("buildPrunePlan", () => {
 
     expect(plan.explicit.map((c) => c.documentId).sort()).toEqual([
       "docs/live.md",
-      "nocciolo:docs/live.md#goal",
+      "orto:docs/live.md#goal",
       "session_custom",
     ]);
     expect(plan.pathGone.map((c) => c.documentId)).toEqual([
-      "nocciolo:docs/other.md#x",
+      "orto:docs/other.md#x",
     ]);
   });
 });

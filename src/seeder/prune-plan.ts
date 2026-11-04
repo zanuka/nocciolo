@@ -34,8 +34,8 @@ export type ParsedDocumentId =
   | { kind: "other"; documentId: string };
 
 export function parseDocumentId(documentId: string): ParsedDocumentId {
-  if (documentId.startsWith("nocciolo:")) {
-    const rest = documentId.slice("nocciolo:".length);
+  if (documentId.startsWith("orto:")) {
+    const rest = documentId.slice("orto:".length);
     if (rest.length === 0) {
       return { kind: "other", documentId };
     }

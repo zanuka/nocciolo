@@ -39,7 +39,7 @@ export interface McpSnippet {
   notes: string[];
 }
 
-const DEFAULT_API_KEY_ENV = "NOCCIOLO_HINDSIGHT_API_KEY";
+const DEFAULT_API_KEY_ENV = "ORTO_HINDSIGHT_API_KEY";
 
 export function parseHarnessList(raw: string | undefined): McpHarness[] {
   if (!raw || raw.trim() === "" || raw.trim().toLowerCase() === "all") {
@@ -93,7 +93,7 @@ export function generateMcpSnippets(input: McpSnippetInput): McpSnippet[] {
         "Project file: .cursor/mcp.json (merge with existing servers if present).",
         "Reload MCP servers in Cursor Settings after writing.",
         "API keys must be in the Cursor process environment (login shell / desktop env), not only an integrated terminal.",
-        "Accepted env vars: NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY.",
+        "Accepted env vars: ORTO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY.",
       ],
     },
     {

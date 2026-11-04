@@ -1,4 +1,4 @@
-import { NoccioloError } from "../../utils/errors.js";
+import { OrtoError } from "../../utils/errors.js";
 
 export interface HindsightVersionInfo {
   api_version?: string;
@@ -147,9 +147,9 @@ export class HindsightInstanceClient {
       const body = await safeReadText(response);
       const authHint =
         response.status === 401 || response.status === 403
-          ? " Set NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY, or pass --api-key."
+          ? " Set ORTO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY, or pass --api-key."
           : "";
-      throw new NoccioloError(
+      throw new OrtoError(
         `Hindsight request failed (${response.status} ${response.statusText}) for ${path}`,
         body
           ? `Response: ${body.slice(0, 500)}.${authHint}`
@@ -175,8 +175,8 @@ export class HindsightInstanceClient {
     return headers;
   }
 
-  private reachError(error: unknown): NoccioloError {
-    return new NoccioloError(
+  private reachError(error: unknown): OrtoError {
+    return new OrtoError(
       `Failed to reach Hindsight at ${this.baseUrl}`,
       `Check that the container is running and --hindsight-url / config / env is correct. (${error instanceof Error ? error.message : String(error)})`,
     );

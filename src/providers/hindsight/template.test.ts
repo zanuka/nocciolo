@@ -66,7 +66,7 @@ describe("generateHindsightBankTemplate", () => {
       "coding-standards",
     ]);
     expect(
-      template.mental_models.every((m) => m.tags.join(",") === "nocciolo"),
+      template.mental_models.every((m) => m.tags.join(",") === "orto"),
     ).toBe(true);
     expect(
       template.mental_models.every(

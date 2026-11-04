@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export const DEFAULT_HINDSIGHT_IMAGE = "ghcr.io/vectorize-io/hindsight:latest";
 export const DEFAULT_CONTAINER_NAME = "hindsight";
@@ -97,7 +97,7 @@ export function buildDockerUpPlan(options: DockerUpOptions = {}): DockerCommandP
 
   if (options.tenantApiKey) {
     const tenantDisplay =
-      options.tenantKeyDisplay ?? "$NOCCIOLO_HINDSIGHT_API_KEY";
+      options.tenantKeyDisplay ?? "$ORTO_HINDSIGHT_API_KEY";
     const authArgs = [
       "-e",
       "HINDSIGHT_API_TENANT_EXTENSION=hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension",
@@ -133,7 +133,7 @@ export function buildDockerUpPlan(options: DockerUpOptions = {}): DockerCommandP
   }
   if (options.tenantApiKey) {
     envHints.push(
-      "Tenant API auth enabled. Use the same value as NOCCIOLO_HINDSIGHT_API_KEY for seed and MCP headers.",
+      "Tenant API auth enabled. Use the same value as ORTO_HINDSIGHT_API_KEY for seed and MCP headers.",
     );
   }
 
@@ -181,9 +181,9 @@ export async function assertDockerAvailable(
 ): Promise<void> {
   const result = await run(["docker", "info"], { allowFailure: true });
   if (result.exitCode !== 0) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Docker is not available or the daemon is not running",
-      "Install Docker Desktop (or another engine), start it, then re-run `nocciolo docker up`. Use `--dry-run` to print the command without executing.",
+      "Install Docker Desktop (or another engine), start it, then re-run `orto docker up`. Use `--dry-run` to print the command without executing.",
     );
   }
 }
@@ -201,7 +201,7 @@ export async function runDockerCommand(
   return new Promise((resolve, reject) => {
     const [cmd, ...args] = argv;
     if (!cmd) {
-      reject(new NoccioloError("Empty docker command"));
+      reject(new OrtoError("Empty docker command"));
       return;
     }
     const child = spawn(cmd, args, {
@@ -217,7 +217,7 @@ export async function runDockerCommand(
     });
     child.on("error", (error) => {
       reject(
-        new NoccioloError(
+        new OrtoError(
           `Failed to run ${cmd}`,
           `${error.message}. Is Docker installed and on PATH?`,
         ),
@@ -227,7 +227,7 @@ export async function runDockerCommand(
       const exitCode = code ?? 1;
       if (exitCode !== 0 && !options.allowFailure) {
         reject(
-          new NoccioloError(
+          new OrtoError(
             `Command failed (${exitCode}): ${formatDockerArgv(argv)}`,
             stderr.trim() || stdout.trim() || "Check Docker output above.",
           ),

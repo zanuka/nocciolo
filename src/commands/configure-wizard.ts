@@ -150,7 +150,7 @@ export async function runConfigureWizard(input: {
   });
   if (confirm.trim().toLowerCase().startsWith("n")) {
     throw new Error(
-      "Configure cancelled. Re-run `nocciolo configure` when ready.",
+      "Configure cancelled. Re-run `orto configure` when ready.",
     );
   }
 

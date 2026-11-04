@@ -38,7 +38,7 @@ import {
   type AdoptProposal,
   type ResolvedJudge,
 } from "../judge/index.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { isInteractive, promptMultiSelect } from "../utils/prompt.js";
 
 export interface StoreOptions {
@@ -115,9 +115,9 @@ async function resolveStoreProjectRoot(
   }
 
   if (explicitProject) {
-    throw new NoccioloError(
-      `${root} is a disposable git worktree; Nocciolo never stores from a worktree.`,
-      "Pass --project pointing at the durable clone that owns .nocciolo/ (firstmate/projects/nocciolo or a daily checkout), not a Treehouse worktree.",
+    throw new OrtoError(
+      `${root} is a disposable git worktree; Orto never stores from a worktree.`,
+      "Pass --project pointing at the durable clone that owns .orto/ (firstmate/projects/orto or a daily checkout), not a Treehouse worktree.",
     );
   }
 
@@ -127,9 +127,9 @@ async function resolveStoreProjectRoot(
     return durable.path;
   }
 
-  throw new NoccioloError(
-    `${root} is a disposable git worktree; Nocciolo never stores from a worktree.`,
-    "Run `nocciolo store` from the durable clone that owns .nocciolo/, pass --project <durable-clone-path>, or register the durable clone with `nocciolo mcp --harness firstmate --write-firstmate`.",
+  throw new OrtoError(
+    `${root} is a disposable git worktree; Orto never stores from a worktree.`,
+    "Run `orto store` from the durable clone that owns .orto/, pass --project <durable-clone-path>, or register the durable clone with `orto mcp --harness firstmate --write-firstmate`.",
   );
 }
 
@@ -234,21 +234,21 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
   const addFiles = parsePathList(options.addFiles);
 
   if (proposeAdopt && (explicitFiles.length > 0 || addFiles.length > 0 || yes)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "--propose-adopt does not retain, and it does not combine with --files, --add-files, or --yes.",
-      "Run nocciolo store --propose-adopt --judge jev. Add confirmed paths with --apply.",
+      "Run orto store --propose-adopt --judge jev. Add confirmed paths with --apply.",
     );
   }
   if (applyProposals && !proposeAdopt) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "--apply only writes allowlist proposals.",
-      "Re-run with nocciolo store --propose-adopt --judge jev --apply.",
+      "Re-run with orto store --propose-adopt --judge jev --apply.",
     );
   }
   if (proposeAdopt && resolved.judgeId !== "jev") {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Allowlist proposals require --judge jev.",
-      "Re-run: nocciolo store --propose-adopt --judge jev",
+      "Re-run: orto store --propose-adopt --judge jev",
     );
   }
 
@@ -259,7 +259,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
       const relativePath = resolveRelativePath(projectRoot, cwd, raw);
       const deny = checkStoreDeny(relativePath, projectRoot, { explicit: true });
       if (deny.denied) {
-        throw new NoccioloError(
+        throw new OrtoError(
           `Refusing to allowlist "${relativePath}": ${deny.reason}`,
           "Pick a durable markdown file inside the project root.",
         );
@@ -392,7 +392,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
       const relativePath = resolveRelativePath(projectRoot, cwd, raw);
       const deny = checkStoreDeny(relativePath, projectRoot, { explicit: true });
       if (deny.denied) {
-        throw new NoccioloError(
+        throw new OrtoError(
           `Refusing to store "${relativePath}": ${deny.reason}`,
           "Pass a durable markdown file inside the project root.",
         );
@@ -431,7 +431,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     const known = new Set(discovered.map((source) => source.relativePath));
     const missing = selected.filter((path) => !known.has(path));
     if (missing.length > 0) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Refusing to store ${missing.map((path) => `"${path}"`).join(", ")}: not in the durable scan.`,
         "Update scanner.include, scanner.exclude, or scanner.extensions so the path is selected, then retry.",
       );
@@ -457,7 +457,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
       `Skipped ${skippedNew.length} new file(s) (not stored): ${skippedNew.join(", ")}`,
     );
     console.log(
-      "Next: `nocciolo store --files <path>[,<path>...]` or run interactively to select them.",
+      "Next: `orto store --files <path>[,<path>...]` or run interactively to select them.",
     );
   }
 
@@ -466,11 +466,11 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     console.log("No memories were retained. Suggested next commands:");
     if (finalBuckets.new.length > 0) {
       console.log(
-        `  nocciolo store --files ${finalBuckets.new.map((b) => b.relativePath).join(",")}`,
+        `  orto store --files ${finalBuckets.new.map((b) => b.relativePath).join(",")}`,
       );
     }
     if (finalBuckets.changed.length > 0) {
-      console.log("  nocciolo store --yes");
+      console.log("  orto store --yes");
     }
     return {
       projectRoot,
@@ -542,7 +542,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
 
   if (!apiKey) {
     console.log(
-      "Warning: no API key resolved (NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
+      "Warning: no API key resolved (ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
     );
   }
 
@@ -555,7 +555,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
     bankId: config.bankId,
     items: toRetainItems(prepared.factsToRetain),
     asyncRetain,
-    retryHint: "NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo store --yes",
+    retryHint: "ORTO_HINDSIGHT_API_KEY='your-key' pnpm orto store --yes",
   });
 
   manifest = nextManifest(manifest, config.bankId, prepared, retainedIds);
@@ -570,7 +570,7 @@ export async function runStore(options: StoreOptions = {}): Promise<StoreResult>
       `Stored ${retainedIds.size} item(s)${asyncRetain ? " (async)" : ""}${failed > 0 ? `, ${failed} failed` : ""}.`,
     );
     console.log(
-      "Incremental state saved under .nocciolo/local/seed-manifest.json",
+      "Incremental state saved under .orto/local/seed-manifest.json",
     );
   } else {
     console.log("Nothing was successfully stored.");

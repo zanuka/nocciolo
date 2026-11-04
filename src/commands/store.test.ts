@@ -39,7 +39,7 @@ describe("runStore", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-store-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-store-"));
     dirs.push(dir);
     return dir;
   }
@@ -48,9 +48,9 @@ describe("runStore", () => {
     root: string,
     overrides: Record<string, unknown> = {},
   ): Promise<void> {
-    await mkdir(join(root, ".nocciolo"), { recursive: true });
+    await mkdir(join(root, ".orto"), { recursive: true });
     await writeFile(
-      join(root, ".nocciolo", "config.json"),
+      join(root, ".orto", "config.json"),
       JSON.stringify({
         version: 1,
         name: "fixture",
@@ -115,7 +115,7 @@ describe("runStore", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
 
     const config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { store?: { allowlist: string[] } };
     expect(config.store?.allowlist).toEqual(["README.md"]);
   });
@@ -137,7 +137,7 @@ describe("runStore", () => {
 
     expect(stored.retained).toBeGreaterThan(0);
     const config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { store?: { allowlist: string[] } };
     expect(config.store?.allowlist).toEqual(["README.md"]);
 
@@ -171,7 +171,7 @@ describe("runStore", () => {
     expect(result.selected).toEqual(["README.md"]);
 
     const config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { store?: { allowlist: string[] } };
     expect(config.store?.allowlist).toEqual(["README.md"]);
   });
@@ -282,7 +282,7 @@ describe("runStore", () => {
     expect(result.addedToAllowlist).toEqual([]);
     expect(fetchImpl).not.toHaveBeenCalled();
     const config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { store?: { allowlist: string[] } };
     expect(config.store?.allowlist).toEqual([]);
   });
@@ -325,7 +325,7 @@ describe("runStore", () => {
     });
     expect(preview.addedToAllowlist).toEqual([]);
     let config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { store?: { allowlist: string[] } };
     expect(config.store?.allowlist).toEqual([]);
 
@@ -340,7 +340,7 @@ describe("runStore", () => {
     expect(result.retained).toBe(0);
     expect(fetchImpl).not.toHaveBeenCalled();
     config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { store?: { allowlist: string[] } };
     expect(config.store?.allowlist).toEqual(["docs/adr/0002-keep-local.md"]);
   });

@@ -82,12 +82,12 @@ describe("retain priority", () => {
       dryRun: true,
       ranked: [
         {
-          id: "nocciolo:docs/adr/0001.md#decision",
+          id: "orto:docs/adr/0001.md#decision",
           priority: 0.98,
           signals: { durability: 4, centrality: 4, supersedesExisting: 0.9, fanout: 4, containsSecret: 0.02, containsPii: 0.02 },
         },
         {
-          id: "nocciolo:docs/changelog.md#notes",
+          id: "orto:docs/changelog.md#notes",
           priority: 0.04,
           signals: { durability: 0, centrality: 0, supersedesExisting: 0.05, fanout: 1, containsSecret: 0.02, containsPii: 0.02 },
         },

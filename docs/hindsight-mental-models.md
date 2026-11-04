@@ -1,4 +1,4 @@
-# Hindsight mental models in Nocciolo
+# Hindsight mental models in Orto
 
 Design notes for Phase 6.
 User-facing workflow guide: [mental-models.md](./mental-models.md).
@@ -26,11 +26,11 @@ Same isolation rules as the rest of the bank, applied to synthesized knowledge: 
 - Multi-tag models whose memories are tagged narrowly (one topic each) often refresh **empty** unless you set `trigger.tags_match` to `any` (or use `tag_groups`).
 - `GET …/tags?source=mental_models` lists tags on models; `source=memories` (default) lists tags on memories: different tag spaces.
 
-Nocciolo must keep **seed retain tags** and **mental model tags** coherent, or first refresh will fail silently into empty content.
+Orto must keep **seed retain tags** and **mental model tags** coherent, or first refresh will fail silently into empty content.
 
 ---
 
-## Where this fits in the Nocciolo lifecycle
+## Where this fits in the Orto lifecycle
 
 Mental models are **not** an `init` concern. `init` names the bank and local Docker server. Models need a bank template, retained knowledge, and then create/refresh against a live bank.
 
@@ -61,8 +61,8 @@ Default generated templates use **topic-scoped tags that seed already emits**, p
 
 | Layer | Tags (example) |
 |-------|----------------|
-| Seed retain | `nocciolo`, `kind:adr`, `knowledge:decision`, … |
-| `project-context` | `knowledge:overview`, `knowledge:domain`, `knowledge:architecture` with `trigger.tags_match: "any"` (not the shared `nocciolo` tag: that scopes almost the whole bank) |
+| Seed retain | `orto`, `kind:adr`, `knowledge:decision`, … |
+| `project-context` | `knowledge:overview`, `knowledge:domain`, `knowledge:architecture` with `trigger.tags_match: "any"` (not the shared `orto` tag: that scopes almost the whole bank) |
 | `architecture-decisions` | `knowledge:architecture`, `knowledge:decision` with `trigger.tags_match: "any"` |
 | `coding-standards` | `knowledge:standard` |
 
@@ -70,7 +70,7 @@ Under Hindsight’s default `all_strict`, a multi-tag model only refreshes from 
 
 **Project-bank defaults:**
 
-1. Prefer **topic tags that seed already emits**, e.g. `knowledge:architecture`, `knowledge:standard`, `knowledge:decision`, plus the shared bank tag `nocciolo` for project-wide models.
+1. Prefer **topic tags that seed already emits**, e.g. `knowledge:architecture`, `knowledge:standard`, `knowledge:decision`, plus the shared bank tag `orto` for project-wide models.
 2. For multi-tag models, set `trigger.tags_match: "any"` unless every memory is expected to carry all tags.
 3. Reserve customer/team/user scopes (`team:platform`, `customer:acme`) for multi-tenant or multi-team banks: not the default single-repo project template.
 4. Changing model tags without retagging memories (or changing `tags_match`) is a breaking refresh change.
@@ -85,7 +85,7 @@ Starter models that list only `knowledge:decision` do not see a section tagged `
 
 `configure` runs an **optional interactive wizard** when stdin is a TTY (same pattern as `init`). Non-interactive paths stay first-class:
 
-- `nocciolo configure --yes`: accept starter defaults, no prompts
+- `orto configure --yes`: accept starter defaults, no prompts
 - Flags: `--models`, `--tagging-mode`, `--refresh-policy` for CI
 - `--dry-run`: print the resulting template
 
@@ -94,12 +94,12 @@ Starter models that list only `knowledge:decision` do not see a section tagged `
 1. **Starter mental models**: multi-select Project Context, Architecture Decisions, Coding Standards
 2. **Tagging mode**:
    - **Topic-scoped (default)**: seed-aligned tags; `tags_match: any` on multi-tag models
-   - **Project-wide**: shared `nocciolo` tag only
+   - **Project-wide**: shared `orto` tag only
    - **Custom**: comma-separated tags per model
 3. **Refresh policy**:
    - **Differentiated (default)**: auto after consolidation for evolving summaries; manual for `coding-standards`
    - **Auto** / **Manual** batch presets
-4. **Review**: confirm write to `.nocciolo/hindsight/bank-template.json`
+4. **Review**: confirm write to `.orto/hindsight/bank-template.json`
 
 Wizard output remains the template file. Applying to Hindsight stays `configure --apply` / `bank apply`. Models stay empty until seed + refresh.
 
@@ -118,13 +118,13 @@ A dedicated command after seed/sync is the right place for day-2 mental model wo
 ### Command surface
 
 ```text
-nocciolo mental-model list
-nocciolo mental-model get <id>
-nocciolo mental-model create --name … --source-query … [--id …]
-nocciolo mental-model update <id> …
-nocciolo mental-model refresh <id|--all>
-nocciolo mental-model clear <id>
-nocciolo mental-model tags [--source memories|mental_models]
+orto mental-model list
+orto mental-model get <id>
+orto mental-model create --name … --source-query … [--id …]
+orto mental-model update <id> …
+orto mental-model refresh <id|--all>
+orto mental-model clear <id>
+orto mental-model tags [--source memories|mental_models]
 ```
 
 Mutating subcommands support `--dry-run`. Refresh `--dry-run` uses Hindsight `dry-run-refresh` when available. Async create/refresh polls operations like `seed`. Template write-back is opt-in via `--save-template`.
@@ -133,7 +133,7 @@ Prefer edit template → apply → refresh for team-shared banks. Use `--save-te
 
 ### Optional seed hook
 
-`nocciolo seed --refresh-mental-models` (opt-in, not default): after retain, refresh declared models from the template. Models with `refresh_after_consolidation: true` may also queue after Hindsight consolidates; the flag is an explicit post-retain refresh. Default seed stays retain-only.
+`orto seed --refresh-mental-models` (opt-in, not default): after retain, refresh declared models from the template. Models with `refresh_after_consolidation: true` may also queue after Hindsight consolidates; the flag is an explicit post-retain refresh. Default seed stays retain-only.
 
 ---
 
@@ -164,7 +164,7 @@ Keep provider logic out of commands. Do not invent a Mem0 mental-model API; if a
 
 ## Decisions
 
-1. Default tagging mode: topic-scoped with seed-aligned tags + `tags_match: any` on multi-tag models (`project-context` uses overview/domain/architecture, not bank-wide `nocciolo`).
+1. Default tagging mode: topic-scoped with seed-aligned tags + `tags_match: any` on multi-tag models (`project-context` uses overview/domain/architecture, not bank-wide `orto`).
 2. Template write-back: **`--save-template` only** (not always).
 3. First content: explicit `mental-model refresh` and/or `seed --refresh-mental-models`; never auto-refresh on apply.
 4. Default refresh presets: auto for `project-context` / `architecture-decisions`; manual for `coding-standards`.
@@ -175,6 +175,6 @@ Keep provider logic out of commands. Do not invent a Mem0 mental-model API; if a
 
 - [ROADMAP.md](../ROADMAP.md): Phase 6 checklist
 - [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md): bank template apply
-- [nocciolo-configs.md](./nocciolo-configs.md): `.nocciolo/` layout
+- [orto-configs.md](./orto-configs.md): `.orto/` layout
 - [cli-architecture.md](./cli-architecture.md): module boundaries
 - [dev-workflow.md](./dev-workflow.md): happy path after seed

@@ -15,7 +15,7 @@ describe("prepareSeed tombstone skip", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-prepare-tomb-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-prepare-tomb-"));
     dirs.push(dir);
     await mkdir(join(dir, "docs"), { recursive: true });
     await writeFile(

@@ -114,6 +114,6 @@ export function printDocsListResult(result: DocsListResult): void {
   }
   console.log("");
   console.log(
-    "Delete with `nocciolo prune --document-id <id> --yes` (or --dry-run first).",
+    "Delete with `orto prune --document-id <id> --yes` (or --dry-run first).",
   );
 }

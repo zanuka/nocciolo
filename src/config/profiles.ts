@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export const DEPLOYMENT_PROFILES = [
   "local",
@@ -35,7 +35,7 @@ export function isDeploymentProfile(value: string): value is DeploymentProfile {
 export function parseDeploymentProfile(value: string): DeploymentProfile {
   const normalized = value.trim().toLowerCase();
   if (!isDeploymentProfile(normalized)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Unknown deployment profile "${value}"`,
       `Use one of: ${DEPLOYMENT_PROFILES.join(", ")}.`,
     );
@@ -78,9 +78,9 @@ export function createShareConfig(input: {
 export function validateShareConfig(share: ShareConfig): void {
   const parsed = ShareConfigSchema.safeParse(share);
   if (!parsed.success) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Invalid share config: ${parsed.error.issues.map((i) => i.message).join("; ")}`,
-      "Fix `.nocciolo/share.json` or re-run `nocciolo share --profile <profile>`.",
+      "Fix `.orto/share.json` or re-run `orto share --profile <profile>`.",
     );
   }
 
@@ -90,16 +90,16 @@ export function validateShareConfig(share: ShareConfig): void {
       share.profile === "public") &&
     !share.baseUrl
   ) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Profile "${share.profile}" requires a non-secret base URL`,
-      "Pass --base-url (e.g. http://192.168.1.10:8888) or set baseUrl in `.nocciolo/share.json`.",
+      "Pass --base-url (e.g. http://192.168.1.10:8888) or set baseUrl in `.orto/share.json`.",
     );
   }
 
   if (share.profile === "local" && share.baseUrl) {
     const host = new URL(share.baseUrl).hostname;
     if (host !== "localhost" && host !== "127.0.0.1") {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Profile "local" should use localhost, got ${share.baseUrl}`,
         "Use --profile lan (or vpn/public) for a shared host, or omit --base-url for local.",
       );
@@ -108,7 +108,7 @@ export function validateShareConfig(share: ShareConfig): void {
 
   if (share.profile === "hindsight-cloud") {
     if (share.baseUrl && share.baseUrl !== HINDSIGHT_CLOUD_API_URL) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Profile "hindsight-cloud" expects ${HINDSIGHT_CLOUD_API_URL}`,
         "Omit --base-url for Cloud, or set profile to lan/vpn/public for a custom host.",
       );
@@ -117,7 +117,7 @@ export function validateShareConfig(share: ShareConfig): void {
       return;
     }
   } else if (share.mcpAuth === "oauth") {
-    throw new NoccioloError(
+    throw new OrtoError(
       `mcpAuth "oauth" is only valid for hindsight-cloud`,
       "Use --mcp-auth api-key, or switch --profile hindsight-cloud.",
     );
@@ -130,7 +130,7 @@ export function profileSecurityNotes(profile: DeploymentProfile): string[] {
       return [
         "Bind Hindsight to localhost only; do not publish API/UI ports to untrusted networks.",
         "Tenant API keys are optional locally but recommended once more than one user shares the machine.",
-        "Never commit API keys; use NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY in the process env (Cursor inherits login-shell env).",
+        "Never commit API keys; use ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY in the process env (Cursor inherits login-shell env).",
       ];
     case "lan":
       return [

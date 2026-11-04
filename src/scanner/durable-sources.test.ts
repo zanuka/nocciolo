@@ -6,7 +6,7 @@ import { findDurableSources } from "./durable-sources.js";
 
 describe("findDurableSources", () => {
   it("finds README, docs, and ADRs; skips AGENTS.md", async () => {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-scan-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-scan-"));
     await writeFile(join(root, "README.md"), "# Hello\n");
     await writeFile(join(root, "AGENTS.md"), "# Agents\n");
     await mkdir(join(root, "docs", "adr"), { recursive: true });
@@ -24,7 +24,7 @@ describe("findDurableSources", () => {
   });
 
   it("excludes sensitive paths even under docs/", async () => {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-scan-sens-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-scan-sens-"));
     await writeFile(join(root, "README.md"), "# Hello\n");
     await mkdir(join(root, "docs", "secrets"), { recursive: true });
     await writeFile(join(root, "docs", "guide.md"), "# Guide\n");
@@ -41,7 +41,7 @@ describe("findDurableSources", () => {
   });
 
   it("uses include and exclude globs, including mdx, and still denies secrets", async () => {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-scan-policy-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-scan-policy-"));
     await writeFile(join(root, "README.md"), "# Hello\n");
     await mkdir(join(root, "docs", "interviews", "panel-2", "slides"), { recursive: true });
     await mkdir(join(root, "docs", "secrets"), { recursive: true });
@@ -72,7 +72,7 @@ describe("findDurableSources", () => {
   });
 
   it("keeps the default scan when include is omitted, and applies exclude", async () => {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-scan-exclude-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-scan-exclude-"));
     await writeFile(join(root, "README.md"), "# Hello\n");
     await mkdir(join(root, "docs", "interviews", "panel-2"), { recursive: true });
     await writeFile(join(root, "docs", "guide.md"), "# Guide\n");

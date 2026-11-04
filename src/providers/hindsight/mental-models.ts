@@ -5,7 +5,7 @@ import type {
   MentalModelTaggingMode,
 } from "./types.js";
 
-export const SEED_SHARED_TAG = "nocciolo";
+export const SEED_SHARED_TAG = "orto";
 
 export interface StarterMentalModelSpec {
   id: string;

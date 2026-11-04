@@ -1,5 +1,5 @@
 import rawCatalog from "./knowledge-kinds.json";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import type { ChoiceQuestion } from "./types.js";
 
 export const KNOWLEDGE_KIND_IDS = [
@@ -39,7 +39,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function fail(detail: string): never {
-  throw new NoccioloError(
+  throw new OrtoError(
     `Knowledge-kind catalog is invalid: ${detail}`,
     "Fix src/judge/knowledge-kinds.json. Each kind needs what, not_for, and examples.",
   );

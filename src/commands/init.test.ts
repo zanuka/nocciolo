@@ -14,7 +14,7 @@ describe("runInit", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-init-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-init-"));
     dirs.push(dir);
     return dir;
   }
@@ -33,7 +33,7 @@ describe("runInit", () => {
     expect(result.containerName).toBe("hindsight");
     expect(result.volumeName).toBe("hindsight-data");
 
-    const raw = await readFile(join(root, ".nocciolo", "config.json"), "utf8");
+    const raw = await readFile(join(root, ".orto", "config.json"), "utf8");
     const config = JSON.parse(raw) as {
       bankId: string;
       docker: { containerName: string; volumeName: string };
@@ -70,7 +70,7 @@ describe("runInit", () => {
     expect(result.dryRun).toBe(true);
     expect(result.bankId).toBe("preview-bank");
     await expect(
-      readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      readFile(join(root, ".orto", "config.json"), "utf8"),
     ).rejects.toThrow();
   });
 

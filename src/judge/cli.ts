@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { DEFAULT_JUDGE_CONFIDENCE } from "./resolve.js";
 
 export const JUDGE_OPTION_HELP =
-  "Decision judge: off, heuristic (default), or jev (hosted TypeSafe, optional; requires NOCCIOLO_TYPESAFE_API_KEY)";
+  "Decision judge: off, heuristic (default), or jev (hosted TypeSafe, optional; requires ORTO_TYPESAFE_API_KEY)";
 
 export const CONFIDENCE_OPTION_HELP = `Minimum confidence to apply a Jev decision (0-1, default ${DEFAULT_JUDGE_CONFIDENCE}; see docs/jev.md)`;
 

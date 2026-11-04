@@ -10,7 +10,7 @@ describe("resolveHindsightBaseUrl", () => {
         cliUrl: "http://cli:1",
         configUrl: "http://config:1",
         env: {
-          NOCCIOLO_HINDSIGHT_URL: "http://env:1",
+          ORTO_HINDSIGHT_URL: "http://env:1",
         },
       }),
     ).toBe("http://cli:1");
@@ -50,7 +50,7 @@ describe("HindsightClient.retain", () => {
         body: JSON.parse(String(init?.body)),
       });
       return new Response(
-        JSON.stringify({ success: true, bank_id: "nocciolo", items_count: 1 }),
+        JSON.stringify({ success: true, bank_id: "orto", items_count: 1 }),
         { status: 200, headers: { "Content-Type": "application/json" } },
       );
     };
@@ -61,15 +61,15 @@ describe("HindsightClient.retain", () => {
       fetchImpl,
     });
 
-    const result = await client.retain("nocciolo", {
+    const result = await client.retain("orto", {
       items: [
         {
           content: "Use TypeScript",
           context: "docs",
-          document_id: "nocciolo:README.md#goal",
+          document_id: "orto:README.md#goal",
           timestamp: "unset",
           metadata: { source: "README.md" },
-          tags: ["nocciolo"],
+          tags: ["orto"],
         },
       ],
     });
@@ -77,14 +77,14 @@ describe("HindsightClient.retain", () => {
     expect(result.success).toBe(true);
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe(
-      "http://localhost:8888/v1/default/banks/nocciolo/memories",
+      "http://localhost:8888/v1/default/banks/orto/memories",
     );
     expect(calls[0]?.headers).toMatchObject({
       Authorization: "Bearer test-key",
     });
     expect(calls[0]?.body).toMatchObject({
       async: false,
-      items: [{ document_id: "nocciolo:README.md#goal" }],
+      items: [{ document_id: "orto:README.md#goal" }],
     });
   });
 
@@ -98,7 +98,7 @@ describe("HindsightClient.retain", () => {
     });
 
     await expect(
-      client.retain("nocciolo", {
+      client.retain("orto", {
         items: [
           {
             content: "x",
@@ -121,7 +121,7 @@ describe("HindsightClient.listDocuments", () => {
       calls.push(String(input));
       return new Response(
         JSON.stringify({
-          items: [{ id: "nocciolo:README.md#goal" }],
+          items: [{ id: "orto:README.md#goal" }],
           total: 1,
           limit: 50,
           offset: 0,
@@ -136,7 +136,7 @@ describe("HindsightClient.listDocuments", () => {
       fetchImpl,
     });
 
-    const result = await client.listDocuments("nocciolo", {
+    const result = await client.listDocuments("orto", {
       q: "README",
       limit: 50,
       offset: 0,
@@ -144,7 +144,7 @@ describe("HindsightClient.listDocuments", () => {
 
     expect(result.items).toHaveLength(1);
     expect(calls[0]).toBe(
-      "http://localhost:8888/v1/default/banks/nocciolo/documents?q=README&limit=50&offset=0",
+      "http://localhost:8888/v1/default/banks/orto/documents?q=README&limit=50&offset=0",
     );
   });
 
@@ -175,14 +175,14 @@ describe("HindsightClient.listDocuments", () => {
       baseUrl: "http://localhost:8888",
       fetchImpl,
     });
-    const all = await client.listAllDocuments("nocciolo", { limit: 2 });
+    const all = await client.listAllDocuments("orto", { limit: 2 });
     expect(all.map((d) => d.id)).toEqual(["a", "b", "c"]);
     expect(offsets).toEqual([0, 2]);
   });
 });
 
 describe("HindsightClient.deleteDocument", () => {
-  it("encodes nocciolo document ids in the path", async () => {
+  it("encodes orto document ids in the path", async () => {
     const calls: Array<{ url: string; method: string | undefined }> = [];
     const fetchImpl: typeof fetch = async (input, init) => {
       calls.push({ url: String(input), method: init?.method });
@@ -190,7 +190,7 @@ describe("HindsightClient.deleteDocument", () => {
         JSON.stringify({
           success: true,
           message: "deleted",
-          document_id: "nocciolo:docs/dev/foo.md#some-section",
+          document_id: "orto:docs/dev/foo.md#some-section",
           memory_units_deleted: 2,
         }),
         { status: 200, headers: { "Content-Type": "application/json" } },
@@ -202,14 +202,14 @@ describe("HindsightClient.deleteDocument", () => {
       fetchImpl,
     });
     const result = await client.deleteDocument(
-      "nocciolo",
-      "nocciolo:docs/dev/foo.md#some-section",
+      "orto",
+      "orto:docs/dev/foo.md#some-section",
     );
 
     expect(result.success).toBe(true);
     expect(calls[0]?.method).toBe("DELETE");
     expect(calls[0]?.url).toBe(
-      "http://localhost:8888/v1/default/banks/nocciolo/documents/nocciolo%3Adocs%2Fdev%2Ffoo.md%23some-section",
+      "http://localhost:8888/v1/default/banks/orto/documents/orto%3Adocs%2Fdev%2Ffoo.md%23some-section",
     );
   });
 
@@ -220,7 +220,7 @@ describe("HindsightClient.deleteDocument", () => {
       baseUrl: "http://localhost:8888",
       fetchImpl,
     });
-    await expect(client.deleteDocument("nocciolo", "missing")).rejects.toThrow(
+    await expect(client.deleteDocument("orto", "missing")).rejects.toThrow(
       /Hindsight delete document failed/,
     );
   });
@@ -259,9 +259,9 @@ describe("HindsightClient.recallObservations", () => {
       apiKey: "test-key",
       fetchImpl,
     });
-    const results = await client.recallObservations("nocciolo", "We use Postgres.");
+    const results = await client.recallObservations("orto", "We use Postgres.");
     expect(calls[0]?.url).toBe(
-      "http://localhost:8888/v1/default/banks/nocciolo/memories/recall",
+      "http://localhost:8888/v1/default/banks/orto/memories/recall",
     );
     expect(calls[0]?.body).toMatchObject({
       query: "We use Postgres.",
@@ -304,12 +304,12 @@ describe("HindsightClient.dryRunExtract", () => {
       apiKey: "test-key",
       fetchImpl,
     });
-    const facts = await client.dryRunExtract("nocciolo", {
+    const facts = await client.dryRunExtract("orto", {
       content: "We use Postgres.",
       context: "durable project docs (adr): docs/adr/0001.md",
     });
     expect(calls[0]?.url).toBe(
-      "http://localhost:8888/v1/default/banks/nocciolo/memories/dry-run-extract",
+      "http://localhost:8888/v1/default/banks/orto/memories/dry-run-extract",
     );
     expect(calls[0]?.body).toEqual({
       content: "We use Postgres.",

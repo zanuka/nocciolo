@@ -19,7 +19,7 @@ import {
   preserveContainerEnv,
   versionsEqual,
 } from "./upgrade.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 describe("normalizeVersionTag / pinnedHindsightImage", () => {
   it("pins ghcr.io tags from short versions", () => {
@@ -31,7 +31,7 @@ describe("normalizeVersionTag / pinnedHindsightImage", () => {
   });
 
   it("refuses latest", () => {
-    expect(() => normalizeVersionTag("latest")).toThrow(NoccioloError);
+    expect(() => normalizeVersionTag("latest")).toThrow(OrtoError);
     expect(() => pinnedHindsightImage("latest")).toThrow(/latest/i);
   });
 
@@ -181,12 +181,12 @@ describe("backup plan", () => {
       toVersion: "0.9.2",
       containerName: "hindsight",
       volumeName: "hindsight-data",
-      banks: [{ bank_id: "nocciolo", fact_count: 42, name: "Nocciolo" }],
-      projectBankId: "nocciolo",
+      banks: [{ bank_id: "orto", fact_count: 42, name: "Orto" }],
+      projectBankId: "orto",
     });
     expect(readme).toContain("0.8.4");
     expect(readme).toContain("0.9.2");
-    expect(readme).toContain("nocciolo");
+    expect(readme).toContain("orto");
     expect(readme).toContain("project bank");
     expect(readme).not.toMatch(/Bearer |sk-|hsk_/);
   });

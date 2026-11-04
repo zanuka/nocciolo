@@ -1,13 +1,13 @@
 ---
-description: Prefer the project Hindsight bank (nocciolo) for durable context
+description: Prefer the project Hindsight bank (orto) for durable context
 alwaysApply: true
 ---
 
-# Hindsight bank: nocciolo
+# Hindsight bank: orto
 
-Use the project memory bank `nocciolo` via Hindsight MCP when answering questions about architecture, decisions, coding standards, or domain rules.
+Use the project memory bank `orto` via Hindsight MCP when answering questions about architecture, decisions, coding standards, or domain rules.
 
 - Prefer `reflect` (or mental models) for architecture, standards, and how-we-work questions; prefer `recall` for narrow facts and provenance.
-- MCP URL: `http://localhost:8888/mcp/nocciolo/`
+- MCP URL: `http://localhost:8888/mcp/orto/`
 - Docs and ADRs remain authoritative; the bank is how agents inherit them across sessions.
 - Never retain secrets or credentials into the bank.

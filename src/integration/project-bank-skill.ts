@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { ensureDir, pathExists, writeTextFile } from "../utils/fs.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { captainHomeDir, saveCaptainRegistryEntry } from "../project/registry.js";
 
 export const PROJECT_BANK_SKILL_NAME = "project-bank";
@@ -19,7 +19,7 @@ On-demand Firstmate skill, not an always-on persona. First mate does not write p
 ## When to use
 
 Before spawning a crewmate on a project that has a Hindsight bank registered
-in \`$FM_HOME/.nocciolo/projects.json\` (or \`~/.nocciolo/projects.json\`).
+in \`$FM_HOME/.orto/projects.json\` (or \`~/.orto/projects.json\`).
 
 ## What it does
 
@@ -42,7 +42,7 @@ in \`$FM_HOME/.nocciolo/projects.json\` (or \`~/.nocciolo/projects.json\`).
 
 ## When durable project markdown changes
 
-The captain runs \`nocciolo store --dry-run\` in the durable clone (never in a
+The captain runs \`orto store --dry-run\` in the durable clone (never in a
 worktree), reviews the known/new/changed/unchanged buckets, then retains only
 after picking files. This skill does not do that step; it only reads the
 registry to build the bank card.
@@ -80,9 +80,9 @@ export async function installFirstmateProjectBank(input: {
   const skillPath = projectBankSkillPath(fmHome);
   const exists = await pathExists(skillPath);
   if (exists && !input.force && !input.dryRun) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `project-bank skill already exists at ${skillPath}`,
-      "Use --force to overwrite, or `nocciolo mcp --harness firstmate --write-firstmate --dry-run` to preview.",
+      "Use --force to overwrite, or `orto mcp --harness firstmate --write-firstmate --dry-run` to preview.",
     );
   }
 

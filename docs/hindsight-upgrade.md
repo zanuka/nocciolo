@@ -3,17 +3,17 @@
 How to upgrade a **local / self-hosted** Hindsight Docker server while keeping banks on the named data volume. Upstream: [Installation](https://hindsight.vectorize.io/developer/installation), [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli).
 
 Prefer a **pinned tag** (e.g. `0.9.2`) over `latest` so upgrades are intentional.
-Nocciolo’s primary path is `nocciolo docker upgrade`.
+Orto’s primary path is `orto docker upgrade`.
 Manual Docker steps remain as a fallback.
 
 ## CLI (recommended)
 
-From a Nocciolo project (uses `.nocciolo/config.json` for container name; volume is taken from live `docker inspect`):
+From a Orto project (uses `.orto/config.json` for container name; volume is taken from live `docker inspect`):
 
 ```bash
-nocciolo docker upgrade --to 0.9.2 --dry-run
-nocciolo docker upgrade --to 0.9.2 -y
-nocciolo docker upgrade --to 0.9.2 --backup-dir ~/hindsight-bank-backups/manual-pre-0.9.2 -y
+orto docker upgrade --to 0.9.2 --dry-run
+orto docker upgrade --to 0.9.2 -y
+orto docker upgrade --to 0.9.2 --backup-dir ~/hindsight-bank-backups/manual-pre-0.9.2 -y
 ```
 
 What the command does:
@@ -56,7 +56,7 @@ Consumer MCP URLs (e.g. `http://localhost:8888/mcp/<bankId>/`) stay valid; do no
 | Portable ZIP backups | N/A | Separate copies on the host: see [hindsight-bank-backup.md](./hindsight-bank-backup.md) |
 
 `docker rm -f <container>` does **not** delete the volume. `docker volume rm hindsight-data` does: never run that unless you intend to wipe all banks.
-`nocciolo docker upgrade` never runs volume delete.
+`orto docker upgrade` never runs volume delete.
 
 Hindsight runs database migrations on API startup by default (`HINDSIGHT_API_RUN_MIGRATIONS_ON_STARTUP`).
 Recreating the container on the same volume is the supported upgrade path for Docker + pg0.
@@ -68,7 +68,7 @@ Use these steps only if you cannot run the CLI helper.
 ### Prerequisites
 
 ```bash
-export HINDSIGHT_CONTAINER=hindsight          # from init / .nocciolo/config.json
+export HINDSIGHT_CONTAINER=hindsight          # from init / .orto/config.json
 export HINDSIGHT_VOLUME=hindsight-data        # usual default; confirm with inspect
 export HINDSIGHT_IMAGE=ghcr.io/vectorize-io/hindsight:0.9.2   # target version
 ```
@@ -129,14 +129,14 @@ Mounts:
 Save the tenant / LLM keys you need (do not commit them). Example:
 
 ```bash
-export NOCCIOLO_HINDSIGHT_API_KEY="$(
+export ORTO_HINDSIGHT_API_KEY="$(
   docker exec "$HINDSIGHT_CONTAINER" printenv HINDSIGHT_API_TENANT_API_KEY
 )"
 ```
 
 If you use Ollama or other custom env (`HINDSIGHT_API_LLM_BASE_URL`, `HINDSIGHT_API_LLM_MODEL`, worker slots, etc.), copy those values into the new `docker run`.
-`nocciolo docker up` only covers a subset of flags and may not reproduce a hand-tuned container.
-`nocciolo docker upgrade` preserves full env from inspect.
+`orto docker up` only covers a subset of flags and may not reproduce a hand-tuned container.
+`orto docker upgrade` preserves full env from inspect.
 
 Set a **stable** worker id across restarts (recommended by upstream):
 
@@ -194,9 +194,9 @@ docker run -d \
   -e HINDSIGHT_API_LLM_BASE_URL=http://host.docker.internal:11434/v1 \
   -e HINDSIGHT_API_LLM_MODEL=qwen2.5:7b \
   -e HINDSIGHT_API_TENANT_EXTENSION=hindsight_api.extensions.builtin.tenant:ApiKeyTenantExtension \
-  -e HINDSIGHT_API_TENANT_API_KEY="$NOCCIOLO_HINDSIGHT_API_KEY" \
-  -e HINDSIGHT_CP_DATAPLANE_API_KEY="$NOCCIOLO_HINDSIGHT_API_KEY" \
-  -e HINDSIGHT_CP_ACCESS_KEY="$NOCCIOLO_HINDSIGHT_API_KEY" \
+  -e HINDSIGHT_API_TENANT_API_KEY="$ORTO_HINDSIGHT_API_KEY" \
+  -e HINDSIGHT_CP_DATAPLANE_API_KEY="$ORTO_HINDSIGHT_API_KEY" \
+  -e HINDSIGHT_CP_ACCESS_KEY="$ORTO_HINDSIGHT_API_KEY" \
   "$HINDSIGHT_IMAGE"
 ```
 
@@ -208,13 +208,13 @@ Wait ~30-60s for startup and migrations, then:
 curl -sS http://localhost:8888/version
 # expect your target api_version
 
-curl -sS -H "Authorization: Bearer $NOCCIOLO_HINDSIGHT_API_KEY" \
+curl -sS -H "Authorization: Bearer $ORTO_HINDSIGHT_API_KEY" \
   http://localhost:8888/v1/default/banks
 
 docker logs --tail 80 "$HINDSIGHT_CONTAINER"
 ```
 
-Spot-check recall/reflect on a known bank (Control Plane at `http://localhost:9999`, MCP, or `nocciolo seed --dry-run` against a project that uses that bank).
+Spot-check recall/reflect on a known bank (Control Plane at `http://localhost:9999`, MCP, or `orto seed --dry-run` against a project that uses that bank).
 
 ### After restore or cross-version upgrade
 
@@ -246,6 +246,6 @@ docker exec "$HINDSIGHT_CONTAINER" hindsight-admin repair-bank --all
 ## See also
 
 - [hindsight-bank-backup.md](./hindsight-bank-backup.md): full `backup` and per-bank `export-bank`
-- [dev-workflow.md](./dev-workflow.md): `nocciolo docker` helper
+- [dev-workflow.md](./dev-workflow.md): `orto docker` helper
 - [cli-architecture.md](./cli-architecture.md): Docker defaults (`hindsight` / `hindsight-data`)
 - [Hindsight Cloud](./hindsight-cloud.md): managed hosting (no local image upgrade)

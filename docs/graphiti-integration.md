@@ -1,20 +1,20 @@
 # Graphiti / Zep provider
 
-How to implement Graphiti (and optional Zep Cloud) as a **CLI option** in Nocciolo — not as a second default, and not as a Graphiti installer.
+How to implement Graphiti (and optional Zep Cloud) as a **CLI option** in Orto — not as a second default, and not as a Graphiti installer.
 
 **Status:** Ready to implement after the provider interface lands (`MULTI_PROVIDER_PLAN.md` Phase A).  
 **Depends on:** `HindsightProvider` extracted behind `MemoryProvider`.  
 **Related:** `GRAPHITI_ZEP_PLAN.md` (strategy + go/no-go), `MULTI_PROVIDER_PLAN.md`, `ROADMAP.md` Phase 6.
 
-Drop this file into the Nocciolo repo as `docs/graphiti.md`. Paste the [roadmap snippet](#roadmap-snippet) into `ROADMAP.md`.
+Drop this file into the Orto repo as `docs/graphiti.md`. Paste the [roadmap snippet](#roadmap-snippet) into `ROADMAP.md`.
 
 ---
 
 ## 1. Product rule
 
-Nocciolo’s job does not change: scan the repo, curate durable knowledge, seed a memory backend, emit enough harness config that agents use it.
+Orto’s job does not change: scan the repo, curate durable knowledge, seed a memory backend, emit enough harness config that agents use it.
 
-Graphiti already has a simple path to **stand up a graph and wire Cursor** (`docker compose` in `graphiti/mcp_server` + `http://localhost:8000/mcp/`). Nocciolo must not wrap that.
+Graphiti already has a simple path to **stand up a graph and wire Cursor** (`docker compose` in `graphiti/mcp_server` + `http://localhost:8000/mcp/`). Orto must not wrap that.
 
 What Graphiti does not have — and why this provider exists — is a **project-native seeder**:
 
@@ -22,7 +22,7 @@ What Graphiti does not have — and why this provider exists — is a **project-
 - skip secrets and low-signal noise
 - install a software ontology instead of Preference / Person / Object
 - incremental re-seed when those files change
-- keep that config in `.nocciolo/` next to the repo
+- keep that config in `.orto/` next to the repo
 
 | Build | Do not build |
 |-------|----------------|
@@ -39,23 +39,23 @@ Hindsight stays the default. `--provider graphiti` is opt-in. `--provider zep` i
 
 ## 2. User-visible CLI
 
-Same verbs as Hindsight. Provider is selected by flag or by `.nocciolo/config.json`.
+Same verbs as Hindsight. Provider is selected by flag or by `.orto/config.json`.
 
 ```bash
 # Choose Graphiti at init (prompts runtime: oss | cloud)
-pnpm nocciolo init --provider graphiti
-pnpm nocciolo init --provider zep          # alias → graphiti + runtime cloud
+pnpm orto init --provider graphiti
+pnpm orto init --provider zep          # alias → graphiti + runtime cloud
 
 # Or switch later
-pnpm nocciolo configure --provider graphiti
+pnpm orto configure --provider graphiti
 
-pnpm nocciolo seed --provider graphiti --dry-run
-pnpm nocciolo seed --provider graphiti
-pnpm nocciolo seed --provider graphiti --force          # re-emit all current candidates as new episodes
-pnpm nocciolo seed --provider graphiti --reset-graph    # explicit wipe; confirm required
+pnpm orto seed --provider graphiti --dry-run
+pnpm orto seed --provider graphiti
+pnpm orto seed --provider graphiti --force          # re-emit all current candidates as new episodes
+pnpm orto seed --provider graphiti --reset-graph    # explicit wipe; confirm required
 
-pnpm nocciolo mcp --provider graphiti                   # print official MCP URL + group_id notes
-pnpm nocciolo docker print --provider graphiti          # print official compose commands; do not execute
+pnpm orto mcp --provider graphiti                   # print official MCP URL + group_id notes
+pnpm orto docker print --provider graphiti          # print official compose commands; do not execute
 ```
 
 If `config.provider` is already `graphiti`, the flag is optional.
@@ -63,7 +63,7 @@ If `config.provider` is already `graphiti`, the flag is optional.
 `init` prompts (non-interactive flags in parentheses):
 
 1. Runtime — `oss` (default) or `cloud` (`--runtime`)
-2. Bank / group / graph id — default `nocciolo-{slug}` (`--bank-id`)
+2. Bank / group / graph id — default `orto-{slug}` (`--bank-id`)
 3. OSS only — Graphiti base URL default `http://localhost:8000` (`--graphiti-url`)
 4. Cloud only — confirm env name `ZEP_API_KEY` (never store the key)
 
@@ -73,18 +73,18 @@ Do not prompt for Neo4j vs FalkorDB in v1. OSS docs assume the official FalkorDB
 
 | Variable | Used by | Purpose |
 |----------|---------|---------|
-| `OPENAI_API_KEY` | Graphiti OSS server (their process) | LLM extraction inside Graphiti. Nocciolo does not send this to Graphiti unless we later call a self-hosted API that requires it. |
-| `NOCCIOLO_GRAPHITI_URL` | Nocciolo CLI | OSS HTTP base (`http://localhost:8000`) |
-| `ZEP_API_KEY` | Nocciolo CLI | Zep Cloud SDK |
-| `NOCCIOLO_GRAPHITI_GROUP_ID` | optional override | `group_id` / `graph_id` if not using `bankId` |
+| `OPENAI_API_KEY` | Graphiti OSS server (their process) | LLM extraction inside Graphiti. Orto does not send this to Graphiti unless we later call a self-hosted API that requires it. |
+| `ORTO_GRAPHITI_URL` | Orto CLI | OSS HTTP base (`http://localhost:8000`) |
+| `ZEP_API_KEY` | Orto CLI | Zep Cloud SDK |
+| `ORTO_GRAPHITI_GROUP_ID` | optional override | `group_id` / `graph_id` if not using `bankId` |
 
-Secrets stay in the environment. `.nocciolo/config.json` stores env *names*, not values.
+Secrets stay in the environment. `.orto/config.json` stores env *names*, not values.
 
 ---
 
 ## 3. Config shape
 
-Extend `.nocciolo/config.json`. Keep provider-specific blocks side by side so a repo can switch later without rewriting bank id.
+Extend `.orto/config.json`. Keep provider-specific blocks side by side so a repo can switch later without rewriting bank id.
 
 ```json
 {
@@ -93,7 +93,7 @@ Extend `.nocciolo/config.json`. Keep provider-specific blocks side by side so a 
   "graphiti": {
     "runtime": "oss",
     "baseUrl": "http://localhost:8000",
-    "groupId": "nocciolo-my-project",
+    "groupId": "orto-my-project",
     "apiKeyEnv": "ZEP_API_KEY",
     "ontology": "software-v1"
   }
@@ -108,19 +108,19 @@ Cloud:
   "bankId": "my-project",
   "graphiti": {
     "runtime": "cloud",
-    "graphId": "nocciolo-my-project",
+    "graphId": "orto-my-project",
     "apiKeyEnv": "ZEP_API_KEY",
     "ontology": "software-v1"
   }
 }
 ```
 
-`groupId` (OSS) and `graphId` (Cloud) should default to `nocciolo-{bankId}`. Do not use Zep `user_id`. Nocciolo seeds a **shared project graph**, not a per-developer memory.
+`groupId` (OSS) and `graphId` (Cloud) should default to `orto-{bankId}`. Do not use Zep `user_id`. Orto seeds a **shared project graph**, not a per-developer memory.
 
-Write generated artifacts under `.nocciolo/` so they travel with the repo:
+Write generated artifacts under `.orto/` so they travel with the repo:
 
 ```
-.nocciolo/
+.orto/
   config.json
   graphiti/
     ontology.json              # entity / edge types shipped with configure
@@ -180,7 +180,7 @@ Freeze the transport in a short comment at the top of `oss-transport.ts`. Do not
 
 ## 5. Concept mapping
 
-| Nocciolo | Graphiti OSS | Zep Cloud |
+| Orto | Graphiti OSS | Zep Cloud |
 |----------|--------------|-----------|
 | `bankId` | `group_id` | `graph_id` |
 | Mission / directives | `custom_extraction_instructions` + ontology | `graph.set_ontology` + same instructions where the API allows |
@@ -224,13 +224,13 @@ JSON ADRs can wait until the text path works. Ship text-only in the first vertic
 `source_description` format:
 
 ```
-nocciolo:{relative/path}#{section} commit={sha}
+orto:{relative/path}#{section} commit={sha}
 ```
 
 Keep dry-run output in the same shape as Hindsight:
 
 ```
-[12/28] nocciolo:docs/adr/0003-auth.md#decision  text  2025-11-02  score=0.91
+[12/28] orto:docs/adr/0003-auth.md#decision  text  2025-11-02  score=0.91
 ```
 
 Print a do-not-interrupt banner. Each episode is an LLM extraction inside Graphiti; first seed takes minutes. Auth / connectivity failures abort before the loop.
@@ -239,7 +239,7 @@ Print a do-not-interrupt banner. Each episode is an LLM extraction inside Graphi
 
 ## 7. Software ontology (`software-v1`)
 
-Default Graphiti MCP types are assistant-oriented. `configure` must install Nocciolo types or extraction will produce Person / Preference noise.
+Default Graphiti MCP types are assistant-oriented. `configure` must install Orto types or extraction will produce Person / Preference noise.
 
 ### Entities
 
@@ -266,7 +266,7 @@ Default Graphiti MCP types are assistant-oriented. `configure` must install Nocc
 | `OWNED_BY` | Service/Module → Team |
 | `IMPLEMENTS` | Service/Module → Interface |
 
-Encode these as JSON in `.nocciolo/graphiti/ontology.json`. OSS: pass into `add_episode` (`entity_types`, `edge_types`, `edge_type_map`) when the transport supports it. Cloud: `graph.set_ontology` during `configure`.
+Encode these as JSON in `.orto/graphiti/ontology.json`. OSS: pass into `add_episode` (`entity_types`, `edge_types`, `edge_type_map`) when the transport supports it. Cloud: `graph.set_ontology` during `configure`.
 
 Extraction instructions (from mission / directives, rewritten):
 
@@ -288,7 +288,7 @@ If the OSS HTTP API ignores custom types in v1, still write the files and send `
 
 ### `mcp`
 
-Print (and optionally `--write`) snippets that use the **official** endpoint. Nocciolo only fills `group_id` / URL.
+Print (and optionally `--write`) snippets that use the **official** endpoint. Orto only fills `group_id` / URL.
 
 Cursor example to emit:
 
@@ -304,7 +304,7 @@ Cursor example to emit:
 
 Add a short AGENTS.md / Cursor rule only if `--write-agents` / `--write-cursor-rules` is passed:
 
-> Prefer the project Graphiti graph (`group_id` = `nocciolo-{bankId}`). Search facts before answering architecture or “why” questions. Do not call `clear_graph`.
+> Prefer the project Graphiti graph (`group_id` = `orto-{bankId}`). Search facts before answering architecture or “why” questions. Do not call `clear_graph`.
 
 Cloud snippets use Zep’s current MCP docs and `ZEP_API_KEY` via env placeholder. If Cloud MCP tool names change, update templates only — keep them out of seed code.
 
@@ -361,7 +361,7 @@ Build in this order. Stop after slice 2 if the transport spike fails.
 - [ ] `--provider zep` alias
 - [ ] `mcp` print/write
 - [ ] `docker print`
-- [ ] User doc section in README (“Using Nocciolo with Graphiti”)
+- [ ] User doc section in README (“Using Orto with Graphiti”)
 
 ### Slice 5 — Harden (only after a real repo seed)
 
@@ -382,7 +382,7 @@ Mem0 may still ship before Graphiti. That is fine. This provider is not blocked 
 | Manifest unit | skip unchanged, append on hash change, `--force` emits all, never calls reset |
 | Config validation | `zep` alias, default `groupId`, reject stored API keys |
 | Dry-run integration | scanner fixtures → printed episode list, zero HTTP |
-| Live OSS smoke (optional CI) | gated on `NOCCIOLO_GRAPHITI_SMOKE=1`; one episode + search |
+| Live OSS smoke (optional CI) | gated on `ORTO_GRAPHITI_SMOKE=1`; one episode + search |
 
 Do not require Neo4j or Zep Cloud in default CI.
 
@@ -394,7 +394,7 @@ Do not require Neo4j or Zep Cloud in default CI.
 |------|--------|
 | FastAPI thinner than `graphiti_core.add_episode` | Slice 1 decides; do not guess |
 | Official MCP still “experimental” | Seed via REST/SDK; MCP is emit-only templates |
-| Users expect Nocciolo to start Graphiti | README + `docker print` point at official compose |
+| Users expect Orto to start Graphiti | README + `docker print` point at official compose |
 | Sloppy re-seeds duplicate current facts | Manifest + temporal-append copy in the CLI warning |
 | Default Graphiti types pollute the graph | `configure` writes `software-v1` before first seed |
 | LLM cost on first seed | Same warning as Hindsight retain |
@@ -406,12 +406,12 @@ Do not require Neo4j or Zep Cloud in default CI.
 A developer who already runs official Graphiti MCP can:
 
 ```bash
-pnpm nocciolo init --provider graphiti --yes
-pnpm nocciolo seed --dry-run
-NOCCIOLO_GRAPHITI_URL=http://localhost:8000 pnpm nocciolo seed
+pnpm orto init --provider graphiti --yes
+pnpm orto seed --dry-run
+ORTO_GRAPHITI_URL=http://localhost:8000 pnpm orto seed
 ```
 
-and get a `group_id=nocciolo-{bankId}` graph that contains project decisions/services from the repo — not an empty graph waiting for the agent to `add_episode` by hand.
+and get a `group_id=orto-{bankId}` graph that contains project decisions/services from the repo — not an empty graph waiting for the agent to `add_episode` by hand.
 
 Changing an ADR and re-running `seed` adds a new episode and leaves the previous one in the graph.
 

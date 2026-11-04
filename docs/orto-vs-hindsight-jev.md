@@ -1,10 +1,10 @@
-# Nocciolo + Jev vs Vanilla Hindsight + Jev Reranker
+# Orto + Jev vs Vanilla Hindsight + Jev Reranker
 
-**Audience:** developers evaluating Nocciolo’s optional Jev judgment layer  
-**Related:** [why-nocciolo.md](../why-nocciolo.md), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [JEV-0 epic](https://github.com/zanuka/nocciolo/issues/58), Hindsight 0.10.1 release notes  
+**Audience:** developers evaluating Orto’s optional Jev judgment layer  
+**Related:** [why-orto.md](./why-orto.md), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [JEV-0 epic](https://github.com/zanuka/orto/issues/58), Hindsight 0.10.1 release notes  
 **As of:** 25 October 2026
 
-Hindsight’s Jev support (0.10.1+) is a strong, opt-in *recall* reranker. Nocciolo’s planned Jev layer is complementary and mostly upstream of that: it decides *what is worth putting in the bank* (and related gates), while Hindsight’s Jev ranks *what is already retrieved*.
+Hindsight’s Jev support (0.10.1+) is a strong, opt-in *recall* reranker. Orto’s planned Jev layer is complementary and mostly upstream of that: it decides *what is worth putting in the bank* (and related gates), while Hindsight’s Jev ranks *what is already retrieved*.
 
 ---
 
@@ -21,16 +21,16 @@ Source posts: [What’s new in Hindsight 0.10.1](https://hindsight.vectorize.io/
 
 ---
 
-## Nocciolo’s planned Jev layer (Phase 7 / JEV issues)
+## Orto’s planned Jev layer (Phase 7 / JEV issues)
 
-Jev is an **opt-in judge** (`--judge jev` or key) for bounded decisions. Nocciolo owns scanning, side effects, and apply; Jev returns typed Choice/Score/Noul + confidence. Offline heuristics remain the default (zero TypeSafe calls).
+Jev is an **opt-in judge** (`--judge jev` or key) for bounded decisions. Orto owns scanning, side effects, and apply; Jev returns typed Choice/Score/Noul + confidence. Offline heuristics remain the default (zero TypeSafe calls).
 
 **Already closed (JEV-1 through JEV-10)**: product rules, judge interface and offline fallback, state sanitization, relevance gate before retain, section-level keep/skip, knowledge kind, the contradiction check, the secret / personal-data check, citation support, and store allowlist proposals.
 
 **Open / planned areas** (grouped):
 
 - Seed quality: knowledge-kind, contradiction vs existing observations, the secret / personal-data check, and citation support are on `seed --judge jev`.
-- Store: allowlist proposals are on `store --propose-adopt --judge jev` ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)). `seed --budget N --judge jev` ranks the retain queue ([JEV-11](https://github.com/zanuka/nocciolo/issues/50)). The `store` edit durability gate (JEV-12) is still open.
+- Store: allowlist proposals are on `store --propose-adopt --judge jev` ([JEV-10](https://github.com/zanuka/orto/issues/41)). `seed --budget N --judge jev` ranks the retain queue ([JEV-11](https://github.com/zanuka/orto/issues/50)). The `store` edit durability gate (JEV-12) is still open.
 - Prune annotation (JEV-14–17): score still-on-disk items as outdated / irrelevant / contradicted (Jev annotates; you confirm delete).
 - Bank-template fitness (JEV-18–21): score mission/directives, extraction aggressiveness, etc. (does not author prose).
 - **Recall & MCP guards** (JEV-22–25): block unsafe MCP retain, rerank recalled passages (overlaps Hindsight’s feature), check “still true?”, route reflect vs recall vs mental-model lookup.
@@ -38,34 +38,34 @@ Jev is an **opt-in judge** (`--judge jev` or key) for bounded decisions. Nocciol
 
 ---
 
-## Comparison table: Nocciolo (with Jev) vs vanilla Hindsight + its Jev reranker
+## Comparison table: Orto (with Jev) vs vanilla Hindsight + its Jev reranker
 
-| Dimension | Vanilla Hindsight (+ Jev reranker) | Nocciolo + optional Jev layer | Developer benefit of Nocciolo |
+| Dimension | Vanilla Hindsight (+ Jev reranker) | Orto + optional Jev layer | Developer benefit of Orto |
 |---|---|---|---|
 | **What enters the bank** | Whatever you (or an agent) `retain`. Quality = extraction from the input. | Scanner + heuristics + optional Jev relevance/durability gate *before* retain. Section-level keep/skip. | Spend retain (and future recall) on durable decisions/invariants/architecture, not changelogs, TOCs, badge walls, or session fluff. |
-| **Recall ranking** | Strong listwise Jev reranker (opt-in). Better order + optional prune. | Can use Hindsight’s built-in. Additional planned guards (JEV-23 etc.): still-true check, routing, MCP retain blocking. | Hindsight already solves ranking. Nocciolo adds gates around *how* and *when* recall is used. |
+| **Recall ranking** | Strong listwise Jev reranker (opt-in). Better order + optional prune. | Can use Hindsight’s built-in. Additional planned guards (JEV-23 etc.): still-true check, routing, MCP retain blocking. | Hindsight already solves ranking. Orto adds gates around *how* and *when* recall is used. |
 | **Bank hygiene / prune** | Manual or your own scripts. | Existing `prune` (path/section-gone + tombstones). Optional Jev annotation of outdated/irrelevant/contradicted items (you confirm). | Structured, confidence-gated cleanup instead of ad-hoc Hindsight cleanup. |
 | **Incremental / provenance** | You manage re-ingest. | Hash-gated incremental seed; source path + commit are first-class. | Agents inherit stable, attributable institutional knowledge. |
 | **Agent / MCP surface** | You wire MCP. Agents can retain freely. | Emits ready MCP configs. Planned Jev gates on unsafe retains and routing (reflect/recall/mental-model). | Safer company-brain usage; less session junk in the shared bank. |
 | **Firstmate / multi-agent** | Out of scope. | Planned routing decisions (needs bank? which bank? escalate vs dispatch? seedable?). | Keeps agent crews from thrashing the bank. |
 | **Default / privacy** | Local MiniLM free and private. Jev reranker is hosted. | Fully local-first by default. Jev is strictly opt-in. | Same local default; extra judgment only when you want it. |
 | **Cost model** | Reranker: input tokens only, listwise is cheap. | Judge calls on sections / candidates (typically ≪ $0.0001 each). Recurring only on changes or MCP attempts. | Cheap second opinion on the expensive step (retain) and on prune. |
-| **Overlap / complementarity** | Excellent at ranking what is already stored. | Decides what is worth storing, annotates what should leave, and adds operational gates. | Complementary. Nocciolo’s pre-retain and hygiene value remains even when you turn on Hindsight’s Jev reranker. |
+| **Overlap / complementarity** | Excellent at ranking what is already stored. | Decides what is worth storing, annotates what should leave, and adds operational gates. | Complementary. Orto’s pre-retain and hygiene value remains even when you turn on Hindsight’s Jev reranker. |
 
 ---
 
 ## Relevance takeaway
 
-Hindsight’s Jev reranker makes *recall* better. It does not solve the upstream problem Nocciolo targets: **bank quality is mostly determined by what you retain**.
+Hindsight’s Jev reranker makes *recall* better. It does not solve the upstream problem Orto targets: **bank quality is mostly determined by what you retain**.
 
-The highest-leverage remaining Nocciolo work is therefore:
+The highest-leverage remaining Orto work is therefore:
 
 1. Prune annotation (so the bank stays clean).
-2. Treating Hindsight’s native Jev reranker as the default ranking path (JEV-23 can become “prefer Hindsight’s typesafe provider when available; add Nocciolo-specific still-true / routing checks on top”).
+2. Treating Hindsight’s native Jev reranker as the default ranking path (JEV-23 can become “prefer Hindsight’s typesafe provider when available; add Orto-specific still-true / routing checks on top”).
 3. MCP retain blocking and Firstmate routing (things Hindsight’s reranker never touches).
 
-That positioning keeps Nocciolo relevant: developers get a curated, provenance-aware company brain whose contents are worth ranking, rather than just a better sort of whatever happened to land in retain.
+That positioning keeps Orto relevant: developers get a curated, provenance-aware company brain whose contents are worth ranking, rather than just a better sort of whatever happened to land in retain.
 
 ---
 
-*Saved from conversation analysis of Hindsight 0.10.1 Jev reranker vs Nocciolo Phase 7 JEV issues. Copy into the Nocciolo repo `docs/` if it lands.*
+*Saved from conversation analysis of Hindsight 0.10.1 Jev reranker vs Orto Phase 7 JEV issues. Copy into the Orto repo `docs/` if it lands.*

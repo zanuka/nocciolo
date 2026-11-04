@@ -248,7 +248,7 @@ function buildFact(input: {
   }
 
   return {
-    id: `nocciolo:${input.source.relativePath}#${input.sectionSlug}`,
+    id: `orto:${input.source.relativePath}#${input.sectionSlug}`,
     title: input.title.slice(0, 160),
     content,
     knowledgeKind: input.knowledgeKind,

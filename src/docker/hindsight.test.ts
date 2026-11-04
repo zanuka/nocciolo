@@ -12,7 +12,7 @@ describe("buildDockerUpPlan", () => {
       llmApiKey: "sk-test",
       llmKeyDisplay: "$OPENAI_API_KEY",
       tenantApiKey: "tenant-secret",
-      tenantKeyDisplay: "$NOCCIOLO_HINDSIGHT_API_KEY",
+      tenantKeyDisplay: "$ORTO_HINDSIGHT_API_KEY",
     });
     expect(plan.argv[0]).toBe("docker");
     expect(plan.argv).toContain("-d");
@@ -24,7 +24,7 @@ describe("buildDockerUpPlan", () => {
     expect(plan.argv).toContain("HINDSIGHT_CP_DATAPLANE_API_KEY=tenant-secret");
     expect(plan.display).toContain("HINDSIGHT_API_LLM_API_KEY=$OPENAI_API_KEY");
     expect(plan.display).toContain(
-      "HINDSIGHT_API_TENANT_API_KEY=$NOCCIOLO_HINDSIGHT_API_KEY",
+      "HINDSIGHT_API_TENANT_API_KEY=$ORTO_HINDSIGHT_API_KEY",
     );
     expect(plan.display).not.toContain("sk-test");
     expect(plan.display).not.toContain("tenant-secret");

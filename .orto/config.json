@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "name": "nocciolo",
+  "name": "orto",
   "provider": "hindsight",
-  "bankId": "nocciolo",
+  "bankId": "orto",
   "root": ".",
   "createdAt": "2026-08-04T04:55:22.981Z",
   "docker": {
@@ -30,16 +30,16 @@
       "docs/jev-integration.md",
       "docs/jev.md",
       "docs/mental-models.md",
-      "docs/nocciolo-cli-commands.md",
-      "docs/nocciolo-configs.md",
-      "docs/nocciolo-sync-strategy.md",
-      "docs/nocciolo-vs-hindsight-jev.md",
+      "docs/orto-cli-commands.md",
+      "docs/orto-configs.md",
+      "docs/orto-sync-strategy.md",
+      "docs/orto-vs-hindsight-jev.md",
       "docs/phase-4-dogfood-gaps.md",
       "docs/phase-5-dogfood-gaps.md",
       "docs/phase-6-dogfood-gaps.md",
       "docs/sensitive-data.md",
       "docs/team-sharing.md",
-      "docs/why-nocciolo.md"
+      "docs/why-orto.md"
     ]
   }
 }

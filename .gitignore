@@ -45,9 +45,9 @@ coverage/
 Thumbs.db
 Desktop.ini
 
-# Nocciolo local / generated state
-.nocciolo/local/
-.nocciolo/cache/
+# Orto local / generated state
+.orto/local/
+.orto/cache/
 *.bank-state.json
 
 # Temporary

@@ -2,14 +2,14 @@
 
 Jev is an **opt-in judge**, not a memory backend and not a CLI provider.
 
-Nocciolo's job does not change: scan the repo, curate durable knowledge, seed a Hindsight bank, prune stale documents, emit harness config, and apply after confirmation.
+Orto's job does not change: scan the repo, curate durable knowledge, seed a Hindsight bank, prune stale documents, emit harness config, and apply after confirmation.
 Jev answers narrow, typed questions about that work.
-Nocciolo keeps every side effect.
+Orto keeps every side effect.
 
-**Status:** Product rule for Phase 7 ([JEV-1](https://github.com/zanuka/nocciolo/issues/20)).
-Judge port: [JEV-2](https://github.com/zanuka/nocciolo/issues/21) (`src/judge/`, `--judge` / `--confidence` / `--strict` on seed/store/prune).
-State sanitization: [JEV-3](https://github.com/zanuka/nocciolo/issues/22) (`buildJevState` before any TypeSafe call).
-Relevance gate: [JEV-4](https://github.com/zanuka/nocciolo/issues/30) (`seed --judge jev` before retain).
+**Status:** Product rule for Phase 7 ([JEV-1](https://github.com/zanuka/orto/issues/20)).
+Judge port: [JEV-2](https://github.com/zanuka/orto/issues/21) (`src/judge/`, `--judge` / `--confidence` / `--strict` on seed/store/prune).
+State sanitization: [JEV-3](https://github.com/zanuka/orto/issues/22) (`buildJevState` before any TypeSafe call).
+Relevance gate: [JEV-4](https://github.com/zanuka/orto/issues/30) (`seed --judge jev` before retain).
 Knowledge kind ships on that same call.
 The contradiction check ships on that same call.
 The secret and personal-data second pass ships on that same call.
@@ -18,13 +18,13 @@ Allowlist proposals ship on `store --propose-adopt --judge jev`.
 A retain budget ships on `seed --budget N --judge jev`.
 `store` edit durability gates are still planned.
 Prune annotation is still planned.
-**Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/nocciolo/issues/58).
+**Related:** [jev-integration.md](./jev-integration.md) (where it sits), [jev-diagrams.md](./jev-diagrams.md) (store / update flows), [jev-benefits-and-costs.md](./jev-benefits-and-costs.md), [ROADMAP.md](../ROADMAP.md) Phase 7, [JEV-0](https://github.com/zanuka/orto/issues/58).
 
 ---
 
 ## Job split
 
-| Nocciolo owns | Jev returns |
+| Orto owns | Jev returns |
 |---------------|-------------|
 | Scan, denylist, extract candidates, content hashes | [Choice](https://docs.typesafe.ai/primitives/choice), [Score](https://docs.typesafe.ai/primitives/score), [Noul](https://docs.typesafe.ai/primitives/noul) |
 | Retain, prune, share, MCP I/O, tombstones | Probabilities and confidence |
@@ -40,9 +40,9 @@ Jev never stores the bank and never authors project docs.
 Enable Jev only when both are present:
 
 - CLI: `--judge jev`
-- Env: `NOCCIOLO_TYPESAFE_API_KEY` (TypeSafe key)
+- Env: `ORTO_TYPESAFE_API_KEY` (TypeSafe key)
 
-The Hindsight API key (`NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY`) never implies Jev.
+The Hindsight API key (`ORTO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY`) never implies Jev.
 `--provider jev` must not exist.
 Hindsight remains the default memory path.
 
@@ -54,7 +54,7 @@ Without `--judge jev`, the CLI uses offline heuristics and makes no TypeSafe cal
 
 With `--judge jev`:
 
-- Missing `NOCCIOLO_TYPESAFE_API_KEY` is a hard error (unset the flag to keep heuristics).
+- Missing `ORTO_TYPESAFE_API_KEY` is a hard error (unset the flag to keep heuristics).
 - Network / timeout / 429 / 5xx: warn once and fall back to heuristics for that run.
 - Pass `--strict` to fail instead of falling back.
 
@@ -67,9 +67,9 @@ With `--judge jev`:
 | `Judge` modes: `off` / `heuristic` / `jev` behind `--judge` | `--provider jev` or a Jev memory adapter |
 | Confidence gate (`--confidence`) before apply | Silent auto-retain, auto-prune, or auto-share |
 | Sanitize state before any TypeSafe call (secrets, denylist, size) | Sending the whole repo or a bank dump as Jev state |
-| Point at official TypeSafe docs and [agent skill](https://docs.typesafe.ai/agent-skill) | Vendoring TypeSafe's installer, plugin marketplace, or skill as if Nocciolo owned them |
+| Point at official TypeSafe docs and [agent skill](https://docs.typesafe.ai/agent-skill) | Vendoring TypeSafe's installer, plugin marketplace, or skill as if Orto owned them |
 | Preview keep/skip scores in `seed --dry-run --judge jev` | Jev-generated mission, ADR, MCP, or mental-model prose |
-| Annotate prune candidates; delete only after Nocciolo confirm | Auto-delete bank items from a Jev answer alone |
+| Annotate prune candidates; delete only after Orto confirm | Auto-delete bank items from a Jev answer alone |
 
 Same installer rule as Graphiti: thin pointers to official URLs, no wrap of their install path.
 See [graphiti-integration.md](./graphiti-integration.md) product rule.
@@ -103,9 +103,9 @@ Detail and sequencing: [jev-integration.md](./jev-integration.md) and the Phase 
 
 Choice and Score answers include confidence.
 Default `--confidence` is **0.8**.
-Nocciolo routes on that score:
+Orto routes on that score:
 
-- At or above `--confidence`: apply the Nocciolo side effect the operator already authorized (retain, prune selection, share check, Firstmate route).
+- At or above `--confidence`: apply the Orto side effect the operator already authorized (retain, prune selection, share check, Firstmate route).
 - Below threshold: dry-run queue, unchecked prune row, or Firstmate captain escalation.
 - Never silent apply on low confidence.
 
@@ -125,7 +125,7 @@ Pattern reference: [Confidence-gated routing](https://docs.typesafe.ai/patterns/
 `seed --judge jev` asks a `kind` choice in the same call as the relevance gate.
 The bins, and the `what` / `not_for` / `examples` for each one, live in `src/judge/knowledge-kinds.json`.
 Dry-run prints the chosen kind, its confidence, and the probability of every bin.
-`document_id` stays `nocciolo:<path>#<section>`, so a later reclassification still upserts the same document.
+`document_id` stays `orto:<path>#<section>`, so a later reclassification still upserts the same document.
 
 A confident `noise` answer is skipped, the same as a relevance reject.
 A confident `style_pref` answer is skipped too.
@@ -146,7 +146,7 @@ Starter mental models still filter on those heuristic labels.
 `seed --judge jev` recalls up to 5 overlapping observation summaries before the same judge call.
 The recall is read-only.
 Dry-run does not retain and does not delete.
-If recall fails, including a first seed before the bank exists, Nocciolo warns once and continues without the relation question.
+If recall fails, including a first seed before the bank exists, Orto warns once and continues without the relation question.
 
 When one to three observations have ids, the call asks one `relation` choice: `supports`, `extends`, `supersedes`, `contradicts`, or `unrelated`.
 A confident `supersedes` or `contradicts` answer retains the section once and records those observation ids on the retain metadata (`supersedes` or `contradicts`).
@@ -159,7 +159,7 @@ A confident yes records that id as `contradicts`.
 A confident no, or an uncertain score, adds no metadata for that id.
 
 The old observation stays in the bank.
-Deleting it is prune annotation ([JEV-14](https://github.com/zanuka/nocciolo/issues/32), [JEV-17](https://github.com/zanuka/nocciolo/issues/52)), after you confirm.
+Deleting it is prune annotation ([JEV-14](https://github.com/zanuka/orto/issues/32), [JEV-17](https://github.com/zanuka/orto/issues/52)), after you confirm.
 
 ---
 
@@ -173,7 +173,7 @@ A confident personal-data answer is also skipped.
 There is no `--allow-pii` flag.
 A score between `--confidence` and `1 - confidence` stays in review and is not retained.
 A local match for an `sk-` token or a PEM private-key block skips before any TypeSafe call, so that text is not sent.
-A clean ADR is not flagged ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)).
+A clean ADR is not flagged ([JEV-8](https://github.com/zanuka/orto/issues/39)).
 
 ---
 
@@ -195,8 +195,8 @@ Further facts stay in review.
 If the preview returns no facts, or the preview fails, the section is retained as written.
 A fact that matches a secret pattern is dropped and is not sent to Jev.
 The log redacts that fact.
-`document_id` stays `nocciolo:<path>#<section>`.
-Dry-run may run this preview and still must not retain or write the manifest ([JEV-9](https://github.com/zanuka/nocciolo/issues/40)).
+`document_id` stays `orto:<path>#<section>`.
+Dry-run may run this preview and still must not retain or write the manifest ([JEV-9](https://github.com/zanuka/orto/issues/40)).
 
 ---
 
@@ -209,20 +209,20 @@ A confident `noise` or `style_pref`, or a confident no on `should_adopt`, is not
 A dependency readme and markdown outside the durable scan are not considered.
 The allowlist changes only when you pass `--apply`.
 That write does not retain.
-Default `store` still never adopts a new file on its own ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)).
+Default `store` still never adopts a new file on its own ([JEV-10](https://github.com/zanuka/orto/issues/41)).
 
 ---
 
 ## Retain budget
 
 `seed --budget N --judge jev` ranks the sections that survived the relevance gate and retains the top N this run.
-The rest stay pending in `.nocciolo/local/seed-manifest.json`.
+The rest stay pending in `.orto/local/seed-manifest.json`.
 The next seed judges those pending sections again.
 Dry-run prints the ordered queue and a cutoff, and it does not retain or write the manifest.
 Without `--budget`, seed still retains every section the gate keeps.
 
 Jev supplies the atomic scores.
-Nocciolo combines them.
+Orto combines them.
 The same judge call already returns `durability` (0 ephemeral through 4 constitutional).
 When `--budget` is set, that call also asks `centrality` (0 buried note through 4 ADR, AGENTS.md, or constitutional standard), `agent_fanout` (0 none through 4 shared context), and the noul `supersedes_existing`.
 `secret_risk` is the higher of `contains_secret` and `contains_pii`.
@@ -237,7 +237,7 @@ The formula is:
 priority = w1*durability + w2*centrality + w3*supersession + w4*fanout - w5*secret_risk
 ```
 
-Weights live in `.nocciolo/config.json` under `judge.priorityWeights`.
+Weights live in `.orto/config.json` under `judge.priorityWeights`.
 They are not chosen by the model.
 When the block is omitted, the defaults are:
 
@@ -252,14 +252,14 @@ When the block is omitted, the defaults are:
 A changed ADR, with high durability and centrality, ranks above a wording-only changelog.
 Ties break by source path, then document id.
 `--budget` requires `--judge jev`.
-`N` is a positive integer ([JEV-11](https://github.com/zanuka/nocciolo/issues/50)).
+`N` is a positive integer ([JEV-11](https://github.com/zanuka/orto/issues/50)).
 
 ---
 
 ## State budget
 
 `buildJevState` in `src/judge/` is the only supported way to fill TypeSafe `state`.
-[JEV-3](https://github.com/zanuka/nocciolo/issues/22).
+[JEV-3](https://github.com/zanuka/orto/issues/22).
 
 Send only:
 
@@ -273,14 +273,14 @@ Do not send the full repo tree, a full file, a bank export, a git patch, or MCP 
 Two local checks run before any HTTP body is built:
 
 - Denylist: reuse `src/scanner/sensitive.ts`. If a path is not seedable, it is not judgeable.
-- Inline secrets: a token, private key, credential connection string, or assignment-shaped API key skips the section before the TypeSafe call. The warning names the path and does not include the secret. The Noul questions `contains_secret` and `contains_pii` ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)) run only on text that already passed this gate.
+- Inline secrets: a token, private key, credential connection string, or assignment-shaped API key skips the section before the TypeSafe call. The warning names the path and does not include the secret. The Noul questions `contains_secret` and `contains_pii` ([JEV-8](https://github.com/zanuka/orto/issues/39)) run only on text that already passed this gate.
 
 Jev allows 32k tokens for state plus the longest question.
 The builder reserves 8k tokens for questions and caps state at 24k tokens, counted as 4 characters per token (96k characters).
 Field caps are tighter: section 6k characters, mission 1.2k, each overlap summary 400.
 `JevJudge` refuses to POST a payload that fails these checks.
 Info logs record the path and question ids.
-Debug logs (`NOCCIOLO_LOG_LEVEL=debug`) record field names and lengths.
+Debug logs (`ORTO_LOG_LEVEL=debug`) record field names and lengths.
 Section text and the request body are not logged.
 
 ---

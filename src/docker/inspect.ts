@@ -9,7 +9,7 @@ import {
   parseDockerInspect,
   type InspectedHindsightContainer,
 } from "./upgrade.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { HindsightInstanceClient } from "../providers/hindsight/instance.js";
 
 export async function inspectHindsightContainer(
@@ -21,18 +21,18 @@ export async function inspectHindsightContainer(
     { allowFailure: true },
   );
   if (result.exitCode !== 0) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Could not inspect container "${containerName}"`,
       result.stderr.trim() ||
         result.stdout.trim() ||
-        "Ensure Docker is running and the container exists (`nocciolo docker status`).",
+        "Ensure Docker is running and the container exists (`orto docker status`).",
     );
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(result.stdout);
   } catch {
-    throw new NoccioloError(
+    throw new OrtoError(
       `docker inspect for "${containerName}" returned invalid JSON`,
       "Re-run `docker inspect <container>` manually and confirm the container exists.",
     );
@@ -98,7 +98,7 @@ export async function waitForHindsightHealth(options: {
     ? `Check logs with: docker logs --tail 80 ${options.containerName}`
     : "Check docker logs for the Hindsight container.";
 
-  throw new NoccioloError(
+  throw new OrtoError(
     `Hindsight did not become healthy within ${Math.round(timeoutMs / 1000)}s at ${options.baseUrl}`,
     `${logsHint} Last error: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
   );
@@ -146,7 +146,7 @@ export async function verifyTarballNonEmpty(
     { allowFailure: true },
   );
   if (result.exitCode !== 0) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Failed to list volume tarball at ${hostTarballPath}`,
       result.stderr.trim() ||
         "Backup tarball may be corrupt. Aborting upgrade.",
@@ -157,7 +157,7 @@ export async function verifyTarballNonEmpty(
     .map((line) => line.trim())
     .filter(Boolean).length;
   if (count <= 0) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Volume tarball is empty: ${hostTarballPath}`,
       "Aborting upgrade. Re-run backup or fix Docker volume mounts.",
     );

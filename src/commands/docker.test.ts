@@ -24,11 +24,11 @@ describe("resolveDockerNames", () => {
   });
 
   it("reads docker names from project config", async () => {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-docker-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-docker-"));
     dirs.push(root);
-    await mkdir(join(root, ".nocciolo"), { recursive: true });
+    await mkdir(join(root, ".orto"), { recursive: true });
     await writeFile(
-      join(root, ".nocciolo", "config.json"),
+      join(root, ".orto", "config.json"),
       JSON.stringify({
         version: 1,
         name: "fixture",
@@ -52,7 +52,7 @@ describe("resolveDockerNames", () => {
   });
 
   it("falls back to hindsight defaults without config", async () => {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-docker-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-docker-"));
     dirs.push(root);
     const resolved = await resolveDockerNames({ cwd: root });
     expect(resolved).toEqual({

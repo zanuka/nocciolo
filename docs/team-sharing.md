@@ -2,11 +2,11 @@
 
 How a team publishes one durable project bank and lets agents across the org inherit it.
 
-Nocciolo stays **local-first by default**.
+Orto stays **local-first by default**.
 Self-host on a machine, LAN, or VPN when you want full control.
 [Hindsight Cloud](./hindsight-cloud.md) is an **opt-in** profile, never a forced path.
 
-Companion docs: [CLI commands](./nocciolo-cli-commands.md), [knowledge-base configs](./nocciolo-configs.md), [Hindsight Cloud](./hindsight-cloud.md), [company brain](./company-brain.md).
+Companion docs: [CLI commands](./orto-cli-commands.md), [knowledge-base configs](./orto-configs.md), [Hindsight Cloud](./hindsight-cloud.md), [company brain](./company-brain.md).
 
 ---
 
@@ -16,17 +16,17 @@ Use team sharing when:
 
 - More than one person (or more than one agent harness) should recall the same project bank
 - A multi-root Cursor workspace attaches several banks and generic MCP server names collide
-- Teammates should bootstrap from git-tracked `.nocciolo/` without a manual Control Plane import
+- Teammates should bootstrap from git-tracked `.orto/` without a manual Control Plane import
 - The bank is reachable somewhere other than `localhost` (LAN, VPN, public host, or Cloud)
 
 If you are solo on one machine with Docker on localhost, the happy path is still:
 
 ```bash
-nocciolo init
-nocciolo configure
-nocciolo bank apply
-nocciolo seed
-nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+orto init
+orto configure
+orto bank apply
+orto seed
+orto mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
 Team sharing adds an explicit **deployment profile** and shareable artifacts so that path works for others.
@@ -38,11 +38,11 @@ Team sharing adds an explicit **deployment profile** and shareable artifacts so 
 | Layer | Commit? | Role |
 |-------|---------|------|
 | Project docs (README, ADRs, standards) | Yes | Source of truth |
-| `.nocciolo/config.json` | Yes | Portable project identity (`bankId`, optional `deploymentProfile`) |
-| `.nocciolo/share.json` | Yes | Deployment profile + non-secret base URL strategy |
-| `.nocciolo/hindsight/bank-template.json` | Yes | Mission, directives, mental-model declarations |
+| `.orto/config.json` | Yes | Portable project identity (`bankId`, optional `deploymentProfile`) |
+| `.orto/share.json` | Yes | Deployment profile + non-secret base URL strategy |
+| `.orto/hindsight/bank-template.json` | Yes | Mission, directives, mental-model declarations |
 | Agent wiring (`.cursor/mcp.json`, rules, `AGENTS.md` section) | Often yes | Points agents at the bank |
-| `.nocciolo/local/` (seed manifest, tombstones) | **No** | Machine-local incremental state |
+| `.orto/local/` (seed manifest, tombstones) | **No** | Machine-local incremental state |
 | API keys / OAuth tokens | **No** | Env vars or secret channel only |
 
 Docs stay authoritative.
@@ -52,12 +52,12 @@ The bank is the agent-facing index of those docs (with provenance).
 
 ## Deployment profiles
 
-Choose a profile with `nocciolo share`.
-That writes `.nocciolo/share.json` and sets `deploymentProfile` in `config.json`.
+Choose a profile with `orto share`.
+That writes `.orto/share.json` and sets `deploymentProfile` in `config.json`.
 
 | Profile | Typical base URL | Who can reach it | Docker helper |
 |---------|------------------|------------------|---------------|
-| `local` | `http://localhost:8888` | Same machine | `nocciolo docker` OK |
+| `local` | `http://localhost:8888` | Same machine | `orto docker` OK |
 | `lan` | Team host on trusted LAN (required in share.json) | LAN peers | Optional on the host |
 | `vpn` | Private hostname only on VPN (required) | VPN members | Optional on the host |
 | `public` | Intentionally exposed self-host URL (required) | Anyone who can hit the host | Harden the host |
@@ -69,7 +69,7 @@ That writes `.nocciolo/share.json` and sets `deploymentProfile` in `config.json`
 
 - Bind Hindsight to localhost only.
 - Tenant API keys are optional locally, recommended once more than one user shares the machine.
-- Never commit keys; use `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` in the process environment.
+- Never commit keys; use `ORTO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` in the process environment.
 
 **lan**
 
@@ -95,7 +95,7 @@ That writes `.nocciolo/share.json` and sets `deploymentProfile` in `config.json`
 - Managed host; skip local Docker.
 - API key required for `seed` / `bank apply`.
 - Default MCP emission is bank-scoped Cloud URL + env key placeholder.
-- Optional OAuth MCP for interactive IDEs (`nocciolo share --profile hindsight-cloud --mcp-auth oauth`).
+- Optional OAuth MCP for interactive IDEs (`orto share --profile hindsight-cloud --mcp-auth oauth`).
 - Retain/reflect consume Cloud credits; review billing and data residency before adopting.
 - Full Cloud guide: [hindsight-cloud.md](./hindsight-cloud.md).
 
@@ -104,16 +104,16 @@ That writes `.nocciolo/share.json` and sets `deploymentProfile` in `config.json`
 ## Share artifact
 
 ```bash
-nocciolo share --profile local
-nocciolo share --profile lan --base-url http://192.168.1.10:8888
-nocciolo share --profile vpn --base-url https://hindsight.internal.example
-nocciolo share --profile public --base-url https://brain.example.com
-nocciolo share --profile hindsight-cloud
-nocciolo share --validate
-nocciolo share --profile lan --base-url http://192.168.1.10:8888 --dry-run
+orto share --profile local
+orto share --profile lan --base-url http://192.168.1.10:8888
+orto share --profile vpn --base-url https://hindsight.internal.example
+orto share --profile public --base-url https://brain.example.com
+orto share --profile hindsight-cloud
+orto share --validate
+orto share --profile lan --base-url http://192.168.1.10:8888 --dry-run
 ```
 
-Example `.nocciolo/share.json` (LAN):
+Example `.orto/share.json` (LAN):
 
 ```json
 {
@@ -137,7 +137,7 @@ Resolution order for the Hindsight base URL:
 
 1. `--hindsight-url`
 2. `hindsightBaseUrl` in `config.json`
-3. `NOCCIOLO_HINDSIGHT_URL` / `HINDSIGHT_URL`
+3. `ORTO_HINDSIGHT_URL` / `HINDSIGHT_URL`
 4. `baseUrl` in `share.json` (or Cloud default)
 5. Profile default (`local` → `http://localhost:8888`)
 
@@ -154,46 +154,46 @@ Teammates clone and connect.
 ### Maintainer
 
 ```bash
-nocciolo init
-nocciolo configure
-nocciolo share --profile <local|lan|vpn|public|hindsight-cloud> [--base-url <url>]
-nocciolo bank apply --dry-run
-nocciolo bank apply
-nocciolo seed --dry-run
-nocciolo seed
-nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+orto init
+orto configure
+orto share --profile <local|lan|vpn|public|hindsight-cloud> [--base-url <url>]
+orto bank apply --dry-run
+orto bank apply
+orto seed --dry-run
+orto seed
+orto mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
-Commit `.nocciolo/config.json`, `.nocciolo/share.json`, `.nocciolo/hindsight/bank-template.json`, and the agent wiring you want others to inherit.
+Commit `.orto/config.json`, `.orto/share.json`, `.orto/hindsight/bank-template.json`, and the agent wiring you want others to inherit.
 Distribute API keys out of band.
 
-`nocciolo configure --apply` is an alias path that applies an existing template (or generates then applies).
+`orto configure --apply` is an alias path that applies an existing template (or generates then applies).
 Prefer keeping generation (`configure`) and apply (`bank apply`) as separate mental steps.
 
 ### Teammate
 
-1. Clone the repo (and pull the committed `.nocciolo/` files).
+1. Clone the repo (and pull the committed `.orto/` files).
 2. Set env for the active profile:
 
 ```bash
 # Self-host example
-export NOCCIOLO_HINDSIGHT_URL=http://192.168.1.10:8888
-export NOCCIOLO_HINDSIGHT_API_KEY=...
+export ORTO_HINDSIGHT_URL=http://192.168.1.10:8888
+export ORTO_HINDSIGHT_API_KEY=...
 
 # Or Cloud
-export NOCCIOLO_HINDSIGHT_URL=https://api.hindsight.vectorize.io
-export NOCCIOLO_HINDSIGHT_API_KEY=hsk_...
+export ORTO_HINDSIGHT_URL=https://api.hindsight.vectorize.io
+export ORTO_HINDSIGHT_API_KEY=hsk_...
 ```
 
 3. Validate and wire agents:
 
 ```bash
-nocciolo share --validate
-nocciolo mcp --write --include-auth --force
-nocciolo mcp --check
+orto share --validate
+orto mcp --write --include-auth --force
+orto mcp --check
 ```
 
-4. Day-to-day: edit durable docs → `nocciolo store` → `nocciolo prune` as needed.
+4. Day-to-day: edit durable docs → `orto store` → `orto prune` as needed.
    Seed is for bootstrap; store is the ongoing allowlist-gated path.
 
 For Cloud org invites, console, and OAuth MCP trade-offs, see [hindsight-cloud.md](./hindsight-cloud.md).
@@ -204,7 +204,7 @@ For Cloud org invites, console, and OAuth MCP trade-offs, see [hindsight-cloud.m
 
 Each project bank needs a distinct MCP server name in Cursor (and other harnesses).
 
-Nocciolo defaults to:
+Orto defaults to:
 
 ```text
 hindsight-<bankId>
@@ -214,29 +214,29 @@ Example in a multi-root workspace:
 
 | Repo | bankId | MCP server name | MCP URL |
 |------|--------|-----------------|---------|
-| nocciolo | `nocciolo` | `hindsight-nocciolo` | `http://localhost:8888/mcp/nocciolo/` |
+| orto | `orto` | `hindsight-orto` | `http://localhost:8888/mcp/orto/` |
 | strumentario | `strumentario` | `hindsight-strumentario` | `http://localhost:8888/mcp/strumentario/` |
 
 Override when needed:
 
 ```bash
-nocciolo mcp --server-name my-custom-name --write --force
+orto mcp --server-name my-custom-name --write --force
 ```
 
 Probe connectivity (never prints secrets):
 
 ```bash
-nocciolo mcp --check
-nocciolo mcp --check --include-auth
+orto mcp --check
+orto mcp --check --include-auth
 ```
 
 ### Cursor auth gotcha
 
-`NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` must be visible to the **Cursor process**, not only an integrated terminal.
+`ORTO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` must be visible to the **Cursor process**, not only an integrated terminal.
 Missing or empty env often shows up as MCP `401 Invalid API key`.
 Set the var in your login shell / desktop environment, restart Cursor, then reload MCP servers.
 
-Written MCP configs use env placeholders (for example `Bearer ${env:NOCCIOLO_HINDSIGHT_API_KEY}`).
+Written MCP configs use env placeholders (for example `Bearer ${env:ORTO_HINDSIGHT_API_KEY}`).
 Do not commit literal keys.
 
 ---
@@ -247,11 +247,11 @@ Do not commit literal keys.
 Teams need an automatable create/update step so mission and directives match git.
 
 ```bash
-nocciolo bank apply --dry-run
-nocciolo bank apply
+orto bank apply --dry-run
+orto bank apply
 # or
-nocciolo configure --apply --dry-run
-nocciolo configure --apply
+orto configure --apply --dry-run
+orto configure --apply
 ```
 
 Apply is idempotent for:
@@ -273,19 +273,19 @@ On Cloud, apply requires an API key.
 
 | Need | Command |
 |------|---------|
-| Flat document inventory (scripts) | `nocciolo docs list` / `nocciolo docs list --json` |
-| Preview stale docs | `nocciolo prune --dry-run` |
-| Delete one document | `nocciolo prune --document-id <id> --yes` |
-| Ongoing retain | `nocciolo store --dry-run` then `nocciolo store` |
+| Flat document inventory (scripts) | `orto docs list` / `orto docs list --json` |
+| Preview stale docs | `orto prune --dry-run` |
+| Delete one document | `orto prune --document-id <id> --yes` |
+| Ongoing retain | `orto store --dry-run` then `orto store` |
 
 Retain (`seed` / `store`) only adds or upserts.
-Prune removes path-gone / section-gone / explicit documents and writes local tombstones under `.nocciolo/local/` (not shared via git).
+Prune removes path-gone / section-gone / explicit documents and writes local tombstones under `.orto/local/` (not shared via git).
 
 ---
 
 ## Profile-aware MCP emission
 
-`nocciolo mcp` reads the active profile from `share.json` / `config.deploymentProfile`.
+`orto mcp` reads the active profile from `share.json` / `config.deploymentProfile`.
 
 | Profile | Emitted MCP URL (default) | Auth in snippets |
 |---------|---------------------------|------------------|
@@ -301,20 +301,20 @@ Use OAuth as an alternate for personal exploration.
 ## Checklist
 
 - [ ] `bankId` is project-specific and stable across the team
-- [ ] `.nocciolo/share.json` names the deployment profile (and `baseUrl` when not local/Cloud)
+- [ ] `.orto/share.json` names the deployment profile (and `baseUrl` when not local/Cloud)
 - [ ] No API keys in git
 - [ ] Maintainer ran `bank apply` then `seed` (or teammates can apply + seed against a shared host)
-- [ ] `nocciolo mcp` emits bank-scoped server names (`hindsight-<bankId>`)
+- [ ] `orto mcp` emits bank-scoped server names (`hindsight-<bankId>`)
 - [ ] Cursor (or other harness) has the key in the **process** environment
 - [ ] Multi-root workspaces show one MCP connection per bank
-- [ ] Cloud users skip `nocciolo docker` and use Cloud keys / org invites
+- [ ] Cloud users skip `orto docker` and use Cloud keys / org invites
 
 ---
 
 ## Related
 
-- [nocciolo-cli-commands.md](./nocciolo-cli-commands.md): `share`, `bank apply`, `mcp`, `docs list` flags
-- [nocciolo-configs.md](./nocciolo-configs.md): `.nocciolo/` layout
+- [orto-cli-commands.md](./orto-cli-commands.md): `share`, `bank apply`, `mcp`, `docs list` flags
+- [orto-configs.md](./orto-configs.md): `.orto/` layout
 - [hindsight-cloud.md](./hindsight-cloud.md): managed hosting deep dive
 - [phase-4-dogfood-gaps.md](./phase-4-dogfood-gaps.md): Strumentario lessons that drove this design
 - [phase-5-dogfood-gaps.md](./phase-5-dogfood-gaps.md): zanuka-web ops lessons (`store` / prune / list)

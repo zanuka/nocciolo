@@ -16,7 +16,7 @@ import {
 } from "../seeder/prune-plan.js";
 import { addTombstones } from "../seeder/tombstones.js";
 import { createJudge } from "../judge/index.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { isInteractive, promptLine, promptMultiSelect } from "../utils/prompt.js";
 
 export interface PruneOptions {
@@ -80,16 +80,16 @@ export async function runPrune(options: PruneOptions = {}): Promise<PruneResult>
     (options.source !== undefined && options.source.length > 0);
 
   if (yes && !hasExplicitSelection) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Refuse to prune with --yes and no selection",
       "Pass --document-id <id> or --source <path> with --yes, or run interactively / use --dry-run first.",
     );
   }
 
   if (!dryRun && !yes && !interactive) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Non-interactive prune requires an explicit selection and --yes",
-      "Run `nocciolo prune --dry-run`, then `nocciolo prune --document-id <id> --yes` (or --source <path> --yes).",
+      "Run `orto prune --dry-run`, then `orto prune --document-id <id> --yes` (or --source <path> --yes).",
     );
   }
 
@@ -102,7 +102,7 @@ export async function runPrune(options: PruneOptions = {}): Promise<PruneResult>
 
   if (!dryRun && !apiKey && options.client === undefined) {
     console.log(
-      "Warning: no API key resolved (NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
+      "Warning: no API key resolved (ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
     );
     console.log(
       "If your Hindsight server requires auth, delete will fail with 401.",
@@ -129,9 +129,9 @@ export async function runPrune(options: PruneOptions = {}): Promise<PruneResult>
   if (hasExplicitSelection) {
     selected = plan.explicit;
     if (selected.length === 0) {
-      throw new NoccioloError(
+      throw new OrtoError(
         "No documents matched the explicit selection",
-        "Check --document-id / --source against `nocciolo prune --dry-run` output.",
+        "Check --document-id / --source against `orto prune --dry-run` output.",
       );
     }
   } else if (dryRun) {
@@ -268,7 +268,7 @@ export async function runPrune(options: PruneOptions = {}): Promise<PruneResult>
     console.log(
       `Deleted ${deleted.length} document(s)${failed > 0 ? `, ${failed} failed` : ""}.`,
     );
-    console.log("Tombstones written under .nocciolo/local/tombstones.json");
+    console.log("Tombstones written under .orto/local/tombstones.json");
     console.log(
       "Unchanged sources will not be re-retained on the next seed/store (use --force or change the file).",
     );

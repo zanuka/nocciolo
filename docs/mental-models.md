@@ -1,10 +1,10 @@
-# Mental models with Nocciolo
+# Mental models with Orto
 
 Use Hindsight mental models so agents get consistent answers to recurring project questions (architecture, standards, "how we work"), not only a bag of retained facts.
 
 Upstream concepts: [Mental Models](https://hindsight.vectorize.io/developer/api/mental-models), [Reflect](https://hindsight.vectorize.io/developer/reflect).
 Design details for contributors: [hindsight-mental-models.md](./hindsight-mental-models.md).
-Flag reference: [nocciolo-cli-commands.md](./nocciolo-cli-commands.md).
+Flag reference: [orto-cli-commands.md](./orto-cli-commands.md).
 
 ## What you get
 
@@ -13,7 +13,7 @@ A mental model is a **saved reflect response**: a curated summary for a stable q
 During `reflect`, Hindsight checks mental models first, then observations, then raw facts.
 That makes common project questions faster and more consistent across agent sessions.
 
-Nocciolo does not invent a second memory system.
+Orto does not invent a second memory system.
 It declares models in your version-controlled bank template, applies them to Hindsight, and helps you refresh them after seed.
 
 ## Happy path
@@ -30,22 +30,22 @@ init
 Typical commands:
 
 ```bash
-nocciolo configure --yes
-nocciolo bank apply --dry-run
-nocciolo bank apply
+orto configure --yes
+orto bank apply --dry-run
+orto bank apply
 
-nocciolo seed --dry-run
-nocciolo seed
+orto seed --dry-run
+orto seed
 
-nocciolo mental-model list
-nocciolo mental-model refresh --all
+orto mental-model list
+orto mental-model refresh --all
 
 # optional: refresh in the same seed run
-nocciolo seed --refresh-mental-models
+orto seed --refresh-mental-models
 ```
 
 **Important:** after `bank apply`, models can exist with empty content until you refresh.
-If the bank already has memories, run `nocciolo mental-model refresh --all` before expecting agents to see summaries.
+If the bank already has memories, run `orto mental-model refresh --all` before expecting agents to see summaries.
 Create/apply alone is not enough.
 
 ## Starter models
@@ -59,17 +59,17 @@ Create/apply alone is not enough.
 | `coding-standards` | Style rules and engineering practices | Manual (on demand) |
 
 Defaults use **topic-scoped** tags aligned with what `seed` already stamps (`knowledge:overview`, `knowledge:domain`, `knowledge:architecture`, `knowledge:decision`, `knowledge:standard`).
-`project-context` does **not** use the shared bank tag `nocciolo` alone (that scopes almost every memory and invites vague stack hallucinations).
+`project-context` does **not** use the shared bank tag `orto` alone (that scopes almost every memory and invites vague stack hallucinations).
 Multi-tag models set `tags_match: any` so refresh is not empty under Hindsight's default `all_strict`.
 
 You can change this at configure time:
 
 ```bash
 # Interactive (TTY): pick models, tagging mode, refresh policy
-nocciolo configure --force
+orto configure --force
 
 # Non-interactive
-nocciolo configure --yes --force \
+orto configure --yes --force \
   --models project-context,architecture-decisions,coding-standards \
   --tagging-mode topic-scoped \
   --refresh-policy differentiated
@@ -80,20 +80,20 @@ nocciolo configure --yes --force \
 | `--tagging-mode` | `topic-scoped` (default), `project-wide`, `custom` |
 | `--refresh-policy` | `differentiated` (default), `auto`, `manual` |
 
-Declarations live in `.nocciolo/hindsight/bank-template.json` and should be committed with the rest of `.nocciolo/`.
+Declarations live in `.orto/hindsight/bank-template.json` and should be committed with the rest of `.orto/`.
 
 ## Day-to-day workflow
 
 ### Keep models current
 
 1. Update durable docs (README, ADRs, standards).
-2. Retain with `nocciolo store` or `nocciolo seed`.
+2. Retain with `orto store` or `orto seed`.
 3. Refresh models when you care about the summary catching up:
 
 ```bash
-nocciolo mental-model list
-nocciolo mental-model refresh architecture-decisions
-nocciolo mental-model refresh --all
+orto mental-model list
+orto mental-model refresh architecture-decisions
+orto mental-model refresh --all
 ```
 
 Models with `refresh_after_consolidation: true` may also refresh after Hindsight consolidates new observations.
@@ -102,19 +102,19 @@ Models with `refresh_after_consolidation: true` may also refresh after Hindsight
 ### Inspect and edit
 
 ```bash
-nocciolo mental-model get coding-standards --detail content
-nocciolo mental-model tags --source memories
-nocciolo mental-model tags --source mental_models
+orto mental-model get coding-standards --detail content
+orto mental-model tags --source memories
+orto mental-model tags --source mental_models
 
-nocciolo mental-model create \
+orto mental-model create \
   --id release-checklist \
   --name "Release Checklist" \
   --source-query "What is our release checklist and non-negotiable gates?" \
   --tags knowledge:ops \
   --save-template
 
-nocciolo mental-model update coding-standards --name "Coding Standards" --save-template
-nocciolo mental-model clear coding-standards   # next refresh is a full rebuild
+orto mental-model update coding-standards --name "Coding Standards" --save-template
+orto mental-model clear coding-standards   # next refresh is a full rebuild
 ```
 
 Prefer **edit template → `bank apply` → refresh** for team-shared banks.
@@ -123,7 +123,7 @@ Use `--save-template` when you edited the live bank and want git to catch up.
 ### Preview a refresh
 
 ```bash
-nocciolo mental-model refresh coding-standards --dry-run
+orto mental-model refresh coding-standards --dry-run
 ```
 
 That calls Hindsight's dry-run-refresh (same LLM cost as a real refresh; nothing is written).
@@ -131,7 +131,7 @@ For several models, refresh one id at a time rather than `--all --dry-run`.
 
 ## How agents should use the bank
 
-Wire MCP once (`nocciolo mcp --write`, plus `--write-agents` / `--write-cursor-rules` as needed).
+Wire MCP once (`orto mcp --write`, plus `--write-agents` / `--write-cursor-rules` as needed).
 
 | Ask | Prefer |
 |-----|--------|
@@ -151,8 +151,8 @@ In the Hindsight Control Plane (default `http://localhost:9999`), open your bank
 
 ## Related
 
-- [CLI commands](./nocciolo-cli-commands.md): `configure`, `bank apply`, `seed`, `mental-model`
+- [CLI commands](./orto-cli-commands.md): `configure`, `bank apply`, `seed`, `mental-model`
 - [Developer workflow](./dev-workflow.md): first seed and re-seed
 - [Team sharing](./team-sharing.md): committing the bank template for teammates
-- [Phase 6 dogfood gaps](./phase-6-dogfood-gaps.md): lessons from the nocciolo bank pass
+- [Phase 6 dogfood gaps](./phase-6-dogfood-gaps.md): lessons from the orto bank pass
 - [Hindsight mental models (design)](./hindsight-mental-models.md): tags, wizard internals, provider boundaries

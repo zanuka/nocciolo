@@ -30,7 +30,7 @@ export const ScannerConfigSchema = z.object({
     .optional(),
 });
 
-export const NoccioloConfigSchema = z.object({
+export const OrtoConfigSchema = z.object({
   version: z.literal(1),
   name: z.string().min(1),
   provider: z.literal("hindsight"),
@@ -50,7 +50,7 @@ export type StoreConfig = z.infer<typeof StoreConfigSchema>;
 export type PriorityWeightsConfig = z.infer<typeof PriorityWeightsSchema>;
 export type JudgeConfig = z.infer<typeof JudgeConfigSchema>;
 export type ScannerConfig = z.infer<typeof ScannerConfigSchema>;
-export type NoccioloConfig = z.infer<typeof NoccioloConfigSchema>;
+export type OrtoConfig = z.infer<typeof OrtoConfigSchema>;
 
 export function createDefaultConfig(input: {
   name: string;
@@ -59,9 +59,9 @@ export function createDefaultConfig(input: {
   hindsightBaseUrl?: string;
   deploymentProfile?: DeploymentProfile;
   docker?: DockerConfig;
-}): NoccioloConfig {
+}): OrtoConfig {
   const bankId = input.bankId ?? slugify(input.name);
-  const config: NoccioloConfig = {
+  const config: OrtoConfig = {
     version: 1,
     name: input.name,
     provider: "hindsight",

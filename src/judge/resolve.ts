@@ -1,4 +1,4 @@
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { HeuristicJudge } from "./heuristic.js";
 import { isJevTransientError, JevJudge } from "./jev.js";
 import type { JevLogLevel } from "./state.js";
@@ -39,7 +39,7 @@ export function parseJudgeId(value: string | undefined): JudgeId {
   if (id === "off" || id === "heuristic" || id === "jev") {
     return id;
   }
-  throw new NoccioloError(
+  throw new OrtoError(
     `Unknown judge "${value}"`,
     "Use --judge off, --judge heuristic, or --judge jev (hosted TypeSafe, optional).",
   );
@@ -53,7 +53,7 @@ export function parseConfidence(
   }
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n) || n < 0 || n > 1) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Invalid --confidence "${value}"`,
       "Pass a number between 0 and 1 (default 0.8). See docs/jev.md.",
     );
@@ -70,7 +70,7 @@ export function resolveTypesafeApiKey(input: {
   if (cli) {
     return cli;
   }
-  const fromEnv = env.NOCCIOLO_TYPESAFE_API_KEY?.trim();
+  const fromEnv = env.ORTO_TYPESAFE_API_KEY?.trim();
   return fromEnv || undefined;
 }
 
@@ -147,9 +147,9 @@ export function createJudge(options: ResolveJudgeOptions = {}): ResolvedJudge {
   });
 
   if (!apiKey) {
-    throw new NoccioloError(
-      "Missing NOCCIOLO_TYPESAFE_API_KEY for --judge jev",
-      "Set NOCCIOLO_TYPESAFE_API_KEY, or omit --judge jev to keep offline heuristics.",
+    throw new OrtoError(
+      "Missing ORTO_TYPESAFE_API_KEY for --judge jev",
+      "Set ORTO_TYPESAFE_API_KEY, or omit --judge jev to keep offline heuristics.",
     );
   }
 

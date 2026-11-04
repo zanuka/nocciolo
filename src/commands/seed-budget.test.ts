@@ -105,9 +105,9 @@ describe("seed retain budget", () => {
   });
 
   async function tempProject(weights?: Record<string, number>): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-seed-budget-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-seed-budget-"));
     dirs.push(dir);
-    await mkdir(join(dir, ".nocciolo", "hindsight"), { recursive: true });
+    await mkdir(join(dir, ".orto", "hindsight"), { recursive: true });
     await mkdir(join(dir, "docs", "adr"), { recursive: true });
     const config: Record<string, unknown> = {
       version: 1,
@@ -121,9 +121,9 @@ describe("seed retain budget", () => {
     if (weights !== undefined) {
       config.judge = { priorityWeights: weights };
     }
-    await writeFile(join(dir, ".nocciolo", "config.json"), JSON.stringify(config), "utf8");
+    await writeFile(join(dir, ".orto", "config.json"), JSON.stringify(config), "utf8");
     await writeFile(
-      join(dir, ".nocciolo", "hindsight", "bank-template.json"),
+      join(dir, ".orto", "hindsight", "bank-template.json"),
       JSON.stringify({
         version: "1",
         bank: { retain_mission: "Hold durable decisions for Fixture." },
@@ -239,15 +239,15 @@ describe("seed retain budget", () => {
     });
 
     expect(retainedIds(mock)).toEqual([
-      "nocciolo:docs/adr/0001-local-bank.md#decision",
+      "orto:docs/adr/0001-local-bank.md#decision",
     ]);
     const first = JSON.parse(await readFile(seedManifestPath(root), "utf8")) as SeedManifest;
     expect(first.sources["docs/adr/0001-local-bank.md"]?.factIds).toEqual([
-      "nocciolo:docs/adr/0001-local-bank.md#decision",
+      "orto:docs/adr/0001-local-bank.md#decision",
     ]);
     expect(first.sources["docs/adr/0001-local-bank.md"]?.pendingFactIds).toBeUndefined();
     expect(first.sources["docs/changelog.md"]?.pendingFactIds).toEqual([
-      "nocciolo:docs/changelog.md#decision",
+      "orto:docs/changelog.md#decision",
     ]);
     expect(first.sources["docs/changelog.md"]?.factIds).toEqual([]);
 

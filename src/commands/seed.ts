@@ -129,7 +129,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
 
   if (!dryRun && !apiKey && !connection.requiresApiKey) {
     console.log(
-      "Warning: no API key resolved (NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
+      "Warning: no API key resolved (ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY / --api-key).",
     );
     console.log(
       "If your Hindsight server requires auth, retain will fail with 401.",
@@ -345,7 +345,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       bankId: config.bankId,
       items: toRetainItems(prepared.factsToRetain),
       asyncRetain,
-      retryHint: "NOCCIOLO_HINDSIGHT_API_KEY='your-key' pnpm nocciolo seed",
+      retryHint: "ORTO_HINDSIGHT_API_KEY='your-key' pnpm orto seed",
     });
     retainedIds = retainResult.retainedIds;
     failed = retainResult.failed;
@@ -371,7 +371,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
     });
     if (retainedIds.size > 0) {
       console.log(
-        "Incremental state saved under .nocciolo/local/seed-manifest.json",
+        "Incremental state saved under .orto/local/seed-manifest.json",
       );
       console.log(
         "Hindsight may still run consolidation in the background. It is safe to close the terminal after retain finishes.",
@@ -383,7 +383,7 @@ export async function runSeed(options: SeedOptions = {}): Promise<SeedResult> {
       relevance.settleEmptyPaths.length > 0
     ) {
       console.log(
-        "Recorded Jev skip(s) in .nocciolo/local/seed-manifest.json so unchanged files are not judged again.",
+        "Recorded Jev skip(s) in .orto/local/seed-manifest.json so unchanged files are not judged again.",
       );
     }
     if (relevance !== undefined && relevance.reopenPaths.length > 0) {
@@ -508,7 +508,7 @@ async function runPostSeedMentalModelRefresh(input: {
   if (!(await pathExists(templatePath))) {
     console.log("");
     console.log(
-      "Skipping --refresh-mental-models: bank template not found. Run `nocciolo configure` first.",
+      "Skipping --refresh-mental-models: bank template not found. Run `orto configure` first.",
     );
     return;
   }
@@ -626,11 +626,11 @@ function printRetainWarning(itemCount: number, asyncRetain: boolean): void {
   console.log("============================================================");
   console.log("Hindsight is processing retain requests.");
   console.log(
-    "Do not close this terminal or press Ctrl+C until Nocciolo reports completion.",
+    "Do not close this terminal or press Ctrl+C until Orto reports completion.",
   );
   if (asyncRetain) {
     console.log(
-      "Async mode: Nocciolo will poll Hindsight operation progress (processed/total when available).",
+      "Async mode: Orto will poll Hindsight operation progress (processed/total when available).",
     );
   } else {
     console.log(

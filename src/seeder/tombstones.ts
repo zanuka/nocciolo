@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { z } from "zod";
-import { noccioloDir } from "../config/paths.js";
+import { ortoDir } from "../config/paths.js";
 import { ensureDir, pathExists, readJsonFile, writeJsonFile } from "../utils/fs.js";
 
 export const TombstoneEntrySchema = z.object({
@@ -20,7 +20,7 @@ export type TombstoneEntry = z.infer<typeof TombstoneEntrySchema>;
 export type Tombstones = z.infer<typeof TombstonesSchema>;
 
 export function tombstonesPath(projectRoot: string): string {
-  return join(noccioloDir(projectRoot), "local", "tombstones.json");
+  return join(ortoDir(projectRoot), "local", "tombstones.json");
 }
 
 export function createEmptyTombstones(bankId: string): Tombstones {
@@ -49,7 +49,7 @@ export async function saveTombstones(
   tombstones: Tombstones,
 ): Promise<void> {
   const path = tombstonesPath(projectRoot);
-  await ensureDir(join(noccioloDir(projectRoot), "local"));
+  await ensureDir(join(ortoDir(projectRoot), "local"));
   await writeJsonFile(path, tombstones, false);
 }
 

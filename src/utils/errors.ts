@@ -1,10 +1,10 @@
-export class NoccioloError extends Error {
+export class OrtoError extends Error {
   readonly hint?: string;
   readonly statusCode?: number;
 
   constructor(message: string, hint?: string, statusCode?: number) {
     super(message);
-    this.name = "NoccioloError";
+    this.name = "OrtoError";
     if (hint !== undefined) {
       this.hint = hint;
     }
@@ -15,7 +15,7 @@ export class NoccioloError extends Error {
 }
 
 export function formatError(error: unknown): string {
-  if (error instanceof NoccioloError) {
+  if (error instanceof OrtoError) {
     const parts = [`Error: ${error.message}`];
     if (error.hint) {
       parts.push(`Hint: ${error.hint}`);
@@ -29,7 +29,7 @@ export function formatError(error: unknown): string {
 }
 
 export function isAuthError(error: unknown): boolean {
-  if (error instanceof NoccioloError) {
+  if (error instanceof OrtoError) {
     return error.statusCode === 401 || error.statusCode === 403;
   }
   if (error instanceof Error) {

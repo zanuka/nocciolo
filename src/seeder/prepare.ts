@@ -172,7 +172,7 @@ export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
       kind: fact.provenance.kind,
       knowledge_kind: fact.bankKind?.id ?? fact.knowledgeKind,
       title: fact.title,
-      nocciolo_fact_id: fact.id,
+      orto_fact_id: fact.id,
     };
     if (fact.provenance.commit) {
       metadata.commit = fact.provenance.commit;
@@ -192,7 +192,7 @@ export function toRetainItems(facts: CandidateFact[]): RetainItem[] {
       document_id: fact.id,
       timestamp: "unset",
       metadata,
-      tags: ["nocciolo", `kind:${fact.provenance.kind}`, ...knowledgeTags],
+      tags: ["orto", `kind:${fact.provenance.kind}`, ...knowledgeTags],
     };
   });
 }

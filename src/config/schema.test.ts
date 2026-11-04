@@ -3,23 +3,23 @@ import {
   createDefaultConfig,
   defaultVolumeName,
   normalizeResourceName,
-  NoccioloConfigSchema,
+  OrtoConfigSchema,
   slugify,
 } from "./schema.js";
 
-describe("NoccioloConfigSchema", () => {
+describe("OrtoConfigSchema", () => {
   it("accepts a valid config", () => {
     const config = createDefaultConfig({
       name: "my-app",
       root: ".",
     });
-    expect(NoccioloConfigSchema.parse(config).bankId).toBe("my-app");
+    expect(OrtoConfigSchema.parse(config).bankId).toBe("my-app");
     expect(config.root).toBe(".");
     expect(config.deploymentProfile).toBe("local");
   });
 
   it("accepts retain-budget weights", () => {
-    const parsed = NoccioloConfigSchema.parse({
+    const parsed = OrtoConfigSchema.parse({
       version: 1,
       name: "fixture",
       provider: "hindsight",
@@ -40,7 +40,7 @@ describe("NoccioloConfigSchema", () => {
   });
 
   it("accepts an optional deploymentProfile", () => {
-    const parsed = NoccioloConfigSchema.parse({
+    const parsed = OrtoConfigSchema.parse({
       version: 1,
       name: "cloud-app",
       provider: "hindsight",
@@ -70,13 +70,13 @@ describe("NoccioloConfigSchema", () => {
     });
     expect(config.bankId).toBe("acme-brain");
     expect(config.docker?.containerName).toBe("hindsight");
-    expect(NoccioloConfigSchema.parse(config).docker?.volumeName).toBe(
+    expect(OrtoConfigSchema.parse(config).docker?.volumeName).toBe(
       "hindsight-data",
     );
   });
 
   it("accepts config without docker (backward compatible)", () => {
-    const parsed = NoccioloConfigSchema.parse({
+    const parsed = OrtoConfigSchema.parse({
       version: 1,
       name: "legacy",
       provider: "hindsight",
@@ -88,7 +88,7 @@ describe("NoccioloConfigSchema", () => {
   });
 
   it("accepts an optional scanner policy", () => {
-    const parsed = NoccioloConfigSchema.parse({
+    const parsed = OrtoConfigSchema.parse({
       version: 1,
       name: "zanuka-web",
       provider: "hindsight",
@@ -109,7 +109,7 @@ describe("NoccioloConfigSchema", () => {
 
   it("rejects scanner extensions that are not dotted suffixes", () => {
     expect(() =>
-      NoccioloConfigSchema.parse({
+      OrtoConfigSchema.parse({
         version: 1,
         name: "x",
         provider: "hindsight",
@@ -123,7 +123,7 @@ describe("NoccioloConfigSchema", () => {
 
   it("rejects invalid provider", () => {
     expect(() =>
-      NoccioloConfigSchema.parse({
+      OrtoConfigSchema.parse({
         version: 1,
         name: "x",
         provider: "other",

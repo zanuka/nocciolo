@@ -516,7 +516,7 @@ export function formatRelevanceLines(input: {
     lines.push(`${prefix}bank mission: ${shown}`);
   } else {
     lines.push(
-      `${prefix}bank mission: (none). Run \`nocciolo configure\` so in_scope can use the retain mission.`,
+      `${prefix}bank mission: (none). Run \`orto configure\` so in_scope can use the retain mission.`,
     );
   }
   lines.push("");

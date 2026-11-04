@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import {
   DEFAULT_API_PORT,
   DEFAULT_UI_PORT,
@@ -88,13 +88,13 @@ const SECRET_ENV_PATTERN =
 export function normalizeVersionTag(version: string): string {
   const trimmed = version.trim();
   if (!trimmed) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Target version is empty",
       "Pass a pinned tag with --to, e.g. --to 0.9.2",
     );
   }
   if (trimmed === "latest" || trimmed.endsWith(":latest")) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Refusing to upgrade to :latest",
       "Pass a pinned image tag with --to, e.g. --to 0.9.2",
     );
@@ -234,7 +234,7 @@ export function buildVolumeTarballPlan(options: {
 export function findPg0VolumeName(mounts: DockerMountInfo[]): string {
   const match = mounts.find((m) => m.destination === PG0_MOUNT_PATH);
   if (!match?.name) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `No named volume mounted at ${PG0_MOUNT_PATH}`,
       "Confirm with `docker inspect <container> --format '{{range .Mounts}}{{.Name}} -> {{.Destination}}{{\"\\n\"}}{{end}}'`. Do not remove the volume.",
     );
@@ -264,9 +264,9 @@ export function parseDockerInspect(
   const list = Array.isArray(raw) ? raw : [raw];
   const entry = list[0] as Record<string, unknown> | undefined;
   if (!entry || typeof entry !== "object") {
-    throw new NoccioloError(
+    throw new OrtoError(
       "docker inspect returned no container",
-      "Ensure the Hindsight container exists: `nocciolo docker status`.",
+      "Ensure the Hindsight container exists: `orto docker status`.",
     );
   }
 
@@ -592,7 +592,7 @@ ${bankLines || "(none listed)"}
 ## Restore
 
 1. Prefer restoring the volume tarball onto the same named volume (do **not** \`docker volume rm\` unless you intend to wipe banks).
-2. For portable ZIP restore via Admin CLI, see [hindsight-bank-backup.md](https://github.com/nocciolo-ai/nocciolo/blob/main/docs/hindsight-bank-backup.md).
+2. For portable ZIP restore via Admin CLI, see [hindsight-bank-backup.md](https://github.com/zanuka/orto/blob/main/docs/hindsight-bank-backup.md).
 3. Recreate the container with the previous image tag and the same volume + env if rolling back an upgrade.
 
 Secrets (API keys, tokens) are not written into this README.
@@ -602,7 +602,7 @@ Secrets (API keys, tokens) are not written into this README.
 export function assertNoVolumeDeleteArgv(argv: string[]): void {
   const joined = argv.join(" ");
   if (/\bvolume\s+rm\b/.test(joined) || /\bvolume\s+remove\b/.test(joined)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Refusing to run a docker volume delete command during upgrade",
       "Upgrade must keep the named data volume. Only the container is recreated.",
     );

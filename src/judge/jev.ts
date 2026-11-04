@@ -1,4 +1,4 @@
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import {
   assertJevStateSendable,
   emitJevDispatchLogs,
@@ -40,7 +40,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function parseNoulAnswer(value: Record<string, unknown>): NoulAnswer {
   if (typeof value.noul !== "number") {
-    throw new NoccioloError(
+    throw new OrtoError(
       "TypeSafe returned an invalid noul answer",
       "Retry with --judge heuristic, or report a bug if this persists.",
     );
@@ -54,7 +54,7 @@ function parseChoiceAnswer(value: Record<string, unknown>): ChoiceAnswer {
     !isRecord(value.probabilities) ||
     typeof value.confidence !== "number"
   ) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "TypeSafe returned an invalid choice answer",
       "Retry with --judge heuristic, or report a bug if this persists.",
     );
@@ -62,7 +62,7 @@ function parseChoiceAnswer(value: Record<string, unknown>): ChoiceAnswer {
   const probabilities: Record<string, number> = {};
   for (const [key, prob] of Object.entries(value.probabilities)) {
     if (typeof prob !== "number") {
-      throw new NoccioloError(
+      throw new OrtoError(
         "TypeSafe returned an invalid choice answer",
         "Retry with --judge heuristic, or report a bug if this persists.",
       );
@@ -84,7 +84,7 @@ function parseScoreAnswer(value: Record<string, unknown>): ScoreAnswer {
     !isRecord(value.probabilities) ||
     typeof value.confidence !== "number"
   ) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "TypeSafe returned an invalid score answer",
       "Retry with --judge heuristic, or report a bug if this persists.",
     );
@@ -92,7 +92,7 @@ function parseScoreAnswer(value: Record<string, unknown>): ScoreAnswer {
   const legend: Record<string, string> = {};
   for (const [key, label] of Object.entries(value.legend)) {
     if (typeof label !== "string") {
-      throw new NoccioloError(
+      throw new OrtoError(
         "TypeSafe returned an invalid score answer",
         "Retry with --judge heuristic, or report a bug if this persists.",
       );
@@ -102,7 +102,7 @@ function parseScoreAnswer(value: Record<string, unknown>): ScoreAnswer {
   const probabilities: Record<string, number> = {};
   for (const [key, prob] of Object.entries(value.probabilities)) {
     if (typeof prob !== "number") {
-      throw new NoccioloError(
+      throw new OrtoError(
         "TypeSafe returned an invalid score answer",
         "Retry with --judge heuristic, or report a bug if this persists.",
       );
@@ -120,7 +120,7 @@ function parseScoreAnswer(value: Record<string, unknown>): ScoreAnswer {
 
 function parseAnswer(value: unknown): JudgeAnswer {
   if (!isRecord(value) || typeof value.type !== "string") {
-    throw new NoccioloError(
+    throw new OrtoError(
       "TypeSafe returned an invalid answer",
       "Retry with --judge heuristic, or report a bug if this persists.",
     );
@@ -133,7 +133,7 @@ function parseAnswer(value: unknown): JudgeAnswer {
     case "score":
       return parseScoreAnswer(value);
     default:
-      throw new NoccioloError(
+      throw new OrtoError(
         `TypeSafe returned unsupported answer type "${value.type}"`,
         "Retry with --judge heuristic, or report a bug if this persists.",
       );
@@ -168,7 +168,7 @@ function toRequestQuestion(question: JudgeQuestion): Record<string, unknown> {
 }
 
 export function isJevTransientError(error: unknown): boolean {
-  if (error instanceof NoccioloError) {
+  if (error instanceof OrtoError) {
     const status = error.statusCode;
     return (
       status === 429 ||
@@ -257,12 +257,12 @@ export class JevJudge implements Judge {
       });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        throw new NoccioloError(
+        throw new OrtoError(
           `TypeSafe request timed out after ${this.timeoutMs}ms`,
           "Retry later, or omit --judge jev to keep offline heuristics.",
         );
       }
-      throw new NoccioloError(
+      throw new OrtoError(
         `TypeSafe request failed: ${error instanceof Error ? error.message : String(error)}`,
         "Check network access to api.typesafe.ai, or omit --judge jev to keep offline heuristics.",
       );
@@ -272,7 +272,7 @@ export class JevJudge implements Judge {
 
     const text = await response.text();
     if (!response.ok) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `TypeSafe API error ${response.status}`,
         text.trim() ||
           "Retry later, or omit --judge jev to keep offline heuristics.",
@@ -284,14 +284,14 @@ export class JevJudge implements Judge {
     try {
       body = JSON.parse(text) as SystemOneResponseBody;
     } catch {
-      throw new NoccioloError(
+      throw new OrtoError(
         "TypeSafe returned non-JSON",
         "Retry with --judge heuristic, or report a bug if this persists.",
       );
     }
 
     if (!isRecord(body.answers)) {
-      throw new NoccioloError(
+      throw new OrtoError(
         "TypeSafe response missing answers",
         "Retry with --judge heuristic, or report a bug if this persists.",
       );
@@ -300,7 +300,7 @@ export class JevJudge implements Judge {
     const answers: Record<string, JudgeAnswer> = {};
     for (const key of Object.keys(input.questions)) {
       if (!(key in body.answers)) {
-        throw new NoccioloError(
+        throw new OrtoError(
           `TypeSafe response missing answer for "${key}"`,
           "Retry with --judge heuristic, or report a bug if this persists.",
         );

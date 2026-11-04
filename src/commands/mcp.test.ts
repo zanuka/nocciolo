@@ -26,10 +26,10 @@ describe("runMcp --write-firstmate", () => {
   }
 
   async function tempProject(): Promise<string> {
-    const root = await tempDir("nocciolo-mcp-project-");
-    await mkdir(join(root, ".nocciolo"), { recursive: true });
+    const root = await tempDir("orto-mcp-project-");
+    await mkdir(join(root, ".orto"), { recursive: true });
     await writeFile(
-      join(root, ".nocciolo", "config.json"),
+      join(root, ".orto", "config.json"),
       JSON.stringify({
         version: 1,
         name: "fixture",
@@ -58,7 +58,7 @@ describe("runMcp --write-firstmate", () => {
   });
 
   it("writes the skill file and registry entry under FM_HOME", async () => {
-    const fmHome = await tempDir("nocciolo-fm-home-");
+    const fmHome = await tempDir("orto-fm-home-");
     process.env.FM_HOME = fmHome;
     const root = await tempProject();
 
@@ -74,7 +74,7 @@ describe("runMcp --write-firstmate", () => {
     expect(skill).toContain("project-bank");
     expect(skill).toContain("recall");
 
-    const registryPath = join(fmHome, ".nocciolo", "projects.json");
+    const registryPath = join(fmHome, ".orto", "projects.json");
     const registry = JSON.parse(await readFile(registryPath, "utf8")) as {
       projects: Record<string, { bankId: string; hindsightBaseUrl?: string }>;
     };
@@ -82,7 +82,7 @@ describe("runMcp --write-firstmate", () => {
   });
 
   it("dry-run previews without writing", async () => {
-    const fmHome = await tempDir("nocciolo-fm-home-");
+    const fmHome = await tempDir("orto-fm-home-");
     process.env.FM_HOME = fmHome;
     const root = await tempProject();
 
@@ -101,7 +101,7 @@ describe("runMcp --write-firstmate", () => {
   });
 
   it("does not write into the product repo tree", async () => {
-    const fmHome = await tempDir("nocciolo-fm-home-");
+    const fmHome = await tempDir("orto-fm-home-");
     process.env.FM_HOME = fmHome;
     const root = await tempProject();
 

@@ -5,7 +5,7 @@ On-demand Firstmate skill, not an always-on persona. First mate does not write p
 ## When to use
 
 Before spawning a crewmate on a project that has a Hindsight bank registered
-in `$FM_HOME/.nocciolo/projects.json` (or `~/.nocciolo/projects.json`).
+in `$FM_HOME/.orto/projects.json` (or `~/.orto/projects.json`).
 
 ## What it does
 
@@ -28,7 +28,7 @@ in `$FM_HOME/.nocciolo/projects.json` (or `~/.nocciolo/projects.json`).
 
 ## When durable project markdown changes
 
-The captain runs `nocciolo store --dry-run` in the durable clone (never in a
+The captain runs `orto store --dry-run` in the durable clone (never in a
 worktree), reviews the known/new/changed/unchanged buckets, then retains only
 after picking files. This skill does not do that step; it only reads the
 registry to build the bank card.
@@ -39,11 +39,11 @@ This is a repo copy for reference. To install it for real, run from the
 product repo:
 
 ```bash
-nocciolo mcp --harness firstmate --write-firstmate
+orto mcp --harness firstmate --write-firstmate
 ```
 
 This writes `$FM_HOME/.agents/skills/project-bank/SKILL.md` and records this
-project's `bankId` + `hindsightBaseUrl` in `$FM_HOME/.nocciolo/projects.json`
-(fallback `~/.nocciolo/projects.json` when `$FM_HOME` is unset). When
+project's `bankId` + `hindsightBaseUrl` in `$FM_HOME/.orto/projects.json`
+(fallback `~/.orto/projects.json` when `$FM_HOME` is unset). When
 `$FM_HOME` is not set, the command prints these install steps instead of
 writing anything.

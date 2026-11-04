@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "hindsight": {
-      "url": "http://localhost:8888/mcp/nocciolo/",
+      "url": "http://localhost:8888/mcp/orto/",
       "headers": {
-        "Authorization": "Bearer ${env:NOCCIOLO_HINDSIGHT_API_KEY}"
+        "Authorization": "Bearer ${env:ORTO_HINDSIGHT_API_KEY}"
       }
     }
   }

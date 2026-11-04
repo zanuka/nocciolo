@@ -26,7 +26,7 @@ import {
   installFirstmateProjectBank,
   type InstallProjectBankSkillResult,
 } from "../integration/project-bank-skill.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export interface McpOptions {
   cwd?: string;
@@ -81,7 +81,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
     !writeKiro &&
     !writeFirstmate
   ) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "--dry-run only applies when writing files",
       "Use --write, --write-agents, --write-cursor-rules, --write-roo, --write-kiro, and/or --write-firstmate with --dry-run to preview.",
     );
@@ -91,7 +91,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
   try {
     harnesses = parseHarnessList(options.harness);
   } catch (error) {
-    throw new NoccioloError(
+    throw new OrtoError(
       error instanceof Error ? error.message : String(error),
       `Pass --harness cursor,claude-code or omit for all.`,
     );
@@ -146,7 +146,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
   if (write) {
     const cursor = writeSnippets.find((s) => s.harness === "cursor");
     if (!cursor) {
-      throw new NoccioloError("Internal error: missing Cursor snippet");
+      throw new OrtoError("Internal error: missing Cursor snippet");
     }
     writes.push(
       await writeMergedMcpJson(cursorMcpPath(projectRoot), cursor, {
@@ -159,7 +159,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
   if (writeRoo) {
     const roo = writeSnippets.find((s) => s.harness === "roo");
     if (!roo) {
-      throw new NoccioloError("Internal error: missing Roo snippet");
+      throw new OrtoError("Internal error: missing Roo snippet");
     }
     writes.push(
       await writeMergedMcpJson(rooMcpPath(projectRoot), roo, {
@@ -172,7 +172,7 @@ export async function runMcp(options: McpOptions = {}): Promise<McpResult> {
   if (writeKiro) {
     const kiro = writeSnippets.find((s) => s.harness === "kiro");
     if (!kiro) {
-      throw new NoccioloError("Internal error: missing Kiro snippet");
+      throw new OrtoError("Internal error: missing Kiro snippet");
     }
     writes.push(
       await writeMergedMcpJson(kiroMcpPath(projectRoot), kiro, {
@@ -282,7 +282,7 @@ export function printMcpResult(result: McpResult): void {
       console.log(
         `  # then record { "${result.projectRoot}": { "bankId": "${result.bankId}", "hindsightBaseUrl": "${result.baseUrl}" } }`,
       );
-      console.log(`  # under "projects" in $FM_HOME/.nocciolo/projects.json`);
+      console.log(`  # under "projects" in $FM_HOME/.orto/projects.json`);
     } else {
       const verb = result.dryRun ? "Would write" : "Wrote";
       console.log(`${prefix}${verb}: ${skill.skillPath}`);
@@ -302,7 +302,7 @@ export function printMcpResult(result: McpResult): void {
     }
   } else if (!result.firstmateSkill && !result.check) {
     console.log(
-      "Tip: `nocciolo mcp --write` writes .cursor/mcp.json; add --write-agents / --write-cursor-rules for agent preference text.",
+      "Tip: `orto mcp --write` writes .cursor/mcp.json; add --write-agents / --write-cursor-rules for agent preference text.",
     );
     console.log(
       "Use --include-auth to add Authorization headers (env placeholders when writing files).",

@@ -1,13 +1,13 @@
 # Jev integration
 
-[Jev](https://docs.typesafe.ai/introduction) (TypeSafe System One) is an opt-in judge for decisions Nocciolo still makes with heuristics. Nocciolo already scans a repo, hashes what it keeps, and retains that into a Hindsight bank. The open question is which of that work is worth retaining, what is stale, what should go first, and when a person should step in. Jev takes a small slice of that state and returns a typed answer with a confidence score. Nocciolo keeps the side effects.
+[Jev](https://docs.typesafe.ai/introduction) (TypeSafe System One) is an opt-in judge for decisions Orto still makes with heuristics. Orto already scans a repo, hashes what it keeps, and retains that into a Hindsight bank. The open question is which of that work is worth retaining, what is stale, what should go first, and when a person should step in. Jev takes a small slice of that state and returns a typed answer with a confidence score. Orto keeps the side effects.
 
 Product rule (judge, not backend): [jev.md](./jev.md).
 Store and update flow diagrams: [jev-diagrams.md](./jev-diagrams.md).
 
-The seed relevance gate is available: `nocciolo seed --dry-run --judge jev` ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
-Section-level keep/skip is part of that command ([JEV-5](https://github.com/zanuka/nocciolo/issues/36)).
-Each `nocciolo:<path>#<section>` is its own row.
+The seed relevance gate is available: `orto seed --dry-run --judge jev` ([JEV-4](https://github.com/zanuka/orto/issues/30)).
+Section-level keep/skip is part of that command ([JEV-5](https://github.com/zanuka/orto/issues/36)).
+Each `orto:<path>#<section>` is its own row.
 A README can retain an architecture section and skip a changelog section in one seed.
 Headings the heuristic would drop, such as changelog, table of contents, and badges, are still judged when `--judge jev` is on.
 Without the flag, those headings stay out of retain.
@@ -16,8 +16,8 @@ The rest of this page describes the wider layer that is still planned.
 This is planned work:
 
 - [Phase 7](../ROADMAP.md) on the roadmap
-- [JEV-0](https://github.com/zanuka/nocciolo/issues/58), the epic
-- the open [`jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev)
+- [JEV-0](https://github.com/zanuka/orto/issues/58), the epic
+- the open [`jev` issues](https://github.com/zanuka/orto/issues?q=is%3Aissue+is%3Aopen+label%3Ajev)
 
 ## Why
 
@@ -46,7 +46,7 @@ The same pass can score the generated mission and directives, and can propose me
 
 You confirm before anything is retained.
 
-**Remove knowledge that is no longer true.** `seed` and `store` add or upsert. Months later a doc can be irrelevant, a path can be gone, or a section can contradict the current tree. `nocciolo prune` groups those cases and asks you to choose:
+**Remove knowledge that is no longer true.** `seed` and `store` add or upsert. Months later a doc can be irrelevant, a path can be gone, or a section can contradict the current tree. `orto prune` groups those cases and asks you to choose:
 
 - source path no longer in the repo
 - section no longer in the file
@@ -56,7 +56,7 @@ You confirm before anything is retained.
 Jev annotates that prompt with a choice and a confidence score.
 A low score is shown and left unchecked.
 `--dry-run` prints the groups and does not delete.
-After you confirm, Nocciolo invalidates or deletes the chosen documents and tombstones them so the next `seed` or `store` does not put the same unchanged text back.
+After you confirm, Orto invalidates or deletes the chosen documents and tombstones them so the next `seed` or `store` does not put the same unchanged text back.
 A mental-model refresh can be recommended in the same run and is its own confirmation.
 Path-gone and section-gone groups work with no TypeSafe key.
 
@@ -76,19 +76,19 @@ A low score goes to the captain instead of a silent apply.
 
 **Leave the default path local.**
 
-- With no `NOCCIOLO_TYPESAFE_API_KEY` and no `--judge jev`, the CLI behaves as it does today and makes no TypeSafe call.
+- With no `ORTO_TYPESAFE_API_KEY` and no `--judge jev`, the CLI behaves as it does today and makes no TypeSafe call.
 - A golden-set judge can score the offline heuristics so that default keep/skip improves for runs that never enable Jev.
-- A public or Cloud share still waits on a safety check in Nocciolo before anything is exposed.
+- A public or Cloud share still waits on a safety check in Orto before anything is exposed.
 
 ## Where it sits
 
-Solid arrows are actions Nocciolo owns.
-`nocciolo prune` path-gone / section-gone / explicit delete is in the CLI.
+Solid arrows are actions Orto owns.
+`orto prune` path-gone / section-gone / explicit delete is in the CLI.
 The dotted Jev annotation into prune is planned and not shipped yet.
 Dotted arrows exist only with `--judge jev`.
 Jev never stores the bank and never writes the repo.
 It returns a typed choice and a confidence score.
-Nocciolo retains, refuses, reranks, or applies after that, and a low score waits for you.
+Orto retains, refuses, reranks, or applies after that, and a low score waits for you.
 
 ```mermaid
 flowchart TD
@@ -100,7 +100,7 @@ flowchart TD
   bank["Hindsight bank"]
   read["Recall and reflect"]
   agents["Agents and Firstmate"]
-  prune["nocciolo prune after you confirm"]
+  prune["orto prune after you confirm"]
 
   subgraph judge ["Opt-in judge"]
     jev["Jev"]

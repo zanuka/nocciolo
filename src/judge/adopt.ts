@@ -155,7 +155,7 @@ export function formatAdoptLines(input: {
 function shouldAdoptQuestion(): NoulQuestion {
   return {
     type: "noul",
-    instructions: "Is this a durable source Nocciolo should keep in the store allowlist?",
+    instructions: "Is this a durable source Orto should keep in the store allowlist?",
     criteria: {
       true: "An ADR, architecture doc, standard, or other durable project source that belongs on the store allowlist.",
       false: "A dependency readme, scratch notes, generated markdown, or other file that should not join the allowlist.",

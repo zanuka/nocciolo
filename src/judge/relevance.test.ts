@@ -277,7 +277,7 @@ describe("judgeSeedRelevance", () => {
     const rows = await judgeSeedRelevance({
       facts: [
         fact({
-          id: "nocciolo:docs/adr/0001-local-bank.md#document",
+          id: "orto:docs/adr/0001-local-bank.md#document",
           path: "docs/adr/0001-local-bank.md",
           title: "ADR 0001: Keep the bank local",
           content: ADR_TEXT,
@@ -321,7 +321,7 @@ describe("judgeSeedRelevance", () => {
     const rows = await judgeSeedRelevance({
       facts: [
         fact({
-          id: "nocciolo:docs/adr/0002.md#document",
+          id: "orto:docs/adr/0002.md#document",
           path: "docs/adr/0002.md",
           title: "Decision",
           content: `Keep the bank local.\n\n-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0123456789abcdef\n-----END RSA PRIVATE KEY-----\n\nsk-test-abcdefghijklmnopqrstuvwxyz`,
@@ -355,13 +355,13 @@ describe("judgeSeedRelevance", () => {
       },
     };
     const kept = fact({
-      id: "nocciolo:README.md#architecture",
+      id: "orto:README.md#architecture",
       path: "README.md",
       title: "Architecture",
       content: ADR_TEXT,
     });
     const skipped = fact({
-      id: "nocciolo:README.md#changelog",
+      id: "orto:README.md#changelog",
       path: "README.md",
       title: "Changelog",
       content: CHANGELOG_TEXT,
@@ -374,8 +374,8 @@ describe("judgeSeedRelevance", () => {
     });
     expect(calls).toBe(1);
     expect(rows.map((row) => [row.fact.id, row.action])).toEqual([
-      ["nocciolo:README.md#architecture", "retain"],
-      ["nocciolo:README.md#changelog", "skip"],
+      ["orto:README.md#architecture", "retain"],
+      ["orto:README.md#changelog", "skip"],
     ]);
     expect(rows[1]?.reason).toMatch(/heuristic skip/);
   });
@@ -395,13 +395,13 @@ describe("judgeSeedRelevance", () => {
       },
     };
     const architecture = fact({
-      id: "nocciolo:README.md#architecture",
+      id: "orto:README.md#architecture",
       path: "README.md",
       title: "Architecture",
       content: ADR_TEXT,
     });
     const changelog = fact({
-      id: "nocciolo:README.md#changelog",
+      id: "orto:README.md#changelog",
       path: "README.md",
       title: "Changelog",
       content: CHANGELOG_TEXT,
@@ -433,11 +433,11 @@ describe("judgeSeedRelevance", () => {
     };
     const applied = applyRelevanceRows(prepared, rows);
     expect(rows.map((row) => [row.fact.id, row.action, row.heuristicVsJev])).toEqual([
-      ["nocciolo:README.md#architecture", "retain", "agree"],
-      ["nocciolo:README.md#changelog", "skip", "agree"],
+      ["orto:README.md#architecture", "retain", "agree"],
+      ["orto:README.md#changelog", "skip", "agree"],
     ]);
     expect(applied.prepared.factsToRetain.map((item) => item.id)).toEqual([
-      "nocciolo:README.md#architecture",
+      "orto:README.md#architecture",
     ]);
     expect(applied.prepared.sources[0]?.heuristicSkips).toEqual([]);
     expect(applied.settleEmptyPaths).toEqual([]);
@@ -456,7 +456,7 @@ describe("judgeSeedRelevance", () => {
       },
     };
     const changelog = fact({
-      id: "nocciolo:README.md#changelog",
+      id: "orto:README.md#changelog",
       path: "README.md",
       title: "Changelog",
       content: ADR_TEXT,
@@ -490,10 +490,10 @@ describe("judgeSeedRelevance", () => {
     expect(rows[0]?.heuristicVsJev).toBe("disagree");
     expect(rows[0]?.heuristicKept).toBe(false);
     expect(applied.prepared.factsToRetain.map((item) => item.id)).toEqual([
-      "nocciolo:README.md#changelog",
+      "orto:README.md#changelog",
     ]);
     expect(applied.prepared.sources[0]?.facts.map((item) => item.id)).toEqual([
-      "nocciolo:README.md#changelog",
+      "orto:README.md#changelog",
     ]);
   });
 });
@@ -515,7 +515,7 @@ describe("knowledge kind on the relevance call", () => {
       rows: [
         {
           fact: fact({
-            id: "nocciolo:docs/adr/0001-local-bank.md#document",
+            id: "orto:docs/adr/0001-local-bank.md#document",
             path: "docs/adr/0001-local-bank.md",
             title: "ADR 0001",
             content: ADR_TEXT,
@@ -601,7 +601,7 @@ describe("knowledge kind on the relevance call", () => {
       0.8,
     );
     const architecture = fact({
-      id: "nocciolo:README.md#architecture",
+      id: "orto:README.md#architecture",
       path: "README.md",
       title: "Architecture",
       content: ADR_TEXT,
@@ -632,7 +632,7 @@ describe("knowledge kind on the relevance call", () => {
       tags: ["knowledge:architecture"],
     });
     expect(applied.prepared.factsToRetain[0]?.id).toBe(
-      "nocciolo:README.md#architecture",
+      "orto:README.md#architecture",
     );
   });
 });
@@ -669,7 +669,7 @@ function relationAnswer(
 
 function postgresFact(): CandidateFact {
   return fact({
-    id: "nocciolo:docs/adr/0008-postgres.md#decision",
+    id: "orto:docs/adr/0008-postgres.md#decision",
     path: "docs/adr/0008-postgres.md",
     title: "ADR 0008: Use Postgres",
     content: POSTGRES_ADR,
@@ -711,7 +711,7 @@ describe("contradiction check against observations", () => {
       ]);
       expect(items).toHaveLength(1);
       expect(items[0]?.document_id).toBe(
-        "nocciolo:docs/adr/0008-postgres.md#decision",
+        "orto:docs/adr/0008-postgres.md#decision",
       );
       expect(items[0]?.metadata[relation]).toBe("obs-mysql");
       expect(POSTGRES_ADR).toMatch(/We use Postgres/);
@@ -933,7 +933,7 @@ describe("secret and personal-data second pass", () => {
       rows: [
         {
           fact: fact({
-            id: "nocciolo:docs/adr/0001.md#decision",
+            id: "orto:docs/adr/0001.md#decision",
             path: "docs/adr/0001.md",
             title: "Decision",
             content: `We use Postgres.\n${secret}`,

@@ -138,12 +138,12 @@ describe("seed relevance gate", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-seed-jev-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-seed-jev-"));
     dirs.push(dir);
-    await mkdir(join(dir, ".nocciolo", "hindsight"), { recursive: true });
+    await mkdir(join(dir, ".orto", "hindsight"), { recursive: true });
     await mkdir(join(dir, "docs", "adr"), { recursive: true });
     await writeFile(
-      join(dir, ".nocciolo", "config.json"),
+      join(dir, ".orto", "config.json"),
       JSON.stringify({
         version: 1,
         name: "fixture",
@@ -156,7 +156,7 @@ describe("seed relevance gate", () => {
       "utf8",
     );
     await writeFile(
-      join(dir, ".nocciolo", "hindsight", "bank-template.json"),
+      join(dir, ".orto", "hindsight", "bank-template.json"),
       JSON.stringify({
         version: "1",
         bank: { retain_mission: "Hold durable decisions for Fixture." },
@@ -318,10 +318,10 @@ describe("seed relevance gate", () => {
       item.document_id.includes("docs/adr/0001-local-bank.md#"),
     );
     expect(adr?.document_id).toBe(
-      "nocciolo:docs/adr/0001-local-bank.md#decision",
+      "orto:docs/adr/0001-local-bank.md#decision",
     );
     expect(adr?.document_id).not.toContain("knowledge:");
-    expect(adr?.tags).toEqual(["nocciolo", "kind:docs", "knowledge:adr"]);
+    expect(adr?.tags).toEqual(["orto", "kind:docs", "knowledge:adr"]);
     expect(adr?.metadata.knowledge_kind).toBe("adr");
   });
 
@@ -347,7 +347,7 @@ describe("seed relevance gate", () => {
     const adr = retainedItems(client).find((item) =>
       item.document_id.includes("docs/adr/0001-local-bank.md#"),
     );
-    expect(adr?.tags).toEqual(["nocciolo", "kind:docs", "knowledge:domain"]);
+    expect(adr?.tags).toEqual(["orto", "kind:docs", "knowledge:domain"]);
     expect(adr?.tags).not.toContain("knowledge:adr");
     expect(adr?.metadata.knowledge_kind).toBe("domain");
   });
@@ -378,15 +378,15 @@ describe("seed relevance gate", () => {
         (row) => row.fact.provenance.sourcePath === "README.md",
       ) ?? [];
     expect(readmeRows.map((row) => [row.fact.id, row.action])).toEqual([
-      ["nocciolo:README.md#architecture", "retain"],
-      ["nocciolo:README.md#changelog", "skip"],
+      ["orto:README.md#architecture", "retain"],
+      ["orto:README.md#changelog", "skip"],
     ]);
-    expect(output).toContain("document_id: nocciolo:README.md#architecture");
-    expect(output).toContain("document_id: nocciolo:README.md#changelog");
+    expect(output).toContain("document_id: orto:README.md#architecture");
+    expect(output).toContain("document_id: orto:README.md#changelog");
     expect(output).toContain("heading: Architecture");
     expect(output).toContain("heading: Changelog");
     expect(output).toMatch(
-      /document_id: nocciolo:README.md#changelog[\s\S]*?heuristic: skip/,
+      /document_id: orto:README.md#changelog[\s\S]*?heuristic: skip/,
     );
 
     const readmeCalls = judge.calls.filter((call) => {
@@ -408,8 +408,8 @@ describe("seed relevance gate", () => {
     expect(changelog.text).not.toMatch(/local-first/);
 
     const ids = result.prepared.factsToRetain.map((fact) => fact.id);
-    expect(ids).toContain("nocciolo:README.md#architecture");
-    expect(ids).not.toContain("nocciolo:README.md#changelog");
+    expect(ids).toContain("orto:README.md#architecture");
+    expect(ids).not.toContain("orto:README.md#changelog");
   });
 
   it("live seed retains the README architecture section and skips its changelog section", async () => {
@@ -433,10 +433,10 @@ describe("seed relevance gate", () => {
     });
 
     const ids = retainedIds(client);
-    expect(ids).toContain("nocciolo:README.md#architecture");
-    expect(ids).not.toContain("nocciolo:README.md#changelog");
+    expect(ids).toContain("orto:README.md#architecture");
+    expect(ids).not.toContain("orto:README.md#changelog");
     expect(
-      result.relevance?.rows.find((row) => row.fact.id === "nocciolo:README.md#changelog")
+      result.relevance?.rows.find((row) => row.fact.id === "orto:README.md#changelog")
         ?.action,
     ).toBe("skip");
 
@@ -444,10 +444,10 @@ describe("seed relevance gate", () => {
       sources: Record<string, { factIds: string[] }>;
     };
     expect(manifest.sources["README.md"]?.factIds).toContain(
-      "nocciolo:README.md#architecture",
+      "orto:README.md#architecture",
     );
     expect(manifest.sources["README.md"]?.factIds ?? []).not.toContain(
-      "nocciolo:README.md#changelog",
+      "orto:README.md#changelog",
     );
   });
 
@@ -465,8 +465,8 @@ describe("seed relevance gate", () => {
 
     const ids = retainedIds(client);
     expect(result.relevance).toBeUndefined();
-    expect(ids).toContain("nocciolo:README.md#architecture");
-    expect(ids).not.toContain("nocciolo:README.md#changelog");
+    expect(ids).toContain("orto:README.md#architecture");
+    expect(ids).not.toContain("orto:README.md#changelog");
   });
 
   it("skips style preferences and holds an uncertain kind out of retain", async () => {

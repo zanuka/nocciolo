@@ -17,8 +17,8 @@ export type CaptainRegistry = z.infer<typeof CaptainRegistrySchema>;
 
 /**
  * Firstmate's home for this machine: $FM_HOME when set, else the product
- * repo falls back to ~/.nocciolo/projects.json so the mapping still has
- * somewhere durable to live. Nocciolo never invents FM_HOME; it only reads
+ * repo falls back to ~/.orto/projects.json so the mapping still has
+ * somewhere durable to live. Orto never invents FM_HOME; it only reads
  * the env var Firstmate sets.
  */
 export function captainHomeDir(): string | undefined {
@@ -29,7 +29,7 @@ export function captainHomeDir(): string | undefined {
 export function captainRegistryPath(): string {
   const fmHome = captainHomeDir();
   const base = fmHome ?? homedir();
-  return join(base, ".nocciolo", "projects.json");
+  return join(base, ".orto", "projects.json");
 }
 
 export async function loadCaptainRegistry(): Promise<CaptainRegistry> {
@@ -63,7 +63,7 @@ export async function saveCaptainRegistryEntry(
  * Matches a disposable worktree to its durable clone entry in the captain
  * registry by directory basename (repo name) — worktree pool paths keep the
  * repo's own name as their last path segment, so this is a reliable, cheap
- * heuristic without needing the worktree to carry any Nocciolo state itself.
+ * heuristic without needing the worktree to carry any Orto state itself.
  */
 export function findDurableProjectForWorktree(
   worktreeRoot: string,

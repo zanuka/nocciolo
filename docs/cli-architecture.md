@@ -1,10 +1,10 @@
-# Nocciolo CLI Architecture
+# Orto CLI Architecture
 
 Contributor guide to how the CLI is structured and how the main commands work. Read this alongside [AGENTS.md](../AGENTS.md) and [ROADMAP.md](../ROADMAP.md).
 
 ## Mental model
 
-Nocciolo turns **durable project knowledge** already in a repo into a configured [Hindsight](https://hindsight.vectorize.io) memory bank so coding agents inherit shared context.
+Orto turns **durable project knowledge** already in a repo into a configured [Hindsight](https://hindsight.vectorize.io) memory bank so coding agents inherit shared context.
 
 It is **not** a general multi-agent orchestrator. It is a local-first config + curation CLI with clear stage boundaries:
 
@@ -44,7 +44,7 @@ flowchart LR
   end
 
   subgraph disk [Project files]
-    noccioloDir[".nocciolo/"]
+    ortoDir[".orto/"]
     sources[README docs ADRs AGENTS]
     agentFiles[".cursor mcp AGENTS rules"]
   end
@@ -53,16 +53,16 @@ flowchart LR
     bank[Memory bank]
   end
 
-  initCmd --> project --> config --> noccioloDir
+  initCmd --> project --> config --> ortoDir
   configureCmd --> config
-  configureCmd --> template --> noccioloDir
+  configureCmd --> template --> ortoDir
   seedCmd --> scanner --> sources
   storeCmd --> scanner
   scanner --> extractor
   extractor --> seeder
   seeder -->|dry-run| seedCmd
   seeder -->|live retain| client --> bank
-  seeder --> noccioloDir
+  seeder --> ortoDir
   pruneCmd --> seeder
   pruneCmd -->|list delete docs| client
   dockerCmd --> dockerHelper
@@ -76,7 +76,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-  start[nocciolo seed] --> loadCfg[Load .nocciolo/config.json]
+  start[orto seed] --> loadCfg[Load .orto/config.json]
   loadCfg --> findSources[Scan durable sources]
   findSources --> extract[Extract candidate facts]
   extract --> hashCheck{Content hash unchanged?}
@@ -89,7 +89,7 @@ flowchart TD
   relevance --> dry
   dry -->|yes| preview[Print candidates plus provenance]
   dry -->|no| retain[POST /v1/default/banks/id/memories]
-  retain --> manifest[Write .nocciolo/local/seed-manifest.json]
+  retain --> manifest[Write .orto/local/seed-manifest.json]
 ```
 
 ## Source layout
@@ -99,7 +99,7 @@ flowchart TD
 | `src/cli.ts` | Commander entry: wires commands and flags |
 | `src/commands/` | Command orchestration + user-facing output |
 | `src/project/` | Project root detection, git commit lookup, worktree detection, captain-home registry |
-| `src/config/` | Paths, Zod schema, load/save `.nocciolo/config.json` + `share.json`, deployment profiles, connection resolution |
+| `src/config/` | Paths, Zod schema, load/save `.orto/config.json` + `share.json`, deployment profiles, connection resolution |
 | `src/scanner/` | Find durable docs (default README, docs/**, ADRs, or `scanner.include` / `exclude` / `extensions`); skip `AGENTS.md`; `store`'s stricter denylist |
 | `src/extractor/` | Conservative heuristics → candidate facts + provenance |
 | `src/providers/hindsight/` | Bank template, mental-model helpers, HTTP retain / list / delete / bank-apply / mental-model client |
@@ -131,10 +131,10 @@ node dist/cli.js mcp --write --dry-run
 
 | Command | What it does |
 |---------|----------------|
-| `init` | Detect project root; prompt (or flags) for bank id + Docker container; write `.nocciolo/config.json` |
-| `configure` | Generate Hindsight bank template under `.nocciolo/hindsight/`; optional `--apply` |
+| `init` | Detect project root; prompt (or flags) for bank id + Docker container; write `.orto/config.json` |
+| `configure` | Generate Hindsight bank template under `.orto/hindsight/`; optional `--apply` |
 | `bank apply` | Create/update bank + directives + mental models from the template (`--dry-run`) |
-| `share` | Write/validate `.nocciolo/share.json` deployment profile (local/LAN/VPN/public/cloud) |
+| `share` | Write/validate `.orto/share.json` deployment profile (local/LAN/VPN/public/cloud) |
 | `docs list` | Flat bank document inventory for scripts |
 | `docker` | Print or run a local Hindsight container (`up` / `down` / `status` / `print` / `upgrade`); skipped under Cloud profile |
 | `seed --dry-run` | Scan + extract; print candidates; no retain. `--judge jev` prints the relevance gate, calls TypeSafe, and may recall up to 5 observation summaries and preview extracted facts (both read-only). `--budget N` prints the ranked queue and a cutoff |
@@ -142,7 +142,7 @@ node dist/cli.js mcp --write --dry-run
 | `store --dry-run` | Print known/new/changed/unchanged buckets for allowlisted + discovered markdown; **no** API calls |
 | `store` | Retain an operator-selected subset (allowlist, `--files`, or interactive pick) via the same seed retain path. `--propose-adopt --judge jev` prints new files to consider; `--apply` writes those paths and does not retain |
 | `prune --dry-run` | List path-gone / section-gone / explicit candidates (read-only document list); no deletes |
-| `prune` | Delete selected bank documents; write local tombstones under `.nocciolo/local/` |
+| `prune` | Delete selected bank documents; write local tombstones under `.orto/local/` |
 | `mcp` | Print ready-to-paste MCP snippets (bank-scoped server names); optional `--write` / `--check` / AGENTS / Cursor rules / Firstmate |
 
 Common flags:
@@ -155,7 +155,7 @@ Common flags:
 - `--hindsight-url <url>`: override Hindsight base URL for this run
 - `--api-key <key>`: override API key for this run (seed / store / prune) or enable tenant auth (docker) / print auth snippets (mcp)
 - `--async`: submit retain asynchronously to Hindsight
-- `--judge <id>`: `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional; needs `NOCCIOLO_TYPESAFE_API_KEY`) on seed / store / prune
+- `--judge <id>`: `off`, `heuristic` (default), or `jev` (hosted TypeSafe, optional; needs `ORTO_TYPESAFE_API_KEY`) on seed / store / prune
 - `--confidence <n>`: minimum confidence to apply a Jev decision (default `0.8`; see [jev.md](./jev.md))
 - `--strict`: with `--judge jev`, fail on TypeSafe network/API errors instead of falling back to heuristics
 
@@ -164,7 +164,7 @@ Common flags:
 Version-controlled (commit these):
 
 ```text
-.nocciolo/
+.orto/
   config.json                 # project name, bankId, provider, optional deploymentProfile + hindsightBaseUrl + docker
   share.json                  # deployment profile + non-secret base URL (commit)
   hindsight/
@@ -174,14 +174,14 @@ Version-controlled (commit these):
 Local / gitignored state (do **not** commit secrets or machine-local seed state):
 
 ```text
-.nocciolo/
+.orto/
   local/
     seed-manifest.json        # content hashes + fact ids for incremental seed
     tombstones.json           # pruned document ids so seed/store skip unchanged re-retain
   cache/
 ```
 
-`config.json` keeps `root: "."` (portable). Bank id defaults to a slug of the project name (directory name), never hardcoded to `nocciolo`.
+`config.json` keeps `root: "."` (portable). Bank id defaults to a slug of the project name (directory name), never hardcoded to `orto`.
 
 Optional config fields:
 
@@ -198,14 +198,14 @@ Optional config fields:
 **Base URL**
 
 1. `--hindsight-url`
-2. `hindsightBaseUrl` in `.nocciolo/config.json`
-3. `NOCCIOLO_HINDSIGHT_URL` or `HINDSIGHT_URL`
+2. `hindsightBaseUrl` in `.orto/config.json`
+3. `ORTO_HINDSIGHT_URL` or `HINDSIGHT_URL`
 4. Default: `http://localhost:8888`
 
 **API key**
 
 1. `--api-key`
-2. `NOCCIOLO_HINDSIGHT_API_KEY` or `HINDSIGHT_API_KEY`
+2. `ORTO_HINDSIGHT_API_KEY` or `HINDSIGHT_API_KEY`
 3. Omit header if unset (fine for unauthenticated local servers)
 
 Live retain sends `Authorization: Bearer <key>` when a key is present.
@@ -213,12 +213,12 @@ Live retain sends `Authorization: Bearer <key>` when a key is present.
 ### Prefixed env assignment
 
 ```bash
-NOCCIOLO_HINDSIGHT_API_KEY=your-real-key node dist/cli.js seed
+ORTO_HINDSIGHT_API_KEY=your-real-key node dist/cli.js seed
 ```
 
 This is **shell** syntax, not a Node-specific feature:
 
-1. The shell sets `NOCCIOLO_HINDSIGHT_API_KEY` only for the following process.
+1. The shell sets `ORTO_HINDSIGHT_API_KEY` only for the following process.
 2. `node dist/cli.js seed` inherits that environment.
 3. When the process exits, your interactive shell is unchanged (unless you previously `export`ed the variable).
 
@@ -226,7 +226,7 @@ Equivalents:
 
 ```bash
 # persistent for the current shell session
-export NOCCIOLO_HINDSIGHT_API_KEY=your-real-key
+export ORTO_HINDSIGHT_API_KEY=your-real-key
 node dist/cli.js seed
 
 # flag instead of env
@@ -246,9 +246,9 @@ Conservative first pass looks for:
 - Markdown under `docs/`, `doc/`, `documentation/`
 - ADR paths (`adr/`, `docs/adr/`, `docs/decisions/`, root `ADR*.md`, etc.)
 
-`AGENTS.md` is **not** scanned for seed or store. It is agent harness wiring (integration emission via `nocciolo mcp --write-agents`), not bank seed material.
+`AGENTS.md` is **not** scanned for seed or store. It is agent harness wiring (integration emission via `orto mcp --write-agents`), not bank seed material.
 
-Optional `.nocciolo/config.json` `scanner` policy:
+Optional `.orto/config.json` `scanner` policy:
 
 - `include`: when non-empty, replaces the default walk. `seed` bootstraps from that set. `store` discovers the same set, and `store.allowlist` still gates which new files are retained.
 - `exclude`: globs removed from either the default walk or `include` (directory trees, or draft names such as `**/_*.mdx`).
@@ -279,27 +279,27 @@ The extractor is **heuristic**, not an LLM:
 - Keeps **whole** ADR files as single high-value documents
 - Attaches provenance: source path, source kind, optional git commit (`git rev-parse HEAD`)
 
-Each candidate gets a stable id used as Hindsight `document_id`, e.g. `nocciolo:README.md#core-principles`. Re-retaining the same id upserts in Hindsight.
+Each candidate gets a stable id used as Hindsight `document_id`, e.g. `orto:README.md#core-principles`. Re-retaining the same id upserts in Hindsight.
 
 ## Seeder and incremental re-seed
 
 1. Hash each source file (`sha256`).
-2. Compare to `.nocciolo/local/seed-manifest.json`.
+2. Compare to `.orto/local/seed-manifest.json`.
 3. Unchanged sources are skipped unless `--force`.
 4. Live seed maps candidates → retain items (`content`, `context`, `document_id`, `timestamp: "unset"`, metadata, tags).
 5. On success, rewrite the manifest with new hashes and fact ids.
 
 Synchronous retain (default) prints a clear warning not to close the terminal or press Ctrl+C, then retains **one item at a time** with `[i/N] percent` progress. Hindsight LLM extraction often takes several seconds per item, so a full first seed can take minutes: that is expected, not a hang.
 
-Use `--async` to submit the batch and have Nocciolo **poll** `GET /v1/default/banks/{bank}/operations/{id}` for Hindsight’s own `progress.processed` / `progress.total` (when the server reports them). Do **not** scrape Docker container logs for progress: that is fragile and environment-specific; the operations API is the supported channel.
+Use `--async` to submit the batch and have Orto **poll** `GET /v1/default/banks/{bank}/operations/{id}` for Hindsight’s own `progress.processed` / `progress.total` (when the server reports them). Do **not** scrape Docker container logs for progress: that is fragile and environment-specific; the operations API is the supported channel.
 
 `--dry-run` still shows what **would** be retained (and what would be skipped as unchanged).
 
 ## Store: ongoing selected retain
 
-`seed` bootstraps from a default scan. `store` (`src/commands/store.ts`) is the ongoing follow-up once durable project `.md` already exists on disk: an operator picks which files to retain, previewed first. It never reimplements retain: it filters `prepareSeed`'s discovered sources down to a selected subset (`only: Set<relativePath>`) and calls the same `retainPreparedItems` loop `seed` uses (extracted into `src/commands/seed.ts` and shared), then writes the same `.nocciolo/local/seed-manifest.json`.
+`seed` bootstraps from a default scan. `store` (`src/commands/store.ts`) is the ongoing follow-up once durable project `.md` already exists on disk: an operator picks which files to retain, previewed first. It never reimplements retain: it filters `prepareSeed`'s discovered sources down to a selected subset (`only: Set<relativePath>`) and calls the same `retainPreparedItems` loop `seed` uses (extracted into `src/commands/seed.ts` and shared), then writes the same `.orto/local/seed-manifest.json`.
 
-Flow: `store` resolves the project root (refusing a disposable git worktree via `src/project/worktree.ts`, walking out to the durable clone via `src/project/registry.ts` when possible), reads `store.allowlist` from `.nocciolo/config.json`, scans with `src/scanner/durable-sources.ts`, and classifies each result into four buckets against the allowlist and the seed manifest's content hashes:
+Flow: `store` resolves the project root (refusing a disposable git worktree via `src/project/worktree.ts`, walking out to the durable clone via `src/project/registry.ts` when possible), reads `store.allowlist` from `.orto/config.json`, scans with `src/scanner/durable-sources.ts`, and classifies each result into four buckets against the allowlist and the seed manifest's content hashes:
 
 - **known**: allowlisted and found on disk (changed + unchanged)
 - **new**: found on disk but not yet allowlisted (never stored implicitly)
@@ -311,7 +311,7 @@ Flow: `store` resolves the project root (refusing a disposable git worktree via 
 ## Prune: bank hygiene
 
 `seed` and `store` only add or upsert.
-`nocciolo prune` (`src/commands/prune.ts`) removes bank documents that are no longer backed by durable sources, or that the operator names explicitly.
+`orto prune` (`src/commands/prune.ts`) removes bank documents that are no longer backed by durable sources, or that the operator names explicitly.
 
 Flow:
 
@@ -319,17 +319,17 @@ Flow:
 2. Build a plan in `src/seeder/prune-plan.ts`: path-gone, section-gone, or explicit (`--source` / `--document-id`).
 3. `--dry-run` prints groups only (list is read-only; no deletes, no tombstones).
 4. TTY multi-select + confirm, or non-interactive `--document-id` / `--source` with `--yes`.
-5. `DELETE .../documents/{documentId}` for each selected id; write `.nocciolo/local/tombstones.json`.
+5. `DELETE .../documents/{documentId}` for each selected id; write `.orto/local/tombstones.json`.
 6. Later `prepareSeed` skips tombstoned unchanged facts; `--force` or a content hash change can retain again.
 
 Day-to-day order: retain (`store` / `seed`), then prune.
-Details: [nocciolo-cli-commands.md](./nocciolo-cli-commands.md#nocciolo-prune).
+Details: [orto-cli-commands.md](./orto-cli-commands.md#orto-prune).
 
 ## Hindsight integration
 
 | Concern | Implementation |
 |---------|----------------|
-| Bank template | `src/providers/hindsight/template.ts` → `.nocciolo/hindsight/bank-template.json` |
+| Bank template | `src/providers/hindsight/template.ts` → `.orto/hindsight/bank-template.json` |
 | Retain API | `POST {baseUrl}/v1/default/banks/{bankId}/memories` |
 | List documents | `GET {baseUrl}/v1/default/banks/{bankId}/documents` |
 | Delete document | `DELETE {baseUrl}/v1/default/banks/{bankId}/documents/{documentId}` |
@@ -340,7 +340,7 @@ Import the generated template into Hindsight (Control Plane or import API) befor
 
 ## Local Docker helper
 
-`nocciolo docker` wraps the official Hindsight image (`ghcr.io/vectorize-io/hindsight:latest` for `up`; **pinned tags** for `upgrade`):
+`orto docker` wraps the official Hindsight image (`ghcr.io/vectorize-io/hindsight:latest` for `up`; **pinned tags** for `upgrade`):
 
 | Action | Behavior |
 |--------|----------|
@@ -350,7 +350,7 @@ Import the generated template into Hindsight (Control Plane or import API) befor
 | `status` | Show container status + API/UI URLs |
 | `upgrade --to <ver>` | Back up all banks, recreate container on the same volume with preserved env, validate `/version` + fact counts |
 
-Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`. Resolution for container/volume: `--name` → `docker` in `.nocciolo/config.json` → those defaults. One container is a Hindsight **server** that can host many banks: do not treat container name as the bank id. LLM key from `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Optional `--api-key` enables tenant auth (`HINDSIGHT_API_TENANT_API_KEY` + matching CP dataplane key).
+Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`. Resolution for container/volume: `--name` → `docker` in `.orto/config.json` → those defaults. One container is a Hindsight **server** that can host many banks: do not treat container name as the bank id. LLM key from `--llm-api-key` or `OPENAI_API_KEY` / `HINDSIGHT_API_LLM_API_KEY`. Optional `--api-key` enables tenant auth (`HINDSIGHT_API_TENANT_API_KEY` + matching CP dataplane key).
 
 `upgrade` is a different operation from `up`: it inspects the running container, never deletes the data volume, and refuses `:latest`. See [hindsight-upgrade.md](./hindsight-upgrade.md).
 
@@ -360,18 +360,18 @@ Defaults: container `hindsight`, API `8888`, UI `9999`, volume `hindsight-data`.
 
 | Command | Behavior |
 |---------|----------|
-| `nocciolo mcp` | Print Cursor, Claude Code, Claude Desktop, Roo, Codex, Kiro snippets |
-| `nocciolo mcp --write` | Merge `.cursor/mcp.json` |
-| `nocciolo mcp --write-roo` / `--write-kiro` | Project Roo / Kiro MCP JSON |
-| `nocciolo mcp --write-agents` | Idempotent AGENTS.md section (HTML comment markers) |
-| `nocciolo mcp --write-cursor-rules` | `.cursor/rules/hindsight-bank.mdc` (`alwaysApply`) |
-| `nocciolo mcp --harness firstmate --write-firstmate` | Install Firstmate's on-demand `project-bank` skill under `$FM_HOME/.agents/skills/project-bank/` and record this project's bank in `$FM_HOME/.nocciolo/projects.json` (prints install steps when `$FM_HOME` is unset; never writes into this repo) |
+| `orto mcp` | Print Cursor, Claude Code, Claude Desktop, Roo, Codex, Kiro snippets |
+| `orto mcp --write` | Merge `.cursor/mcp.json` |
+| `orto mcp --write-roo` / `--write-kiro` | Project Roo / Kiro MCP JSON |
+| `orto mcp --write-agents` | Idempotent AGENTS.md section (HTML comment markers) |
+| `orto mcp --write-cursor-rules` | `.cursor/rules/hindsight-bank.mdc` (`alwaysApply`) |
+| `orto mcp --harness firstmate --write-firstmate` | Install Firstmate's on-demand `project-bank` skill under `$FM_HOME/.agents/skills/project-bank/` and record this project's bank in `$FM_HOME/.orto/projects.json` (prints install steps when `$FM_HOME` is unset; never writes into this repo) |
 | `--dry-run` | Preview writes without mutating |
 | `--include-auth` | Add Authorization headers (env placeholders on write) |
 
 Harness filter: `--harness cursor,claude-code`.
 
-`src/project/registry.ts` owns the captain-home registry (`$FM_HOME/.nocciolo/projects.json`, fallback `~/.nocciolo/projects.json`): the same file `store` reads to walk out of a disposable worktree to its durable clone. `src/integration/project-bank-skill.ts` owns the skill content and the write; a checked-in copy for manual install lives at [docs/firstmate/project-bank/SKILL.md](./firstmate/project-bank/SKILL.md).
+`src/project/registry.ts` owns the captain-home registry (`$FM_HOME/.orto/projects.json`, fallback `~/.orto/projects.json`): the same file `store` reads to walk out of a disposable worktree to its durable clone. `src/integration/project-bank-skill.ts` owns the skill content and the write; a checked-in copy for manual install lives at [docs/firstmate/project-bank/SKILL.md](./firstmate/project-bank/SKILL.md).
 
 ## Development tips
 
@@ -384,7 +384,7 @@ node dist/cli.js --help
 ```
 
 - Prefer unit tests for pure modules (extractor, template, client with mocked `fetch`).
-- Errors should tell the user the next concrete action (`NoccioloError` + hint).
+- Errors should tell the user the next concrete action (`OrtoError` + hint).
 - Support `--dry-run` on mutating / network commands.
 - Strict TypeScript; avoid `any`.
 

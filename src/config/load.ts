@@ -1,4 +1,4 @@
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { pathExists, readJsonFile, writeJsonFile } from "../utils/fs.js";
 import { configPath, sharePath } from "./paths.js";
 import {
@@ -6,23 +6,23 @@ import {
   ShareConfigSchema,
   validateShareConfig,
 } from "./profiles.js";
-import { NoccioloConfig, NoccioloConfigSchema } from "./schema.js";
+import { OrtoConfig, OrtoConfigSchema } from "./schema.js";
 
-export async function loadConfig(projectRoot: string): Promise<NoccioloConfig> {
+export async function loadConfig(projectRoot: string): Promise<OrtoConfig> {
   const path = configPath(projectRoot);
   if (!(await pathExists(path))) {
-    throw new NoccioloError(
-      `No Nocciolo config found at ${path}`,
-      "Run `nocciolo init` from your project root first.",
+    throw new OrtoError(
+      `No Orto config found at ${path}`,
+      "Run `orto init` from your project root first.",
     );
   }
 
   const raw = await readJsonFile<unknown>(path);
-  const parsed = NoccioloConfigSchema.safeParse(raw);
+  const parsed = OrtoConfigSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Invalid config at ${path}: ${parsed.error.issues.map((i) => i.message).join("; ")}`,
-      "Fix the config or re-run `nocciolo init --force`.",
+      "Fix the config or re-run `orto init --force`.",
     );
   }
   return parsed.data;
@@ -30,7 +30,7 @@ export async function loadConfig(projectRoot: string): Promise<NoccioloConfig> {
 
 export async function saveConfig(
   projectRoot: string,
-  config: NoccioloConfig,
+  config: OrtoConfig,
   dryRun: boolean,
 ): Promise<void> {
   await writeJsonFile(configPath(projectRoot), config, dryRun);
@@ -51,9 +51,9 @@ export async function loadShareConfig(
   const raw = await readJsonFile<unknown>(path);
   const parsed = ShareConfigSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Invalid share config at ${path}: ${parsed.error.issues.map((i) => i.message).join("; ")}`,
-      "Fix the file or re-run `nocciolo share --profile <profile>`.",
+      "Fix the file or re-run `orto share --profile <profile>`.",
     );
   }
   validateShareConfig(parsed.data);

@@ -1,5 +1,5 @@
 ---
-description: TypeScript CLI conventions for Nocciolo
+description: TypeScript CLI conventions for Orto
 globs: ["**/*.{ts,tsx,js,mjs,cjs}", "package.json", "tsconfig*.json"]
 alwaysApply: false
 ---

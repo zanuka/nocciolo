@@ -1,4 +1,4 @@
-import { NoccioloError } from "../../utils/errors.js";
+import { OrtoError } from "../../utils/errors.js";
 
 export interface RetainItem {
   content: string;
@@ -195,9 +195,9 @@ export class HindsightClient {
         }),
       });
     } catch (error) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Failed to reach Hindsight at ${this.baseUrl}`,
-        `Check that Hindsight is running and NOCCIOLO_HINDSIGHT_URL / config hindsightBaseUrl is correct. (${error instanceof Error ? error.message : String(error)})`,
+        `Check that Hindsight is running and ORTO_HINDSIGHT_URL / config hindsightBaseUrl is correct. (${error instanceof Error ? error.message : String(error)})`,
       );
     }
 
@@ -205,9 +205,9 @@ export class HindsightClient {
       const body = await safeReadText(response);
       const authHint =
         response.status === 401 || response.status === 403
-          ? " Set NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY (same value as HINDSIGHT_API_TENANT_API_KEY in your Hindsight container), or pass --api-key."
+          ? " Set ORTO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY (same value as HINDSIGHT_API_TENANT_API_KEY in your Hindsight container), or pass --api-key."
           : "";
-      throw new NoccioloError(
+      throw new OrtoError(
         `Hindsight retain failed (${response.status} ${response.statusText}) for bank "${bankId}"`,
         body
           ? `Response: ${body.slice(0, 500)}.${authHint}`
@@ -240,7 +240,7 @@ export class HindsightClient {
         headers: this.headers(),
       });
     } catch (error) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Failed to reach Hindsight at ${this.baseUrl}`,
         `Could not poll operation status. (${error instanceof Error ? error.message : String(error)})`,
       );
@@ -248,7 +248,7 @@ export class HindsightClient {
 
     if (!response.ok) {
       const body = await safeReadText(response);
-      throw new NoccioloError(
+      throw new OrtoError(
         `Hindsight operation status failed (${response.status}) for "${operationId}"`,
         body ? `Response: ${body.slice(0, 500)}` : undefined,
         response.status,
@@ -290,7 +290,7 @@ export class HindsightClient {
         headers: this.headers(),
       });
     } catch (error) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Failed to reach Hindsight at ${this.baseUrl}`,
         `Could not list documents. (${error instanceof Error ? error.message : String(error)})`,
       );
@@ -300,9 +300,9 @@ export class HindsightClient {
       const body = await safeReadText(response);
       const authHint =
         response.status === 401 || response.status === 403
-          ? " Set NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY (same value as HINDSIGHT_API_TENANT_API_KEY in your Hindsight container), or pass --api-key."
+          ? " Set ORTO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY (same value as HINDSIGHT_API_TENANT_API_KEY in your Hindsight container), or pass --api-key."
           : "";
-      throw new NoccioloError(
+      throw new OrtoError(
         `Hindsight list documents failed (${response.status} ${response.statusText}) for bank "${bankId}"`,
         body
           ? `Response: ${body.slice(0, 500)}.${authHint}`
@@ -362,7 +362,7 @@ export class HindsightClient {
         headers: this.headers(),
       });
     } catch (error) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Failed to reach Hindsight at ${this.baseUrl}`,
         `Could not delete document. (${error instanceof Error ? error.message : String(error)})`,
       );
@@ -372,9 +372,9 @@ export class HindsightClient {
       const body = await safeReadText(response);
       const authHint =
         response.status === 401 || response.status === 403
-          ? " Set NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY (same value as HINDSIGHT_API_TENANT_API_KEY in your Hindsight container), or pass --api-key."
+          ? " Set ORTO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY (same value as HINDSIGHT_API_TENANT_API_KEY in your Hindsight container), or pass --api-key."
           : "";
-      throw new NoccioloError(
+      throw new OrtoError(
         `Hindsight delete document failed (${response.status} ${response.statusText}) for "${documentId}"`,
         body
           ? `Response: ${body.slice(0, 500)}.${authHint}`
@@ -739,12 +739,12 @@ export class HindsightClient {
         error instanceof Error &&
         (error.name === "AbortError" || error.name === "TimeoutError")
       ) {
-        throw new NoccioloError(
+        throw new OrtoError(
           `Hindsight ${action} timed out`,
           "Check that Hindsight is running. Seed can continue without the contradiction check.",
         );
       }
-      throw new NoccioloError(
+      throw new OrtoError(
         `Failed to reach Hindsight at ${this.baseUrl}`,
         `Could not ${action}. (${error instanceof Error ? error.message : String(error)})`,
       );
@@ -754,13 +754,13 @@ export class HindsightClient {
       const text = await safeReadText(response);
       const authHint =
         response.status === 401 || response.status === 403
-          ? " Set NOCCIOLO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY, or pass --api-key. For Cloud, create a key at https://ui.hindsight.vectorize.io."
+          ? " Set ORTO_HINDSIGHT_API_KEY or HINDSIGHT_API_KEY, or pass --api-key. For Cloud, create a key at https://ui.hindsight.vectorize.io."
           : "";
       const missingHint =
         response.status === 404
-          ? " Verify the bank id exists (run `nocciolo bank apply` to create it from the template)."
+          ? " Verify the bank id exists (run `orto bank apply` to create it from the template)."
           : "";
-      throw new NoccioloError(
+      throw new OrtoError(
         `Hindsight ${action} failed (${response.status} ${response.statusText})`,
         text
           ? `Response: ${text.slice(0, 500)}.${authHint}${missingHint}`
@@ -797,7 +797,7 @@ export function resolveHindsightBaseUrl(input: {
 }): string {
   const env = input.env ?? process.env;
   const fromEnv =
-    env.NOCCIOLO_HINDSIGHT_URL?.trim() || env.HINDSIGHT_URL?.trim();
+    env.ORTO_HINDSIGHT_URL?.trim() || env.HINDSIGHT_URL?.trim();
   return (
     input.cliUrl?.trim() ||
     input.configUrl?.trim() ||
@@ -817,7 +817,7 @@ export function resolveHindsightApiKey(input: {
   const key =
     input.cliKey?.trim() ||
     input.configKey?.trim() ||
-    env.NOCCIOLO_HINDSIGHT_API_KEY?.trim() ||
+    env.ORTO_HINDSIGHT_API_KEY?.trim() ||
     env.HINDSIGHT_API_KEY?.trim();
   return key || undefined;
 }

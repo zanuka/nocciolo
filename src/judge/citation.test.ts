@@ -99,7 +99,7 @@ describe("citation support", () => {
       "drop",
     ]);
     const printed = formatCitationLines({
-      factId: "nocciolo:docs/adr/0009.md#decision",
+      factId: "orto:docs/adr/0009.md#decision",
       decisions: result.decisions,
       dryRun: true,
       calls: result.calls,

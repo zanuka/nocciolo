@@ -1,6 +1,6 @@
 # Preventing sensitive data from being seeded
 
-How Nocciolo keeps secrets and low-value project noise out of Hindsight banks. Companion to [cli-architecture.md](./cli-architecture.md) and [dev-workflow.md](./dev-workflow.md).
+How Orto keeps secrets and low-value project noise out of Hindsight banks. Companion to [cli-architecture.md](./cli-architecture.md) and [dev-workflow.md](./dev-workflow.md).
 
 ## Goals
 
@@ -102,8 +102,8 @@ Rejected as the default. Reasons:
 ### Planned follow-ups
 
 1. **Broader noise denylist**: explicit excludes for lockfiles, package manifests, `.github/`, `.gitlab*`, language build dirs (`target`, `_build`, `deps`, etc.) even if scanning expands later
-2. **Project ignore file**: e.g. `.nocciolo/ignore` or `ignorePatterns` in `.nocciolo/config.json` (gitignore-style), committed with the repo
-3. **Optional one-time wizard**: during `configure` (or `nocciolo ignore`) that *writes* ignore patterns; never a mandatory gate on each `seed`
+2. **Project ignore file**: e.g. `.orto/ignore` or `ignorePatterns` in `.orto/config.json` (gitignore-style), committed with the repo
+3. **Optional one-time wizard**: during `configure` (or `orto ignore`) that *writes* ignore patterns; never a mandatory gate on each `seed`
 
 ## Implementation map
 

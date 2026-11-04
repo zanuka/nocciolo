@@ -5,7 +5,7 @@ import { nextManifest, toRetainItems, type PreparedSeed } from "./prepare.js";
 describe("toRetainItems", () => {
   it("maps candidate facts to Hindsight retain items with provenance", () => {
     const fact: CandidateFact = {
-      id: "nocciolo:README.md#goal",
+      id: "orto:README.md#goal",
       title: "Goal",
       content: "Seed durable knowledge.",
       knowledgeKind: "overview",
@@ -20,20 +20,20 @@ describe("toRetainItems", () => {
     const items = toRetainItems([fact]);
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({
-      document_id: "nocciolo:README.md#goal",
+      document_id: "orto:README.md#goal",
       timestamp: "unset",
       metadata: {
         source: "README.md",
         commit: "deadbeef",
         knowledge_kind: "overview",
       },
-      tags: ["nocciolo", "kind:readme", "knowledge:overview"],
+      tags: ["orto", "kind:readme", "knowledge:overview"],
     });
   });
 
   it("uses catalog tags for a judged kind and keeps the document id", () => {
     const fact: CandidateFact = {
-      id: "nocciolo:docs/adr/0001-local-bank.md#document",
+      id: "orto:docs/adr/0001-local-bank.md#document",
       title: "ADR 0001",
       content: "We chose a local bank.",
       knowledgeKind: "decision",
@@ -47,11 +47,11 @@ describe("toRetainItems", () => {
 
     const items = toRetainItems([fact]);
     expect(items[0]?.document_id).toBe(
-      "nocciolo:docs/adr/0001-local-bank.md#document",
+      "orto:docs/adr/0001-local-bank.md#document",
     );
     expect(items[0]?.document_id).not.toContain("knowledge:");
     expect(items[0]?.metadata?.knowledge_kind).toBe("adr");
-    expect(items[0]?.tags).toEqual(["nocciolo", "kind:adr", "knowledge:adr"]);
+    expect(items[0]?.tags).toEqual(["orto", "kind:adr", "knowledge:adr"]);
   });
 });
 
@@ -60,7 +60,7 @@ describe("nextManifest", () => {
     const previous = createEmptyManifest("bank");
     previous.sources["docs/review.md"] = {
       contentHash: "old",
-      factIds: ["nocciolo:docs/review.md#old"],
+      factIds: ["orto:docs/review.md#old"],
       seededAt: "2020-01-01T00:00:00.000Z",
     };
     const prepared: PreparedSeed = {
@@ -113,7 +113,7 @@ describe("nextManifest", () => {
           contentHash: "hash-adr",
           facts: [
             {
-              id: "nocciolo:docs/adr/0001.md#decision",
+              id: "orto:docs/adr/0001.md#decision",
               title: "Decision",
               content: "Keep it local.",
               knowledgeKind: "decision",
@@ -130,7 +130,7 @@ describe("nextManifest", () => {
           contentHash: "hash-changelog",
           facts: [
             {
-              id: "nocciolo:docs/changelog.md#notes",
+              id: "orto:docs/changelog.md#notes",
               title: "Notes",
               content: "Wording only.",
               knowledgeKind: "overview",
@@ -149,21 +149,21 @@ describe("nextManifest", () => {
       skippedTombstoned: 0,
     };
     const budgetFactIds = new Set([
-      "nocciolo:docs/adr/0001.md#decision",
-      "nocciolo:docs/changelog.md#notes",
+      "orto:docs/adr/0001.md#decision",
+      "orto:docs/changelog.md#notes",
     ]);
     const first = nextManifest(
       createEmptyManifest("bank"),
       "bank",
       prepared,
-      new Set(["nocciolo:docs/adr/0001.md#decision"]),
+      new Set(["orto:docs/adr/0001.md#decision"]),
       { budgetFactIds },
     );
     expect(first.sources["docs/changelog.md"]?.pendingFactIds).toEqual([
-      "nocciolo:docs/changelog.md#notes",
+      "orto:docs/changelog.md#notes",
     ]);
     expect(first.sources["docs/adr/0001.md"]?.factIds).toEqual([
-      "nocciolo:docs/adr/0001.md#decision",
+      "orto:docs/adr/0001.md#decision",
     ]);
 
     const followUp: PreparedSeed = {
@@ -183,15 +183,15 @@ describe("nextManifest", () => {
       first,
       "bank",
       followUp,
-      new Set(["nocciolo:docs/changelog.md#notes"]),
-      { budgetFactIds: new Set(["nocciolo:docs/changelog.md#notes"]) },
+      new Set(["orto:docs/changelog.md#notes"]),
+      { budgetFactIds: new Set(["orto:docs/changelog.md#notes"]) },
     );
     expect(second.sources["docs/changelog.md"]?.pendingFactIds).toBeUndefined();
     expect(second.sources["docs/changelog.md"]?.factIds).toEqual([
-      "nocciolo:docs/changelog.md#notes",
+      "orto:docs/changelog.md#notes",
     ]);
     expect(second.sources["docs/adr/0001.md"]?.factIds).toEqual([
-      "nocciolo:docs/adr/0001.md#decision",
+      "orto:docs/adr/0001.md#decision",
     ]);
   });
 });

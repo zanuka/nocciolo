@@ -2,12 +2,12 @@
 
 How to back up memory banks on a **local / self-hosted** Hindsight server running in Docker. Upstream: [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli) (`hindsight-admin`).
 
-Nocciolo does not own Hindsight storage. Banks live in the server’s Postgres (embedded `pg0` for the usual Docker setup). Use `hindsight-admin` **inside** the container; it talks to the database directly, not the HTTP API.
+Orto does not own Hindsight storage. Banks live in the server’s Postgres (embedded `pg0` for the usual Docker setup). Use `hindsight-admin` **inside** the container; it talks to the database directly, not the HTTP API.
 
 ## Prerequisites
 
 - Docker running, with your Hindsight container up
-- Container name from `nocciolo init` / `.nocciolo/config.json` → `docker.containerName` (default `hindsight`)
+- Container name from `orto init` / `.orto/config.json` → `docker.containerName` (default `hindsight`)
 
 Set a helper for the examples below:
 
@@ -39,7 +39,7 @@ Both write files **inside** the container. Copy them to the host with `docker cp
 
 ## Full instance backup
 
-Creates a consistent zip of all Hindsight data in the schema (banks, documents, memories, mental models, directives, webhooks, operational tables). Recommended before an image upgrade (`0.8.x` → `0.9.x`, etc.) while keeping the same named volume. The CLI path `nocciolo docker upgrade --to <version>` takes a volume tarball plus this admin backup when available; see [hindsight-upgrade.md](./hindsight-upgrade.md).
+Creates a consistent zip of all Hindsight data in the schema (banks, documents, memories, mental models, directives, webhooks, operational tables). Recommended before an image upgrade (`0.8.x` → `0.9.x`, etc.) while keeping the same named volume. The CLI path `orto docker upgrade --to <version>` takes a volume tarball plus this admin backup when available; see [hindsight-upgrade.md](./hindsight-upgrade.md).
 
 ```bash
 BACKUP="hindsight-backup-$(date +%Y%m%d).zip"
@@ -65,10 +65,10 @@ docker exec -it "$HINDSIGHT_CONTAINER" \
 
 Exports one bank to a portable ZIP: documents, facts, observations, bank config, mental models, directives, and webhooks. Embeddings are **not** included; they are regenerated on `import-bank`. Safe to run against a live instance.
 
-Replace `BANK_ID` with your bank id (often the same as `.nocciolo/config.json` → `bankId`):
+Replace `BANK_ID` with your bank id (often the same as `.orto/config.json` → `bankId`):
 
 ```bash
-BANK_ID=nocciolo
+BANK_ID=orto
 OUT="/tmp/${BANK_ID}.zip"
 
 docker exec "$HINDSIGHT_CONTAINER" \
@@ -101,11 +101,11 @@ done
 Import into an instance (target bank must **not** already exist: delete it first or use `--target-bank`):
 
 ```bash
-docker cp ~/hindsight-bank-backups/nocciolo.zip \
-  "${HINDSIGHT_CONTAINER}:/tmp/nocciolo.zip"
+docker cp ~/hindsight-bank-backups/orto.zip \
+  "${HINDSIGHT_CONTAINER}:/tmp/orto.zip"
 
 docker exec "$HINDSIGHT_CONTAINER" \
-  hindsight-admin import-bank --archive /tmp/nocciolo.zip
+  hindsight-admin import-bank --archive /tmp/orto.zip
 ```
 
 ## Where the files land
@@ -126,6 +126,6 @@ Do **not** run `docker volume rm` on the data volume unless you intend to delete
 ## See also
 
 - [Admin CLI](https://hindsight.vectorize.io/developer/admin-cli): `backup`, `restore`, `export-bank`, `import-bank`
-- [Upgrading Hindsight](./hindsight-upgrade.md): prefer `nocciolo docker upgrade --to <version>`; manual Docker steps as fallback
+- [Upgrading Hindsight](./hindsight-upgrade.md): prefer `orto docker upgrade --to <version>`; manual Docker steps as fallback
 - [Developer workflow](./dev-workflow.md): local Docker up / seed loop
 - [Hindsight Cloud](./hindsight-cloud.md): managed hosting (different backup story; not this Docker path)

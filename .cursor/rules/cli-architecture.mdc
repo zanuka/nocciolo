@@ -1,9 +1,9 @@
 ---
-description: Enforce Nocciolo CLI module boundaries and seed/config conventions from docs/cli-architecture.md
+description: Enforce Orto CLI module boundaries and seed/config conventions from docs/cli-architecture.md
 globs:
   - "src/**/*.{ts,tsx}"
   - "docs/cli-architecture.md"
-  - ".nocciolo/**/*"
+  - ".orto/**/*"
   - "package.json"
 alwaysApply: false
 ---
@@ -20,7 +20,7 @@ Put logic in the matching layer: do not collapse stages into `commands/` or a si
 |---------|--------|
 | Flags / UX / orchestration | `src/commands/` |
 | Root detection, git commit | `src/project/` |
-| `.nocciolo/config.json` schema + IO | `src/config/` |
+| `.orto/config.json` schema + IO | `src/config/` |
 | Discover durable files | `src/scanner/` |
 | Heuristic candidates + provenance | `src/extractor/` |
 | Prepare retain, seed manifest, prune plan, tombstones | `src/seeder/` |
@@ -36,9 +36,9 @@ Commands may call modules; modules must not depend on Commander. Integration emi
 - Mutating or network commands support `--dry-run` where practical
 - `seed --dry-run` previews candidates and does not retain or write the manifest. It does not call Hindsight unless `--judge jev` is set, in which case it may recall up to 5 observation summaries and may preview extracted facts (both read-only) and still must not retain or delete
 - `prune --dry-run` may list documents (read-only) but must not delete or write tombstones
-- Live `seed` uses stable `document_id`s and writes incremental state only under `.nocciolo/local/` (gitignored)
-- Live `prune` deletes selected documents and writes tombstones under `.nocciolo/local/` (gitignored)
-- Version-controlled config stays under `.nocciolo/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
+- Live `seed` uses stable `document_id`s and writes incremental state only under `.orto/local/` (gitignored)
+- Live `prune` deletes selected documents and writes tombstones under `.orto/local/` (gitignored)
+- Version-controlled config stays under `.orto/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
 - `init` prompts for bank id + Docker container name in a TTY (flags/`--yes` skip prompts); bank id is not the Docker container name
 - Docker container/volume: CLI `--name` → `config.docker` → defaults `hindsight` / `hindsight-data`
 
@@ -46,8 +46,8 @@ Commands may call modules; modules must not depend on Commander. Integration emi
 
 Resolve URL/key in order: CLI flag → config (URL only) → env → default `http://localhost:8888`.
 
-- URL: `--hindsight-url`, `hindsightBaseUrl`, `NOCCIOLO_HINDSIGHT_URL` / `HINDSIGHT_URL`
-- Key: `--api-key`, `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` (Bearer header; not stored in config)
+- URL: `--hindsight-url`, `hindsightBaseUrl`, `ORTO_HINDSIGHT_URL` / `HINDSIGHT_URL`
+- Key: `--api-key`, `ORTO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` (Bearer header; not stored in config)
 
 ## Extraction / seeding
 
@@ -59,4 +59,4 @@ Resolve URL/key in order: CLI flag → config (URL only) → env → default `ht
 
 ## Errors
 
-Fail with `NoccioloError` (or equivalent) plus a concrete next step: e.g. run `init`, pass `--force`, or set an API key.
+Fail with `OrtoError` (or equivalent) plus a concrete next step: e.g. run `init`, pass `--force`, or set an API key.

@@ -3,7 +3,7 @@ import { bankTemplatePath, hindsightDir } from "../config/paths.js";
 import { detectProjectRoot } from "../project/detect-root.js";
 import { generateHindsightBankTemplate } from "../providers/hindsight/template.js";
 import type { HindsightBankTemplate } from "../providers/hindsight/types.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { ensureDir, pathExists, readJsonFile, writeJsonFile } from "../utils/fs.js";
 import {
   printBankApplyResult,
@@ -54,9 +54,9 @@ export async function runConfigure(
     template = await readJsonFile<HindsightBankTemplate>(templatePath);
   } else {
     if (exists && !force && !dryRun) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Bank template already exists at ${templatePath}`,
-        "Use --force to overwrite, `nocciolo configure --apply` to apply the existing template, or `nocciolo configure --dry-run` to preview.",
+        "Use --force to overwrite, `orto configure --apply` to apply the existing template, or `orto configure --dry-run` to preview.",
       );
     }
 
@@ -79,7 +79,7 @@ export async function runConfigure(
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      throw new NoccioloError(message, "Fix the flags or re-run configure.");
+      throw new OrtoError(message, "Fix the flags or re-run configure.");
     }
 
     template = generateHindsightBankTemplate(templateInput);
@@ -154,9 +154,9 @@ export function printConfigureResult(result: ConfigureResult): void {
   }
 
   console.log(
-    "Next: run `nocciolo bank apply --dry-run` (or `configure --apply`) then `nocciolo seed --dry-run`.",
+    "Next: run `orto bank apply --dry-run` (or `configure --apply`) then `orto seed --dry-run`.",
   );
   console.log(
-    "After seed, refresh models with `nocciolo mental-model refresh --all` or `seed --refresh-mental-models`.",
+    "After seed, refresh models with `orto mental-model refresh --all` or `seed --refresh-mental-models`.",
   );
 }

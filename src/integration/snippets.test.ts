@@ -14,8 +14,8 @@ import { mergeMcpServers } from "./write.js";
 
 describe("buildSingleBankMcpUrl", () => {
   it("builds a trailing-slash single-bank MCP path", () => {
-    expect(buildSingleBankMcpUrl("http://localhost:8888", "nocciolo")).toBe(
-      "http://localhost:8888/mcp/nocciolo/",
+    expect(buildSingleBankMcpUrl("http://localhost:8888", "orto")).toBe(
+      "http://localhost:8888/mcp/orto/",
     );
   });
 
@@ -29,27 +29,27 @@ describe("buildSingleBankMcpUrl", () => {
 describe("generateMcpSnippets", () => {
   const input = {
     baseUrl: "http://localhost:8888",
-    bankId: "nocciolo",
-    projectName: "Nocciolo",
+    bankId: "orto",
+    projectName: "Orto",
   };
 
   it("emits Cursor JSON with the single-bank URL and bank-scoped server name", () => {
     const cursor = generateMcpSnippets(input).find((s) => s.harness === "cursor");
     expect(cursor).toBeDefined();
     const parsed = JSON.parse(cursor!.body) as {
-      mcpServers: { "hindsight-nocciolo": { url: string } };
+      mcpServers: { "hindsight-orto": { url: string } };
     };
-    expect(parsed.mcpServers["hindsight-nocciolo"].url).toBe(
-      "http://localhost:8888/mcp/nocciolo/",
+    expect(parsed.mcpServers["hindsight-orto"].url).toBe(
+      "http://localhost:8888/mcp/orto/",
     );
   });
 
   it("emits Roo with streamable-http type", () => {
     const roo = generateMcpSnippets(input).find((s) => s.harness === "roo");
     const parsed = JSON.parse(roo!.body) as {
-      mcpServers: { "hindsight-nocciolo": { type: string; url: string } };
+      mcpServers: { "hindsight-orto": { type: string; url: string } };
     };
-    expect(parsed.mcpServers["hindsight-nocciolo"].type).toBe("streamable-http");
+    expect(parsed.mcpServers["hindsight-orto"].type).toBe("streamable-http");
   });
 
   it("emits Claude Code shell with http transport", () => {
@@ -57,13 +57,13 @@ describe("generateMcpSnippets", () => {
       (s) => s.harness === "claude-code",
     );
     expect(claude!.body).toContain("claude mcp add --transport http");
-    expect(claude!.body).toContain("http://localhost:8888/mcp/nocciolo/");
+    expect(claude!.body).toContain("http://localhost:8888/mcp/orto/");
   });
 
   it("emits Codex TOML with mcp_servers", () => {
     const codex = generateMcpSnippets(input).find((s) => s.harness === "codex");
-    expect(codex!.body).toContain("[mcp_servers.hindsight-nocciolo]");
-    expect(codex!.body).toContain('url = "http://localhost:8888/mcp/nocciolo/"');
+    expect(codex!.body).toContain("[mcp_servers.hindsight-orto]");
+    expect(codex!.body).toContain('url = "http://localhost:8888/mcp/orto/"');
   });
 
   it("honors an explicit --server-name override", () => {
@@ -74,7 +74,7 @@ describe("generateMcpSnippets", () => {
     const parsed = JSON.parse(cursor!.body) as {
       mcpServers: { "custom-bank": { url: string } };
     };
-    expect(parsed.mcpServers["custom-bank"].url).toContain("/mcp/nocciolo/");
+    expect(parsed.mcpServers["custom-bank"].url).toContain("/mcp/orto/");
   });
 
   it("uses env placeholders for auth when writing-safe", () => {
@@ -84,11 +84,11 @@ describe("generateMcpSnippets", () => {
     }).find((s) => s.harness === "cursor");
     const parsed = JSON.parse(cursor!.body) as {
       mcpServers: {
-        "hindsight-nocciolo": { headers: { Authorization: string } };
+        "hindsight-orto": { headers: { Authorization: string } };
       };
     };
-    expect(parsed.mcpServers["hindsight-nocciolo"].headers.Authorization).toBe(
-      "Bearer ${env:NOCCIOLO_HINDSIGHT_API_KEY}",
+    expect(parsed.mcpServers["hindsight-orto"].headers.Authorization).toBe(
+      "Bearer ${env:ORTO_HINDSIGHT_API_KEY}",
     );
   });
 
@@ -100,7 +100,7 @@ describe("generateMcpSnippets", () => {
     expect(firstmate!.format).toBe("shell");
     expect(firstmate!.body).toContain("cd ");
     expect(firstmate!.body).toContain("claude mcp add --transport http");
-    expect(firstmate!.body).toContain("http://localhost:8888/mcp/nocciolo/");
+    expect(firstmate!.body).toContain("http://localhost:8888/mcp/orto/");
     expect(firstmate!.notes.join(" ")).toMatch(/Firstmate home/);
     expect(firstmate!.notes.join(" ")).toMatch(/Captain-only/);
     expect(firstmate!.notes.join(" ")).toMatch(/scouts or ships/);
@@ -114,7 +114,7 @@ describe("generateMcpSnippets", () => {
       includeAuth: true,
     }).find((s) => s.harness === "firstmate");
     expect(firstmate!.body).toContain(
-      '--header "Authorization: Bearer ${NOCCIOLO_HINDSIGHT_API_KEY}"',
+      '--header "Authorization: Bearer ${ORTO_HINDSIGHT_API_KEY}"',
     );
   });
 
@@ -148,31 +148,31 @@ describe("parseHarnessList", () => {
 describe("agent rules", () => {
   it("upserts AGENTS.md section idempotently", () => {
     const first = upsertAgentsBankSection("# Title\n\nBody.\n", {
-      projectName: "Nocciolo",
-      bankId: "nocciolo",
+      projectName: "Orto",
+      bankId: "orto",
       baseUrl: "http://localhost:8888",
     });
     expect(first).toContain(AGENTS_BANK_BEGIN);
-    expect(first).toContain("mcp/nocciolo/");
+    expect(first).toContain("mcp/orto/");
 
     const second = upsertAgentsBankSection(first, {
-      projectName: "Nocciolo",
-      bankId: "nocciolo",
+      projectName: "Orto",
+      bankId: "orto",
       baseUrl: "http://localhost:9999",
     });
-    expect(second.match(/<!-- nocciolo:hindsight-bank -->/g)?.length).toBe(1);
-    expect(second).toContain("http://localhost:9999/mcp/nocciolo/");
+    expect(second.match(/<!-- orto:hindsight-bank -->/g)?.length).toBe(1);
+    expect(second).toContain("http://localhost:9999/mcp/orto/");
     expect(second).toContain("# Title");
   });
 
   it("builds a Cursor alwaysApply rule", () => {
     const rule = buildCursorBankRule({
-      projectName: "Nocciolo",
-      bankId: "nocciolo",
+      projectName: "Orto",
+      bankId: "orto",
       baseUrl: "http://localhost:8888",
     });
     expect(rule).toContain("alwaysApply: true");
-    expect(rule).toContain("nocciolo");
+    expect(rule).toContain("orto");
     expect(rule).toContain("Prefer `reflect`");
     expect(rule).toContain("Prefer `recall`");
   });
@@ -188,14 +188,14 @@ describe("mergeMcpServers", () => {
       },
       {
         mcpServers: {
-          hindsight: { url: "http://localhost:8888/mcp/nocciolo/" },
+          hindsight: { url: "http://localhost:8888/mcp/orto/" },
         },
       },
       false,
     );
     expect(merged.mcpServers?.other).toEqual({ url: "http://example" });
     expect(merged.mcpServers?.hindsight).toEqual({
-      url: "http://localhost:8888/mcp/nocciolo/",
+      url: "http://localhost:8888/mcp/orto/",
     });
   });
 

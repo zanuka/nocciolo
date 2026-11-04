@@ -19,12 +19,12 @@ describe("runPrune", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-prune-cmd-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-prune-cmd-"));
     dirs.push(dir);
-    await mkdir(join(dir, ".nocciolo"), { recursive: true });
+    await mkdir(join(dir, ".orto"), { recursive: true });
     await mkdir(join(dir, "docs"), { recursive: true });
     await writeFile(
-      join(dir, ".nocciolo", "config.json"),
+      join(dir, ".orto", "config.json"),
       JSON.stringify({
         version: 1,
         name: "fixture",
@@ -63,7 +63,7 @@ describe("runPrune", () => {
   it("dry-run lists candidates and does not delete", async () => {
     const root = await tempProject();
     const client = mockClient([
-      { id: "nocciolo:docs/missing.md#gone" },
+      { id: "orto:docs/missing.md#gone" },
       { id: "docs/also-missing.md" },
     ]);
 
@@ -81,7 +81,7 @@ describe("runPrune", () => {
 
   it("refuses non-interactive mutate without selection and --yes", async () => {
     const root = await tempProject();
-    const client = mockClient([{ id: "nocciolo:docs/missing.md#gone" }]);
+    const client = mockClient([{ id: "orto:docs/missing.md#gone" }]);
 
     await expect(
       runPrune({
@@ -94,7 +94,7 @@ describe("runPrune", () => {
 
   it("refuses --yes without explicit selection", async () => {
     const root = await tempProject();
-    const client = mockClient([{ id: "nocciolo:docs/missing.md#gone" }]);
+    const client = mockClient([{ id: "orto:docs/missing.md#gone" }]);
 
     await expect(
       runPrune({
@@ -114,7 +114,7 @@ describe("runPrune", () => {
       "utf8",
     );
     const client = mockClient([
-      { id: "nocciolo:docs/live.md#goal" },
+      { id: "orto:docs/live.md#goal" },
       { id: "docs/live.md" },
     ]);
 

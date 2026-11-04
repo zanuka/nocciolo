@@ -1,15 +1,15 @@
 # Jev diagrams: store and update paths
 
-How the opt-in Jev judge sits on Nocciolo's retain path when you store **new** durable markdown or update **changed** content already in the bank.
+How the opt-in Jev judge sits on Orto's retain path when you store **new** durable markdown or update **changed** content already in the bank.
 
 Product rule: [jev.md](./jev.md).
 Narrative design: [jev-integration.md](./jev-integration.md).
-Judge port: `src/judge/` ([JEV-2](https://github.com/zanuka/nocciolo/issues/21)).
-The seed relevance gate is shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30)).
-Section-level keep/skip is shipped with it ([JEV-5](https://github.com/zanuka/nocciolo/issues/36)).
+Judge port: `src/judge/` ([JEV-2](https://github.com/zanuka/orto/issues/21)).
+The seed relevance gate is shipped ([JEV-4](https://github.com/zanuka/orto/issues/30)).
+Section-level keep/skip is shipped with it ([JEV-5](https://github.com/zanuka/orto/issues/36)).
 One file can retain one section and skip another.
-`store --propose-adopt` can propose new allowlist files ([JEV-10](https://github.com/zanuka/nocciolo/issues/41)).
-Edit durability gates are still planned ([JEV-12](https://github.com/zanuka/nocciolo/issues/31)).
+`store --propose-adopt` can propose new allowlist files ([JEV-10](https://github.com/zanuka/orto/issues/41)).
+Edit durability gates are still planned ([JEV-12](https://github.com/zanuka/orto/issues/31)).
 The diagrams show that intended `store` experience with `--judge jev`.
 
 Without `--judge jev`, solid boxes still run. Dotted Jev steps are skipped and offline heuristics decide keep/skip.
@@ -18,7 +18,7 @@ Without `--judge jev`, solid boxes still run. Dotted Jev steps are skipped and o
 
 ## New vs changed at a glance
 
-`seed` and `store` share one retain path (stable `document_id` upserts, seed manifest under `.nocciolo/local/`).
+`seed` and `store` share one retain path (stable `document_id` upserts, seed manifest under `.orto/local/`).
 Buckets differ by how the operator selects files:
 
 | Bucket | Meaning | Typical command |
@@ -28,7 +28,7 @@ Buckets differ by how the operator selects files:
 | Unchanged | Hash matches; skip unless `--force` | no Hindsight call |
 
 Jev does not invent new files or rewrite docs.
-It scores candidates Nocciolo already extracted, then Nocciolo retains only after confidence and (when required) confirmation.
+It scores candidates Orto already extracted, then Orto retains only after confidence and (when required) confirmation.
 
 ```mermaid
 flowchart LR
@@ -37,7 +37,7 @@ flowchart LR
     changedFile[Changed known file]
   end
 
-  subgraph nocciolo [Nocciolo]
+  subgraph orto [Orto]
     scan[Scan and denylist]
     extract[Extract sections]
     buckets[Bucket new or changed]
@@ -63,8 +63,8 @@ flowchart LR
 
 ## Store / seed retain with Jev
 
-Operator flow for `nocciolo store` (or `seed`) when Jev is enabled.
-Nocciolo owns every side effect: denylist, hash, upsert, manifest.
+Operator flow for `orto store` (or `seed`) when Jev is enabled.
+Orto owns every side effect: denylist, hash, upsert, manifest.
 
 ```mermaid
 flowchart TD
@@ -97,7 +97,7 @@ Notes:
 
 - `seed --budget N --judge jev` ranks kept sections and retains the top N. Without `--budget`, every kept section is still eligible. Weights are in [jev.md](./jev.md).
 - Default `--confidence` is `0.8` ([jev.md](./jev.md)).
-- Missing `NOCCIOLO_TYPESAFE_API_KEY` with `--judge jev` is a hard error.
+- Missing `ORTO_TYPESAFE_API_KEY` with `--judge jev` is a hard error.
 - Network / 429 / 5xx: warn once and fall back to heuristics unless `--strict`.
 
 ---
@@ -131,7 +131,7 @@ flowchart TD
 
 ## Changed content update
 
-When a known source's hash changes, Nocciolo re-extracts and upserts by `document_id`.
+When a known source's hash changes, Orto re-extracts and upserts by `document_id`.
 Jev can hold an edit that does not look durable (changelog noise, temporary notes) even though the path is already allowlisted.
 
 ```mermaid
@@ -156,7 +156,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-  subgraph noccioloOwns [Nocciolo owns]
+  subgraph ortoOwns [Orto owns]
     scanOwn[Scan denylist hash]
     sideEffects[Retain upsert tombstone]
     prose[Missions ADRs in git]
@@ -183,5 +183,5 @@ flowchart LR
 
 - [jev.md](./jev.md): product rule (judge, not backend)
 - [jev-integration.md](./jev-integration.md): where Jev sits on the full pipeline
-- [nocciolo-cli-commands.md](./nocciolo-cli-commands.md): `seed` / `store` flags including `--judge`
-- [nocciolo-sync-strategy.md](./nocciolo-sync-strategy.md): why curated retain beats file upload
+- [orto-cli-commands.md](./orto-cli-commands.md): `seed` / `store` flags including `--judge`
+- [orto-sync-strategy.md](./orto-sync-strategy.md): why curated retain beats file upload

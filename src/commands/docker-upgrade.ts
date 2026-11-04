@@ -36,7 +36,7 @@ import {
   resolveHindsightApiKey,
   resolveHindsightBaseUrl,
 } from "../providers/hindsight/client.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { isInteractive, promptLine } from "../utils/prompt.js";
 
 export interface DockerUpgradeOptions {
@@ -193,7 +193,7 @@ export async function runDockerUpgrade(
     "(unknown)";
   const health = await client.getHealth();
   if (!client.isHealthy(health)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Hindsight health check failed at ${baseUrl}`,
       `Response: ${JSON.stringify(health)}. Fix health before upgrading.`,
     );
@@ -239,7 +239,7 @@ export async function runDockerUpgrade(
     const message = `Detected ${pending} pending/processing operation field(s) across bank stats. Upgrading mid-flight can leave work incomplete.`;
     if (!yes) {
       if (!isInteractive()) {
-        throw new NoccioloError(
+        throw new OrtoError(
           message,
           "Re-run with -y/--yes after quiescing retain traffic, or wait for operations to finish.",
         );
@@ -247,7 +247,7 @@ export async function runDockerUpgrade(
       console.warn(`Warning: ${message}`);
       const answer = await promptLine("Continue with upgrade? [y/N]");
       if (!/^y(es)?$/i.test(answer)) {
-        throw new NoccioloError(
+        throw new OrtoError(
           "Upgrade aborted due to pending operations",
           "Wait for operations to finish, then re-run. Use -y to skip this confirm.",
         );
@@ -259,16 +259,16 @@ export async function runDockerUpgrade(
 
   if (!yes) {
     if (!isInteractive()) {
-      throw new NoccioloError(
+      throw new OrtoError(
         "Non-interactive upgrade requires -y/--yes",
-        "Re-run with -y after reviewing `nocciolo docker upgrade --to <ver> --dry-run`.",
+        "Re-run with -y after reviewing `orto docker upgrade --to <ver> --dry-run`.",
       );
     }
     const answer = await promptLine(
       `Upgrade ${containerName} from ${fromVersion} to ${toVersion}? This recreates the container and keeps the data volume. [y/N]`,
     );
     if (!/^y(es)?$/i.test(answer)) {
-      throw new NoccioloError(
+      throw new OrtoError(
         "Upgrade aborted",
         "Re-run with -y to skip confirmation.",
       );
@@ -384,7 +384,7 @@ export async function runDockerUpgrade(
     await runDockerCommand(backupPlan.volumeTarball.argv);
     const tarballStat = await stat(backupPlan.volumeTarball.hostTarballPath);
     if (tarballStat.size <= 0) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Volume tarball is empty: ${backupPlan.volumeTarball.hostTarballPath}`,
         "Aborting upgrade. Fix Docker volume access and re-run without --skip-backup.",
       );
@@ -439,7 +439,7 @@ export async function runDockerUpgrade(
   const afterVersionInfo = await client.getVersion();
   const afterVersion = client.resolveApiVersion(afterVersionInfo);
   if (!afterVersion || !versionsEqual(afterVersion, toVersion)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Post-upgrade /version mismatch: expected ${toVersion}, got ${afterVersion ?? "unknown"}`,
       backupDir
         ? `Backup is at ${backupDir}. See docs/hindsight-upgrade.md for rollback.`
@@ -449,7 +449,7 @@ export async function runDockerUpgrade(
 
   const afterHealth = await client.getHealth();
   if (!client.isHealthy(afterHealth)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Post-upgrade health check failed",
       backupDir
         ? `Backup is at ${backupDir}. Check docker logs and docs/hindsight-upgrade.md.`
@@ -460,7 +460,7 @@ export async function runDockerUpgrade(
   const afterBanks = normalizeBankManifest(await client.listBanks());
   const validation = diffBankFactCounts(banks, afterBanks);
   if (!validation.ok) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Post-upgrade bank validation failed (bank set or fact_count mismatch)",
       [
         formatFactCountTable(validation.rows),

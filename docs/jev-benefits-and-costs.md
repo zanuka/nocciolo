@@ -1,17 +1,17 @@
-# Jev in Nocciolo — benefits and expected cost
+# Jev in Orto — benefits and expected cost
 
 **Status:** planning / opt-in design  
-**Audience:** Nocciolo operators, SWE team leads, anyone deciding whether to turn on `--judge jev`  
-**Related:** [JEV-0 epic](https://github.com/zanuka/nocciolo/issues/58), [open `jev` issues](https://github.com/zanuka/nocciolo/issues?q=is%3Aissue+is%3Aopen+label%3Ajev), [jev.md](./jev.md) (product rule), [jev-integration.md](./jev-integration.md), [JEV issue pack](./JEV_GITHUB_ISSUES.md), TypeSafe [Introduction](https://docs.typesafe.ai/introduction), [System One](https://docs.typesafe.ai/concepts/system-one), [Models & pricing](https://docs.typesafe.ai/models)  
+**Audience:** Orto operators, SWE team leads, anyone deciding whether to turn on `--judge jev`  
+**Related:** [JEV-0 epic](https://github.com/zanuka/orto/issues/58), [open `jev` issues](https://github.com/zanuka/orto/issues?q=is%3Aissue+is%3Aopen+label%3Ajev), [jev.md](./jev.md) (product rule), [jev-integration.md](./jev-integration.md), [JEV issue pack](./JEV_GITHUB_ISSUES.md), TypeSafe [Introduction](https://docs.typesafe.ai/introduction), [System One](https://docs.typesafe.ai/concepts/system-one), [Models & pricing](https://docs.typesafe.ai/models)  
 **As of:** 29 September 2026
 
-This report is for end-users of Nocciolo, not a TypeSafe sales brief. Nocciolo stays local-first. Jev is an **opt-in hosted judge**. If you never set a TypeSafe key, you never pay TypeSafe, and the CLI behaves as it does today.
+This report is for end-users of Orto, not a TypeSafe sales brief. Orto stays local-first. Jev is an **opt-in hosted judge**. If you never set a TypeSafe key, you never pay TypeSafe, and the CLI behaves as it does today.
 
 ---
 
 ## 1. Executive summary
 
-Nocciolo already scans a repo, hashes what it keeps, and retains durable knowledge into a Hindsight bank. The expensive and irreversible steps are still decided with heuristics (and, at runtime, by agents):
+Orto already scans a repo, hashes what it keeps, and retains durable knowledge into a Hindsight bank. The expensive and irreversible steps are still decided with heuristics (and, at runtime, by agents):
 
 - which sections are worth a Hindsight `retain`
 - which bank items have gone stale
@@ -19,23 +19,23 @@ Nocciolo already scans a repo, hashes what it keeps, and retains durable knowled
 - whether an agent `retain` through MCP is project knowledge or session junk
 - when Firstmate should touch the bank at all
 
-[Jev](https://docs.typesafe.ai/introduction) is TypeSafe’s System One model: unstructured state in, typed Choice / Score / Noul answers out, with calibrated probabilities and a confidence score. It does not write bank text, missions, or ADRs. Nocciolo keeps every side effect.
+[Jev](https://docs.typesafe.ai/introduction) is TypeSafe’s System One model: unstructured state in, typed Choice / Score / Noul answers out, with calibrated probabilities and a confidence score. It does not write bank text, missions, or ADRs. Orto keeps every side effect.
 
 **Primary benefit:** spend Hindsight retain, prune, and agent context on knowledge that is actually durable — and escalate the uncertain cases to a human or Firstmate captain instead of silently applying a guess.
 
-**Primary cost fact:** TypeSafe bills **input tokens only**. Official list price for `jev-1.13.0` (alias `jev-latest`) is **$0.042 per million input tokens**; **output is free**. A typical Nocciolo section-judge call is on the order of **1,000–2,500 input tokens**, or **well under $0.0001 per section**. A first seed of a mid-size docs tree is cents, not dollars. Recurring cost stays low if you judge **changed sections and MCP retain attempts**, not the whole bank on every command.
+**Primary cost fact:** TypeSafe bills **input tokens only**. Official list price for `jev-1.13.0` (alias `jev-latest`) is **$0.042 per million input tokens**; **output is free**. A typical Orto section-judge call is on the order of **1,000–2,500 input tokens**, or **well under $0.0001 per section**. A first seed of a mid-size docs tree is cents, not dollars. Recurring cost stays low if you judge **changed sections and MCP retain attempts**, not the whole bank on every command.
 
 **Opt-in contract:**
 
 | Condition | What happens | TypeSafe bill |
 |---|---|---|
-| No `NOCCIOLO_TYPESAFE_API_KEY`, no `--judge jev` | Today’s heuristic path | $0 |
+| No `ORTO_TYPESAFE_API_KEY`, no `--judge jev` | Today’s heuristic path | $0 |
 | Key present but flag off | Key is unused | $0 |
 | `--judge jev` without a key | Hard error; how to unset the flag | $0 |
 | `--judge jev` + key | Typed questions on sanitized excerpts | Input tokens only |
-| API error / 429 (default) | Warn once, fall back to heuristics | Partial (failed calls may still meter; Nocciolo must not retry-storm) |
+| API error / 429 (default) | Warn once, fall back to heuristics | Partial (failed calls may still meter; Orto must not retry-storm) |
 
-Nocciolo does not resell Jev, does not require a TypeSafe account, and must not treat the Hindsight key as a TypeSafe key.
+Orto does not resell Jev, does not require a TypeSafe account, and must not treat the Hindsight key as a TypeSafe key.
 
 ---
 
@@ -44,11 +44,11 @@ Nocciolo does not resell Jev, does not require a TypeSafe account, and must not 
 TypeSafe names Jev a **System One** model, after Kahneman’s fast / slow split:
 
 - **System One (Jev):** snap judgments software can branch on. Fast, structured, no prose.
-- **System Two (already Nocciolo’s):** Hindsight extract/retain, `reflect`, Firstmate captain, a person confirming prune or share.
+- **System Two (already Orto’s):** Hindsight extract/retain, `reflect`, Firstmate captain, a person confirming prune or share.
 
 That split is the integration rule. Jev is not a memory backend and not a second agent.
 
-| Jev does | Nocciolo still does |
+| Jev does | Orto still does |
 |---|---|
 | Return `choice`, `score`, `noul`, probabilities, confidence | Scan, denylist, hash, retain, prune, share, MCP I/O |
 | Score a section for durability / scope / secrets | Write the bank and the repo |
@@ -72,7 +72,7 @@ Do-not-build (from JEV-1):
 
 Hindsight `retain` is the costly step — time, local model/GPU, and bank quality. Heuristics already drop a lot of noise. Changelogs, badge walls, tables of contents, generated API dumps, and meeting-note piles still get through often enough to matter.
 
-With `--judge jev`, after scan and the existing filter, Nocciolo sends a **section excerpt** (not the file, not the bank) and asks atomic questions in one call:
+With `--judge jev`, after scan and the existing filter, Orto sends a **section excerpt** (not the file, not the bank) and asks atomic questions in one call:
 
 - Noul `is_durable` — decision, invariant, architecture, standard
 - Noul `is_ephemeral` — changelog, TOC, generated dump, TODO pile
@@ -85,13 +85,13 @@ Code policy, not a prompt:
 - in_scope low → skip (or later route to another bank)
 - confidence below threshold → dry-run review, never auto-skip or auto-retain
 
-**User-visible result:** `nocciolo seed --dry-run --judge jev` prints path, heading, decisions, scores, confidence, and heuristic-vs-Jev. You see the keep/skip table before anything is written.
+**User-visible result:** `orto seed --dry-run --judge jev` prints path, heading, decisions, scores, confidence, and heuristic-vs-Jev. You see the keep/skip table before anything is written.
 
 **Why this is the headline benefit:** a dirty bank is more expensive than Jev. Every later `recall` / `reflect` / Firstmate turn pays for junk that was retained once.
 
 ### 3.2 Judge sections, not files
 
-A README is often 20% durable architecture and 80% badges, TOC, and contributor tables. File-level keep/skip is the wrong unit. Jev runs per `nocciolo:<path>#<section>` / `document_id`. One file can produce a mix of retain and skip rows in a single seed.
+A README is often 20% durable architecture and 80% badges, TOC, and contributor tables. File-level keep/skip is the wrong unit. Jev runs per `orto:<path>#<section>` / `document_id`. One file can produce a mix of retain and skip rows in a single seed.
 
 **User-visible result:** the dry-run table has one row per heading. The architecture section of `README.md` can land in the bank while the changelog section does not.
 
@@ -103,13 +103,13 @@ A monorepo change can touch dozens of markdown files and contain only a few deci
 
 ### 3.4 Remove knowledge that is no longer true: with a plan, not a guess
 
-`seed` and `store` add or upsert. Months later a path is gone, a section is gone, or the file is still on disk but the claim is false. `nocciolo prune` already groups path-gone and section-gone without a TypeSafe key (plus explicit `--source` / `--document-id`). Optional `audit --judge jev` / `--judge jev` on prune is planned to annotate:
+`seed` and `store` add or upsert. Months later a path is gone, a section is gone, or the file is still on disk but the claim is false. `orto prune` already groups path-gone and section-gone without a TypeSafe key (plus explicit `--source` / `--document-id`). Optional `audit --judge jev` / `--judge jev` on prune is planned to annotate:
 
 - source path no longer in the repo (shipped today; no TypeSafe key required)
 - section no longer in the file (shipped today; no key required)
 - Jev-scored outdated / irrelevant / contradicted (key + `--judge jev`; not shipped yet)
 
-Jev annotates the prompt with a choice and a confidence score. Low score is shown and left unchecked. `--dry-run` prints groups and does not delete. After you confirm, Nocciolo deletes and tombstones so the next seed does not put the same unchanged text back.
+Jev annotates the prompt with a choice and a confidence score. Low score is shown and left unchecked. `--dry-run` prints groups and does not delete. After you confirm, Orto deletes and tombstones so the next seed does not put the same unchanged text back.
 
 **User-visible result:** prune is a reviewable plan instead of manual Hindsight cleanup. Path-gone / section-gone work offline today.
 
@@ -123,7 +123,7 @@ Questions on a sanitized payload:
 - Noul `is_session_fluff`
 - Choice `action`: `allow | deny | suggest_seed_instead`
 
-Default deny on fluff or low confidence. The agent is told to use `nocciolo seed` / `store`, not mid-session retain. With the judge off, conservative heuristic deny rules still apply to obvious chat-shaped payloads.
+Default deny on fluff or low confidence. The agent is told to use `orto seed` / `store`, not mid-session retain. With the judge off, conservative heuristic deny rules still apply to obvious chat-shaped payloads.
 
 **User-visible result:** the bank stays a company brain, not a transcript dump — even when several harnesses are pointed at the same MCP server.
 
@@ -146,7 +146,7 @@ A low score goes to the captain instead of a silent apply.
 
 **User-visible result:** fewer wasted recall tokens in the coding agent, fewer “we still use MySQL” answers after the Postgres ADR landed, fewer Firstmate loops that load the bank for a pure-code task.
 
-### 3.7 Typed answers so policy lives in Nocciolo
+### 3.7 Typed answers so policy lives in Orto
 
 The alternative is “ask an LLM if we should keep this” and parse a paragraph. That is using a System Two text model as a brittle classifier: extra output tokens, parse failures, no calibrated confidence.
 
@@ -164,7 +164,7 @@ Anything sent to TypeSafe leaves the machine. The benefit only holds if state is
 - never attach the full bank, a huge file, a secret-bearing patch, or MCP conversation logs
 - second-pass Noul `contains_secret` / `contains_pii` on candidates that already passed the path filter
 
-**User-visible result:** a pasted `sk-` / PEM block in an otherwise seedable ADR is skipped and the warning names the path without reprinting the secret. Public share still waits on a Nocciolo safety check (JEV-33).
+**User-visible result:** a pasted `sk-` / PEM block in an otherwise seedable ADR is skipped and the warning names the path without reprinting the secret. Public share still waits on a Orto safety check (JEV-33).
 
 ### 3.9 Make the default (offline) path better, even if you rarely turn Jev on
 
@@ -178,7 +178,7 @@ Do not expect Jev to:
 
 - replace Hindsight or become a provider
 - write better ADRs than your team
-- count occurrences, compare dates, or do arithmetic (do that in Nocciolo)
+- count occurrences, compare dates, or do arithmetic (do that in Orto)
 - guarantee a single answer is correct — calibration is over groups of predictions
 - harden the bank against a determined adversarial prompt in `state` without your own tests
 
@@ -192,23 +192,23 @@ Happy path stays local. Jev is a flag plus a key you own.
 
 ```bash
 # default — no TypeSafe traffic
-nocciolo seed --dry-run
-nocciolo seed
+orto seed --dry-run
+orto seed
 
 # preview judgments only
-export NOCCIOLO_TYPESAFE_API_KEY=...   # never commit; never reuse the Hindsight key
-nocciolo seed --dry-run --judge jev
+export ORTO_TYPESAFE_API_KEY=...   # never commit; never reuse the Hindsight key
+orto seed --dry-run --judge jev
 
 # apply keep/skip only where confidence ≥ threshold (default documented in docs/jev.md)
-nocciolo seed --judge jev --confidence 0.8
+orto seed --judge jev --confidence 0.8
 
 # runtime MCP retain gate (harness-level; default off unless the emitted snippet enables it)
-# NOCCIOLO_TYPESAFE_API_KEY must be present in the MCP server environment
+# ORTO_TYPESAFE_API_KEY must be present in the MCP server environment
 ```
 
 Recommended enable order:
 
-1. Dry-run seed on a repo you already know (Nocciolo itself, Strumentario, or a docs-heavy service).
+1. Dry-run seed on a repo you already know (Orto itself, Strumentario, or a docs-heavy service).
 2. Compare the table to heuristics. If it is not obviously better on ADRs vs changelog/TOC, stop.
 3. Turn on the MCP retain guardrail. That is the runtime damage-control switch.
 4. Add audit/prune annotation once you trust the questions.
@@ -224,12 +224,12 @@ Commands that must not call Jev unless they explicitly opt in: `init`, `configur
 
 | Party | Charges for Jev? | Notes |
 |---|---|---|
-| Nocciolo | No | OSS CLI. No markup, no bundled TypeSafe subscription. |
+| Orto | No | OSS CLI. No markup, no bundled TypeSafe subscription. |
 | TypeSafe AI | Yes, if you call their API | You create a key at [console.typesafe.ai](https://console.typesafe.ai/). Early access has been waitlist-based; some gateways also serve `jev-1.13`. |
 | Hindsight / local Docker | Unchanged | Jev does not replace local retain compute. It *reduces how often* you pay that cost. |
 | Coding-agent vendor | Unchanged, often down slightly | Cleaner bank → fewer wasted recall/reflect tokens in Cursor / Claude Code / etc. |
 
-You bring your own TypeSafe key. Nocciolo never implies that key from the Hindsight key.
+You bring your own TypeSafe key. Orto never implies that key from the Hindsight key.
 
 ### 5.2 Official TypeSafe list price (29 September 2026)
 
@@ -242,18 +242,18 @@ Source: [docs.typesafe.ai/models](https://docs.typesafe.ai/models) for **Jev 1.1
 | Context | 64k tokens per request; 32k for state + the longest question |
 | Input types | Text only (string, JSON object, or array of text). No image / audio / video |
 | Rate limits (published, can change) | 250,000 tokens/second; 1,200 requests/minute |
-| Fine-tuning | None. Same weights for every account. Domain rules go in questions + Nocciolo policy |
+| Fine-tuning | None. Same weights for every account. Domain rules go in questions + Orto policy |
 | Data use | TypeSafe documents that enterprise terms include zero retention; confirm current terms before sending anything you would not send to any hosted API |
 
-Independent write-ups of the same list price are consistent with the models page. Third-party **credit packs** advertised on unofficial sites (e.g. $0.25–$0.42/M on prepaid tiers) are **not** the official models-page rate and should not be used for Nocciolo planning. Gateways (OpenRouter, Vercel AI Gateway, Cloudflare) have historically listed the same **$0.042 / $0** unit price plus their own fees or context caps — check the gateway you actually use.
+Independent write-ups of the same list price are consistent with the models page. Third-party **credit packs** advertised on unofficial sites (e.g. $0.25–$0.42/M on prepaid tiers) are **not** the official models-page rate and should not be used for Orto planning. Gateways (OpenRouter, Vercel AI Gateway, Cloudflare) have historically listed the same **$0.042 / $0** unit price plus their own fees or context caps — check the gateway you actually use.
 
 TypeSafe has said it expects prices to fall rather than rise and has noted it cannot prove the current price is not subsidized. Treat **$0.042/MTok input** as the planning rate and re-read the models page before you budget a contract.
 
-### 5.3 What Nocciolo sends (and therefore what you pay for)
+### 5.3 What Orto sends (and therefore what you pay for)
 
 You pay for **every token in `state` plus every token in the question definitions**, once per HTTP call. Output (the typed answers) is free. Several questions against the same state in **one** call are cheaper than one call per question, because the section text is billed once.
 
-Nocciolo’s state budget (JEV-3) is the main cost-control:
+Orto’s state budget (JEV-3) is the main cost-control:
 
 - section text + path + heading + bank mission + a short overlap list
 - not the repo, not the bank dump, not a raw patch with secrets
@@ -289,7 +289,7 @@ run_cost ≈ N_calls × tokens_per_call × 0.042 / 1e6
 
 Batching more questions into the same call (kind + durability + secret check) raises tokens_per_call only by the extra question text, not by another copy of the section.
 
-### 5.4 Expected cost by Nocciolo feature
+### 5.4 Expected cost by Orto feature
 
 These are **planning ranges**, not invoices. They assume the 2,000-token average unless noted, list price $0.042/MTok, and no gateway markup.
 
@@ -344,7 +344,7 @@ These sit on the hot path. A naive “score every recalled passage on every agen
 |---|---|---|
 | `recall` pass-through (default) | $0 Jev | Correct default |
 | Packed `recall_ranked` on demand | One call per pack, not per passage if batched | Budget ~3k–8k tokens/call if you send several passages as one state |
-| `still_true` on every recall | Cloud hop + tokens every turn | Env flag off by default (`NOCCIOLO_JEV_RECALL_VERIFY`) |
+| `still_true` on every recall | Cloud hop + tokens every turn | Env flag off by default (`ORTO_JEV_RECALL_VERIFY`) |
 | Firstmate “needs bank?” once per captain request | One small call per task | Usually cheaper than a useless Hindsight reflect |
 
 **Guidance:** enable seed + MCP retain first. Measure. Only then put Jev on recall.
@@ -375,7 +375,7 @@ Assumptions: 2,000 tokens/seed-section, 1,000 tokens/MCP-retain, 2,000 tokens/au
 - Same as team case × ~3 banks, if each bank is seeded separately → **≈ $0.15 / month**
 - Turning on un-gated watcher or per-turn recall verify is the only way this becomes material. That is a configuration mistake, not the list price.
 
-Compared with asking Claude Haiku 4.5 to “decide keep/skip and explain” at published **$1 / $5 per million** input/output, the same 500k input tokens is **$0.50** before any output tokens. Jev’s output-free, no-prose design is why the Nocciolo judge can exist as a default-off extra without a procurement exercise.
+Compared with asking Claude Haiku 4.5 to “decide keep/skip and explain” at published **$1 / $5 per million** input/output, the same 500k input tokens is **$0.50** before any output tokens. Jev’s output-free, no-prose design is why the Orto judge can exist as a default-off extra without a procurement exercise.
 
 ### 5.6 Costs Jev is meant to *avoid* (the real budget)
 
@@ -387,7 +387,7 @@ TypeSafe cents are not the interesting number. The costs Jev is designed to cut:
 | Bank pollution → every future `recall` / `reflect` is worse and longer | MCP retain deny; section-level skip |
 | Human time cleaning Hindsight by hand | Audit plan + confidence-gated prune |
 | Firstmate / Maglio loops that load the bank for a pure-code task | `needs_project_bank` Noul |
-| Accidental public share of internal runbooks | JEV-33 profile gate (still Nocciolo applies the profile) |
+| Accidental public share of internal runbooks | JEV-33 profile gate (still Orto applies the profile) |
 | Using a frontier LLM as an ad-hoc JSON judge | Typed primitives, free output, no parser |
 
 A single bad MCP retain of a 2,000-token chat blob is “free” at write time and then paid back on every agent session that recalls it. That is why JEV-22 is in the first slice and why its TypeSafe bill is the wrong thing to minimize in isolation.
@@ -408,9 +408,9 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 ### 5.8 Access and operational caveats that affect cost
 
 - Direct TypeSafe signup has been **early access / waitlist**. Gateway routing may be how some operators get a key. Gateway context caps can be **32k**, tighter than TypeSafe direct.
-- Published rate limits can change without notice during early access. Nocciolo should treat 429 as fallback-to-heuristics, not a tight retry loop (retries are how a $0.02 seed becomes a surprise).
-- Jev is hosted. There is **no self-hosted / OSS weights** path as of this writing. Local-first Nocciolo remains the default; Jev is the optional cloud hop.
-- Confirm TypeSafe’s current data-retention and DPA language before judging anything that might include customer names. Nocciolo’s job is to keep that text off the wire; the legal review is still yours.
+- Published rate limits can change without notice during early access. Orto should treat 429 as fallback-to-heuristics, not a tight retry loop (retries are how a $0.02 seed becomes a surprise).
+- Jev is hosted. There is **no self-hosted / OSS weights** path as of this writing. Local-first Orto remains the default; Jev is the optional cloud hop.
+- Confirm TypeSafe’s current data-retention and DPA language before judging anything that might include customer names. Orto’s job is to keep that text off the wire; the legal review is still yours.
 
 ---
 
@@ -418,18 +418,18 @@ A single bad MCP retain of a 2,000-token chat blob is “free” at write time a
 
 | Spend (opt-in) | Benefit | First-slice? |
 |---|---|---|
-| `seed --dry-run --judge jev` | See keep/skip + scores before any retain, one row per section | Shipped ([JEV-4](https://github.com/zanuka/nocciolo/issues/30), [JEV-5](https://github.com/zanuka/nocciolo/issues/36)). One file can mix retain and skip |
+| `seed --dry-run --judge jev` | See keep/skip + scores before any retain, one row per section | Shipped ([JEV-4](https://github.com/zanuka/orto/issues/30), [JEV-5](https://github.com/zanuka/orto/issues/36)). One file can mix retain and skip |
 | `seed --judge jev` | Skip high-confidence junk; review the rest | Yes |
 | MCP retain gate | Stop session fluff entering the bank | Yes (JEV-22) |
 | Golden-set eval | Know whether Jev beats heuristics; improve offline path | Yes (JEV-34) |
-| Kind / tags / contradiction / secrets | Cleaner bank, supersession instead of duplicate facts, secrets and personal data stay out | Shipped for kind ([JEV-6](https://github.com/zanuka/nocciolo/issues/37)), contradiction ([JEV-7](https://github.com/zanuka/nocciolo/issues/38)), the secret / personal-data check ([JEV-8](https://github.com/zanuka/nocciolo/issues/39)), and citation support ([JEV-9](https://github.com/zanuka/nocciolo/issues/40)) |
+| Kind / tags / contradiction / secrets | Cleaner bank, supersession instead of duplicate facts, secrets and personal data stay out | Shipped for kind ([JEV-6](https://github.com/zanuka/orto/issues/37)), contradiction ([JEV-7](https://github.com/zanuka/orto/issues/38)), the secret / personal-data check ([JEV-8](https://github.com/zanuka/orto/issues/39)), and citation support ([JEV-9](https://github.com/zanuka/orto/issues/40)) |
 | `audit --judge jev` + confirm | Structured prune; tombstones | After |
 | Firstmate routing | Bank only when the task needs it | After |
 | Recall rerank / still-true | Safer context; extra latency and tokens | After, flag-gated |
 | Share safety gate | Extra check before `public` | After, with Phase 5 profiles |
 
 Foundation work (JEV-1–3) has **no TypeSafe cost**. It is documentation, a `Judge` port, and sanitization so the later flags cannot leak secrets or become a default.
-[JEV-4](https://github.com/zanuka/nocciolo/issues/30) is the first call that spends input tokens, one section at a time.
+[JEV-4](https://github.com/zanuka/orto/issues/30) is the first call that spends input tokens, one section at a time.
 
 ---
 
@@ -437,14 +437,14 @@ Foundation work (JEV-1–3) has **no TypeSafe cost**. It is documentation, a `Ju
 
 Ship and talk about Jev as:
 
-> An optional System One judge. Nocciolo stays local-first. You add a TypeSafe key and `--judge jev` when you want typed keep/skip, prune annotation, and an MCP retain gate. Expect **cents per month** on normal seed + retain-guard usage at the September 2026 list price of **$0.042 per million input tokens**, output free. If the dry-run table is not better than heuristics, leave it off.
+> An optional System One judge. Orto stays local-first. You add a TypeSafe key and `--judge jev` when you want typed keep/skip, prune annotation, and an MCP retain gate. Expect **cents per month** on normal seed + retain-guard usage at the September 2026 list price of **$0.042 per million input tokens**, output free. If the dry-run table is not better than heuristics, leave it off.
 
-Success test (already in the issue pack): on Strumentario or Nocciolo itself, `seed --dry-run --judge jev` keeps durable ADRs, drops changelog/TOC, and sends no secrets in the TypeSafe payload.
+Success test (already in the issue pack): on Strumentario or Orto itself, `seed --dry-run --judge jev` keeps durable ADRs, drops changelog/TOC, and sends no secrets in the TypeSafe payload.
 
 ---
 
 ## 8. Sources
 
 - TypeSafe docs: [Introduction](https://docs.typesafe.ai/introduction), [System One](https://docs.typesafe.ai/concepts/system-one), [How to build with System One](https://docs.typesafe.ai/concepts/how-to-build-with-system-one), [Models](https://docs.typesafe.ai/models)
-- Nocciolo: [JEV-0](https://github.com/zanuka/nocciolo/issues/58), [JEV issue pack](./JEV_GITHUB_ISSUES.md), [jev.md](./jev.md), [jev-integration.md](./jev-integration.md), [company-brain.md](./company-brain.md)
+- Orto: [JEV-0](https://github.com/zanuka/orto/issues/58), [JEV issue pack](./JEV_GITHUB_ISSUES.md), [jev.md](./jev.md), [jev-integration.md](./jev-integration.md), [company-brain.md](./company-brain.md)
 - Planning rates in §5 were computed from the official **$0.042 / MTok input, output free** line on the models page as of 29 September 2026. Re-verify before procurement.

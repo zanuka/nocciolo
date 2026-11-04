@@ -1,6 +1,6 @@
-# Nocciolo Development Guide for Claude Code
+# Orto Development Guide for Claude Code
 
-**Nocciolo** is an open-source CLI that turns durable project knowledge into Hindsight memory banks so AI agents inherit shared context.
+**Orto** is an open-source CLI that turns durable project knowledge into Hindsight memory banks so AI agents inherit shared context.
 
 ## Core Principles
 
@@ -42,7 +42,7 @@ Put logic in the matching layer; do not collapse stages into `commands/` or a si
 |---------|--------|
 | Flags / UX / orchestration | `src/commands/` |
 | Root detection, git commit | `src/project/` |
-| `.nocciolo/config.json` schema + IO | `src/config/` |
+| `.orto/config.json` schema + IO | `src/config/` |
 | Discover durable files | `src/scanner/` |
 | Heuristic candidates + provenance | `src/extractor/` |
 | Prepare retain + seed manifest | `src/seeder/` |
@@ -58,9 +58,9 @@ Commands may call modules; modules must not depend on Commander. Integration emi
 - Mutating or network commands support `--dry-run` where practical
 - `seed --dry-run` previews candidates and does not retain or write the manifest. It does not call Hindsight unless `--judge jev` is set, in which case it may recall up to 5 observation summaries and may preview extracted facts (both read-only) and still must not retain or delete
 - `prune --dry-run` may list documents (read-only) but must not delete or write tombstones
-- Live `seed` uses stable `document_id`s and writes incremental state only under `.nocciolo/local/` (gitignored)
-- Live `prune` deletes selected documents and writes tombstones under `.nocciolo/local/` (gitignored)
-- Version-controlled config stays under `.nocciolo/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
+- Live `seed` uses stable `document_id`s and writes incremental state only under `.orto/local/` (gitignored)
+- Live `prune` deletes selected documents and writes tombstones under `.orto/local/` (gitignored)
+- Version-controlled config stays under `.orto/` (`config.json`, `hindsight/bank-template.json`); never commit API keys
 - `init` prompts for bank id + Docker container name in a TTY (flags/`--yes` skip prompts); bank id is not the Docker container name
 - Docker container/volume: CLI `--name` → `config.docker` → defaults `hindsight` / `hindsight-data`
 
@@ -68,8 +68,8 @@ Commands may call modules; modules must not depend on Commander. Integration emi
 
 Resolve URL/key in order: CLI flag → config (URL only) → env → default `http://localhost:8888`.
 
-- URL: `--hindsight-url`, `hindsightBaseUrl`, `NOCCIOLO_HINDSIGHT_URL` / `HINDSIGHT_URL`
-- Key: `--api-key`, `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` (Bearer header; not stored in config)
+- URL: `--hindsight-url`, `hindsightBaseUrl`, `ORTO_HINDSIGHT_URL` / `HINDSIGHT_URL`
+- Key: `--api-key`, `ORTO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` (Bearer header; not stored in config)
 
 ## CLI Design Conventions
 
@@ -93,7 +93,7 @@ Resolve URL/key in order: CLI flag → config (URL only) → env → default `ht
 - Fail fast with clear messages
 - Tell the user the next concrete action when possible
 - Distinguish between user error (bad config, missing files) and system error
-- Errors must be actionable; fail with `NoccioloError` (or equivalent) plus a concrete next step
+- Errors must be actionable; fail with `OrtoError` (or equivalent) plus a concrete next step
 
 ## Testing Mindset
 
@@ -145,10 +145,10 @@ Deprioritize or ignore:
 
 ## Hindsight Bank Usage
 
-Use the project memory bank `nocciolo` via Hindsight MCP when answering questions about architecture, decisions, coding standards, or domain rules.
+Use the project memory bank `orto` via Hindsight MCP when answering questions about architecture, decisions, coding standards, or domain rules.
 
 - Prefer `recall` / `reflect` on the project bank before re-deriving facts from README/ADRs alone.
-- MCP URL: `http://localhost:8888/mcp/nocciolo/`
+- MCP URL: `http://localhost:8888/mcp/orto/`
 - Docs and ADRs remain authoritative; the bank is how agents inherit them across sessions.
 - Never retain secrets or credentials into the bank.
 

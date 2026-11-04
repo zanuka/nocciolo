@@ -20,7 +20,7 @@ describe("tombstones", () => {
   });
 
   async function tempRoot(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), "nocciolo-tomb-"));
+    const dir = await mkdtemp(join(tmpdir(), "orto-tomb-"));
     dirs.push(dir);
     return dir;
   }
@@ -31,44 +31,44 @@ describe("tombstones", () => {
       bankId: "b",
       updatedAt: "t",
       entries: {
-        "nocciolo:a.md#x": { contentHash: "abc", prunedAt: "t" },
-        "nocciolo:b.md#y": { prunedAt: "t" },
+        "orto:a.md#x": { contentHash: "abc", prunedAt: "t" },
+        "orto:b.md#y": { prunedAt: "t" },
       },
     };
 
-    expect(isTombstoned("nocciolo:a.md#x", "abc", tombs, false)).toBe(true);
-    expect(isTombstoned("nocciolo:a.md#x", "changed", tombs, false)).toBe(
+    expect(isTombstoned("orto:a.md#x", "abc", tombs, false)).toBe(true);
+    expect(isTombstoned("orto:a.md#x", "changed", tombs, false)).toBe(
       false,
     );
-    expect(isTombstoned("nocciolo:a.md#x", "abc", tombs, true)).toBe(false);
-    expect(isTombstoned("nocciolo:b.md#y", "anything", tombs, false)).toBe(
+    expect(isTombstoned("orto:a.md#x", "abc", tombs, true)).toBe(false);
+    expect(isTombstoned("orto:b.md#y", "anything", tombs, false)).toBe(
       true,
     );
 
     const { kept, skipped } = filterTombstonedFacts(
-      [{ id: "nocciolo:a.md#x" }, { id: "nocciolo:c.md#z" }],
+      [{ id: "orto:a.md#x" }, { id: "orto:c.md#z" }],
       "abc",
       tombs,
       false,
     );
     expect(skipped).toBe(1);
-    expect(kept.map((f) => f.id)).toEqual(["nocciolo:c.md#z"]);
+    expect(kept.map((f) => f.id)).toEqual(["orto:c.md#z"]);
   });
 
   it("persists and clears tombstone entries", async () => {
     const root = await tempRoot();
     await addTombstones(root, "bank", [
       {
-        documentId: "nocciolo:docs/a.md#s",
+        documentId: "orto:docs/a.md#s",
         sourcePath: "docs/a.md",
         contentHash: "h1",
       },
     ]);
     const loaded = await loadTombstones(root);
-    expect(loaded?.entries["nocciolo:docs/a.md#s"]?.contentHash).toBe("h1");
+    expect(loaded?.entries["orto:docs/a.md#s"]?.contentHash).toBe("h1");
 
-    await clearTombstonesForIds(root, ["nocciolo:docs/a.md#s"]);
+    await clearTombstonesForIds(root, ["orto:docs/a.md#s"]);
     const after = await loadTombstones(root);
-    expect(after?.entries["nocciolo:docs/a.md#s"]).toBeUndefined();
+    expect(after?.entries["orto:docs/a.md#s"]).toBeUndefined();
   });
 });

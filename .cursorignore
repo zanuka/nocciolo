@@ -42,8 +42,8 @@ broker.sock
 *.tmp
 *.tsbuildinfo
 .cache/
-.nocciolo/cache/
-.nocciolo/local/
+.orto/cache/
+.orto/local/
 .nyc_output/
 .pnp
 .pnp.js

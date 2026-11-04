@@ -44,7 +44,7 @@ async function main(): Promise<void> {
   const program = new Command();
 
   program
-    .name("nocciolo")
+    .name("orto")
     .description(
       "Company brain config for AI agents — seed Hindsight banks from durable project knowledge",
     )
@@ -52,9 +52,9 @@ async function main(): Promise<void> {
 
   program
     .command("init")
-    .description("Detect project root and scaffold .nocciolo/ config")
+    .description("Detect project root and scaffold .orto/ config")
     .option("--dry-run", "Show what would be written without creating files")
-    .option("--force", "Overwrite an existing .nocciolo/config.json")
+    .option("--force", "Overwrite an existing .orto/config.json")
     .option("--name <name>", "Project name (defaults to directory name)")
     .option(
       "--bank-id <id>",
@@ -90,7 +90,7 @@ async function main(): Promise<void> {
 
   program
     .command("configure")
-    .description("Generate a Hindsight bank template into .nocciolo/")
+    .description("Generate a Hindsight bank template into .orto/")
     .option("--dry-run", "Print the template without writing files")
     .option("--force", "Overwrite an existing bank template")
     .option("-y, --yes", "Accept starter defaults without interactive prompts")
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
     )
     .option(
       "--api-key <key>",
-      "Hindsight API key when using --apply (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      "Hindsight API key when using --apply (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
     )
     .action(
       async (opts: {
@@ -158,7 +158,7 @@ async function main(): Promise<void> {
   bank
     .command("apply")
     .description(
-      "Create or update the Hindsight bank from .nocciolo/hindsight/bank-template.json",
+      "Create or update the Hindsight bank from .orto/hindsight/bank-template.json",
     )
     .option("--dry-run", "Preview apply steps without calling Hindsight mutations")
     .option(
@@ -167,7 +167,7 @@ async function main(): Promise<void> {
     )
     .option(
       "--api-key <key>",
-      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      "Hindsight API key (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
     )
     .action(
       async (opts: {
@@ -189,7 +189,7 @@ async function main(): Promise<void> {
   program
     .command("share")
     .description(
-      "Generate or validate a deployment profile share artifact (.nocciolo/share.json)",
+      "Generate or validate a deployment profile share artifact (.orto/share.json)",
     )
     .option(
       "--profile <name>",
@@ -239,7 +239,7 @@ async function main(): Promise<void> {
     )
     .option(
       "--api-key <key>",
-      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      "Hindsight API key (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
     )
     .action(
       async (opts: {
@@ -277,11 +277,11 @@ async function main(): Promise<void> {
       )
       .option(
         "--hindsight-url <url>",
-        "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+        "Hindsight base URL (default: config, ORTO_HINDSIGHT_URL, or http://localhost:8888)",
       )
       .option(
         "--api-key <key>",
-        "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+        "Hindsight API key (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
       )
       .option("--async", "Submit retain asynchronously to Hindsight")
       .option(
@@ -389,7 +389,7 @@ async function main(): Promise<void> {
     .option("--mode <mode>", "Refresh mode: full or delta")
     .option(
       "--save-template",
-      "Write the declaration into .nocciolo/hindsight/bank-template.json",
+      "Write the declaration into .orto/hindsight/bank-template.json",
     )
     .option("--hindsight-url <url>", "Hindsight base URL")
     .option("--api-key <key>", "Hindsight API key")
@@ -451,7 +451,7 @@ async function main(): Promise<void> {
     .option("--mode <mode>", "Refresh mode: full or delta")
     .option(
       "--save-template",
-      "Write the declaration into .nocciolo/hindsight/bank-template.json",
+      "Write the declaration into .orto/hindsight/bank-template.json",
     )
     .option("--hindsight-url <url>", "Hindsight base URL")
     .option("--api-key <key>", "Hindsight API key")
@@ -628,11 +628,11 @@ async function main(): Promise<void> {
       )
       .option(
         "--hindsight-url <url>",
-        "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+        "Hindsight base URL (default: config, ORTO_HINDSIGHT_URL, or http://localhost:8888)",
       )
       .option(
         "--api-key <key>",
-        "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+        "Hindsight API key (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
       ),
   ).action(
     async (opts: {
@@ -695,11 +695,11 @@ async function main(): Promise<void> {
       )
       .option(
         "--hindsight-url <url>",
-        "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+        "Hindsight base URL (default: config, ORTO_HINDSIGHT_URL, or http://localhost:8888)",
       )
       .option(
         "--api-key <key>",
-        "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+        "Hindsight API key (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
       ),
   ).action(
     async (opts: {
@@ -756,7 +756,7 @@ async function main(): Promise<void> {
     .option("--force", "Overwrite existing MCP server entry / Cursor rule / project-bank skill")
     .option(
       "--hindsight-url <url>",
-      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+      "Hindsight base URL (default: config, ORTO_HINDSIGHT_URL, or http://localhost:8888)",
     )
     .option(
       "--include-auth",
@@ -926,11 +926,11 @@ async function main(): Promise<void> {
     .option("-y, --yes", "Skip TTY confirmation prompts")
     .option(
       "--hindsight-url <url>",
-      "Hindsight base URL (default: config, NOCCIOLO_HINDSIGHT_URL, or http://localhost:8888)",
+      "Hindsight base URL (default: config, ORTO_HINDSIGHT_URL, or http://localhost:8888)",
     )
     .option(
       "--api-key <key>",
-      "Hindsight API key (or set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
+      "Hindsight API key (or set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY)",
     )
     .option(
       "--name <name>",

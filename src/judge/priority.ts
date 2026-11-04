@@ -1,4 +1,4 @@
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import type { JudgeAnswer, JudgeQuestion, NoulQuestion, ScoreQuestion } from "./types.js";
 
 const SCORE_MAX = 4;
@@ -44,7 +44,7 @@ export function priorityQuestions(): Record<string, JudgeQuestion> {
 
 export function parseBudget(value: string): number {
   if (!/^[1-9]\d*$/.test(value.trim())) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Invalid --budget "${value}"`,
       "Pass a positive integer, for example --budget 5.",
     );
@@ -54,13 +54,13 @@ export function parseBudget(value: string): number {
 
 export function assertRetainBudget(budget: number, judgeId: string): void {
   if (!Number.isInteger(budget) || budget < 1) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Invalid --budget "${budget}"`,
       "Pass a positive integer, for example --budget 5.",
     );
   }
   if (judgeId !== "jev") {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Retain budget requires --judge jev.",
       "Pass --judge jev, or omit --budget to retain every candidate.",
     );

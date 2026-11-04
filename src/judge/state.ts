@@ -1,5 +1,5 @@
 import { isSensitiveRelativePath } from "../scanner/sensitive.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export const JEV_CHARS_PER_TOKEN = 4;
 export const JEV_STATE_QUESTION_TOKEN_BUDGET = 32_000;
@@ -270,7 +270,7 @@ export function assertJevStateSendable(state: unknown): void {
   try {
     encoded = JSON.stringify(state) ?? "";
   } catch {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Refusing to send Jev state: value is not JSON.",
       "Pass the object returned by buildJevState.",
     );
@@ -279,7 +279,7 @@ export function assertJevStateSendable(state: unknown): void {
   const path = readPath(state);
   if (path !== undefined && isSensitiveRelativePath(path)) {
     const label = displayPath(path);
-    throw new NoccioloError(
+    throw new OrtoError(
       `Refusing to send Jev state for ${label}: path is on the secrets denylist.`,
       "Judge only seedable paths, or omit --judge jev.",
     );
@@ -287,13 +287,13 @@ export function assertJevStateSendable(state: unknown): void {
   if (containsInlineSecret(state)) {
     const label =
       path !== undefined && !containsInlineSecret(path) ? ` for ${path}` : "";
-    throw new NoccioloError(
+    throw new OrtoError(
       `Refusing to send Jev state${label}: text matched a secret pattern.`,
       "Remove the secret from the source, or omit --judge jev.",
     );
   }
   if (encoded.length > JEV_STATE_MAX_CHARS) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Refusing to send Jev state: ${encoded.length} chars exceeds the ${JEV_STATE_MAX_TOKENS} token budget.`,
       "Send a section excerpt instead of the full file or bank.",
     );
@@ -354,7 +354,7 @@ export function emitJevDispatchLogs(
   log: (level: JevLogLevel, message: string) => void,
   env: NodeJS.ProcessEnv = process.env,
 ): void {
-  const debug = env.NOCCIOLO_LOG_LEVEL === "debug";
+  const debug = env.ORTO_LOG_LEVEL === "debug";
   for (const entry of logs) {
     if (entry.level === "debug" && !debug) {
       continue;

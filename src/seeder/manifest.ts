@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { z } from "zod";
 import { ensureDir, pathExists, readJsonFile, writeJsonFile } from "../utils/fs.js";
-import { noccioloDir } from "../config/paths.js";
+import { ortoDir } from "../config/paths.js";
 
 export const SeedManifestSchema = z.object({
   version: z.literal(1),
@@ -20,7 +20,7 @@ export const SeedManifestSchema = z.object({
 export type SeedManifest = z.infer<typeof SeedManifestSchema>;
 
 export function seedManifestPath(projectRoot: string): string {
-  return join(noccioloDir(projectRoot), "local", "seed-manifest.json");
+  return join(ortoDir(projectRoot), "local", "seed-manifest.json");
 }
 
 export async function loadSeedManifest(
@@ -40,7 +40,7 @@ export async function saveSeedManifest(
   manifest: SeedManifest,
 ): Promise<void> {
   const path = seedManifestPath(projectRoot);
-  await ensureDir(join(noccioloDir(projectRoot), "local"));
+  await ensureDir(join(ortoDir(projectRoot), "local"));
   await writeJsonFile(path, manifest, false);
 }
 

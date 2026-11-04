@@ -13,7 +13,7 @@ import {
   DEFAULT_CONTAINER_NAME,
   DEFAULT_VOLUME_NAME,
 } from "../docker/hindsight.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export type DockerAction = "up" | "down" | "status" | "print";
 
@@ -94,14 +94,14 @@ export async function runDockerHelper(
       const share = await loadShareConfig(projectRoot);
       const profile = resolveDeploymentProfile({ config, share });
       if (profile === "hindsight-cloud") {
-        throw new NoccioloError(
+        throw new OrtoError(
           "Deployment profile is hindsight-cloud: no local Docker container",
-          "Skip `nocciolo docker`. Set NOCCIOLO_HINDSIGHT_URL=https://api.hindsight.vectorize.io and NOCCIOLO_HINDSIGHT_API_KEY, then use seed/mcp against Cloud. See docs/hindsight-cloud.md.",
+          "Skip `orto docker`. Set ORTO_HINDSIGHT_URL=https://api.hindsight.vectorize.io and ORTO_HINDSIGHT_API_KEY, then use seed/mcp against Cloud. See docs/hindsight-cloud.md.",
         );
       }
     } catch (error) {
       if (
-        error instanceof NoccioloError &&
+        error instanceof OrtoError &&
         error.message.startsWith("Deployment profile is hindsight-cloud")
       ) {
         throw error;
@@ -182,7 +182,7 @@ export async function runDockerHelper(
       ...(options.apiKey !== undefined
         ? {
             tenantApiKey: options.apiKey,
-            tenantKeyDisplay: "$NOCCIOLO_HINDSIGHT_API_KEY",
+            tenantKeyDisplay: "$ORTO_HINDSIGHT_API_KEY",
           }
         : {}),
       pull: options.pull ?? true,
@@ -193,11 +193,11 @@ export async function runDockerHelper(
       await assertDockerAvailable();
       const existing = await getContainerStatus(containerName);
       if (existing.exists) {
-        throw new NoccioloError(
+        throw new OrtoError(
           `Container "${containerName}" already exists (${existing.statusLine})`,
           existing.running
-            ? "Hindsight may already be running. Use `nocciolo docker status`, or `nocciolo docker down` then `up` again."
-            : "Run `nocciolo docker down` to remove it, then `nocciolo docker up` again.",
+            ? "Hindsight may already be running. Use `orto docker status`, or `orto docker down` then `up` again."
+            : "Run `orto docker down` to remove it, then `orto docker up` again.",
         );
       }
       await runDockerCommand(plan.argv);
@@ -215,7 +215,7 @@ export async function runDockerHelper(
     };
   }
 
-  throw new NoccioloError(
+  throw new OrtoError(
     `Unknown docker action "${String(action)}"`,
     "Use: up, down, status, or print.",
   );
@@ -248,11 +248,11 @@ export function printDockerResult(result: DockerCommandResult): void {
   }
   if (result.executed) {
     console.log("");
-    console.log("Next: import your bank template, then `nocciolo seed --dry-run` / `nocciolo seed`.");
-    console.log("Wire agents with `nocciolo mcp` (add --write for .cursor/mcp.json).");
+    console.log("Next: import your bank template, then `orto seed --dry-run` / `orto seed`.");
+    console.log("Wire agents with `orto mcp` (add --write for .cursor/mcp.json).");
   } else if (result.action === "print" || result.dryRun) {
     console.log("");
-    console.log("Run without --dry-run: `nocciolo docker up` (requires Docker).");
+    console.log("Run without --dry-run: `orto docker up` (requires Docker).");
   }
 }
 
@@ -270,7 +270,7 @@ export function parseDockerAction(raw: string | undefined): DockerAction {
     if (value === "stop") return "down";
     return value;
   }
-  throw new NoccioloError(
+  throw new OrtoError(
     `Unknown docker action "${raw}"`,
     "Use: up (start), down (stop), status, or print.",
   );

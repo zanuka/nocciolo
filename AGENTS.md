@@ -1,10 +1,10 @@
-# AGENTS.md: Nocciolo
+# AGENTS.md: Orto
 
-This file is the primary source of truth for any AI agent working on Nocciolo.
+This file is the primary source of truth for any AI agent working on Orto.
 
 ## Project Identity
 
-Nocciolo is a **company brain config** utility.
+Orto is a **company brain config** utility.
 
 It helps developers turn durable project knowledge (docs, ADRs, decisions, domain references) into structured memory banks: starting with Hindsight, so AI agents inherit shared context instead of rediscovering it every session.
 
@@ -19,7 +19,7 @@ We are building this in public as open source.
    Favor self-hostable, version-controlled, offline-capable designs. Avoid forced cloud dependencies.
 
 3. **Amplify existing craft**  
-   Nocciolo does not replace ADRs, architecture docs, or coding standards. It makes them usable by agents.
+   Orto does not replace ADRs, architecture docs, or coding standards. It makes them usable by agents.
 
 4. **CLI-first, progressive enhancement**  
    The primary interface is a fast, predictable CLI. UIs and advanced features come later.
@@ -34,7 +34,7 @@ We are building this in public as open source.
 
 - TypeScript CLI (Node.js)
 - Clean separation: scanner → extractor → bank template → seeder → prune → integration emitters
-- Config lives in `.nocciolo/` (or equivalent) and is version-controlled
+- Config lives in `.orto/` (or equivalent) and is version-controlled
 - Prefer explicit configuration over magic
 - Every retained fact should carry provenance (source file + optional commit)
 
@@ -68,23 +68,23 @@ We are building this in public as open source.
 
 ## Current Focus
 
-See `ROADMAP.md`. Phase 3 added `nocciolo store` and the Firstmate `project-bank` skill.
-Phase 4 shipped `nocciolo prune` v1 (path-gone / section-gone / explicit + tombstones).
-Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `nocciolo share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `nocciolo docs list`.
-Phase 6 (mental models) shipped: seed-aligned tags, differentiated refresh presets, interactive `configure` wizard, `nocciolo mental-model` lifecycle CLI, opt-in `seed --refresh-mental-models`, and agent snippets preferring `reflect` for playbook questions.
+See `ROADMAP.md`. Phase 3 added `orto store` and the Firstmate `project-bank` skill.
+Phase 4 shipped `orto prune` v1 (path-gone / section-gone / explicit + tombstones).
+Phase 5 (team sharing) shipped: bank-scoped MCP names, `bank apply` / `configure --apply`, `orto share` deployment profiles (local/LAN/VPN/public/hindsight-cloud), profile-aware MCP emission, and `orto docs list`.
+Phase 6 (mental models) shipped: seed-aligned tags, differentiated refresh presets, interactive `configure` wizard, `orto mental-model` lifecycle CLI, opt-in `seed --refresh-mental-models`, and agent snippets preferring `reflect` for playbook questions.
 Phase 7 (current): optional Jev judgment layer. `seed --judge jev` runs the relevance gate, a knowledge-kind choice, a contradiction check against overlapping observations, a secret / personal-data check, and a citation check on Hindsight's extracted facts before retain, one decision per section. `seed --budget N --judge jev` ranks that retain queue and keeps the top N. The rest stay pending. `store --propose-adopt --judge jev` can propose new allowlist files; the operator confirms with `--apply`. Prune annotation is still open, then reliability and DX.
 
-<!-- nocciolo:hindsight-bank -->
+<!-- orto:hindsight-bank -->
 
 ## Project memory bank (Hindsight)
 
-Prefer the project Hindsight bank `nocciolo` for durable nocciolo context (architecture, decisions, standards, domain invariants).
+Prefer the project Hindsight bank `orto` for durable orto context (architecture, decisions, standards, domain invariants).
 
 - Prefer `reflect` (or read mental models) for architecture, standards, and "how we work" / playbook questions.
 - Prefer `recall` for narrow fact lookup and provenance hunting.
 - Use Hindsight MCP before rediscovering the same facts from scattered docs.
-- MCP endpoint (single-bank): `http://localhost:8888/mcp/nocciolo/`
+- MCP endpoint (single-bank): `http://localhost:8888/mcp/orto/`
 - Treat repo docs and ADRs as source of truth; use the bank as the agent-facing memory of those sources.
 - Do not dump secrets, credentials, or ephemeral chat into the bank.
 
-<!-- /nocciolo:hindsight-bank -->
+<!-- /orto:hindsight-bank -->

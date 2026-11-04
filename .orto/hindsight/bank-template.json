@@ -1,11 +1,11 @@
 {
   "version": "1",
   "bank": {
-    "retain_mission": "This bank holds durable knowledge for the nocciolo software project. Always extract: architectural decisions and trade-offs, coding standards and conventions, domain invariants, API design choices, tech stack facts, module boundaries, operational constraints, and explicit ADRs or decision records. Ignore: transient debugging output, one-off chat notes, generated lockfile noise, secrets/credentials, and ephemeral WIP comments.",
+    "retain_mission": "This bank holds durable knowledge for the orto software project. Always extract: architectural decisions and trade-offs, coding standards and conventions, domain invariants, API design choices, tech stack facts, module boundaries, operational constraints, and explicit ADRs or decision records. Ignore: transient debugging output, one-off chat notes, generated lockfile noise, secrets/credentials, and ephemeral WIP comments.",
     "retain_extraction_mode": "verbose",
     "enable_observations": true,
-    "observations_mission": "Synthesize stable facts about nocciolo: tech stack, architecture patterns, team conventions, domain vocabulary, and how the codebase is organized. Prefer long-lived project truths over session-specific details.",
-    "reflect_mission": "You are the durable project memory for nocciolo. When reflecting, prefer established architecture, ADRs, coding standards, and domain invariants. Cite provenance when recalling decisions. Do not invent conventions that are not in the bank.",
+    "observations_mission": "Synthesize stable facts about orto: tech stack, architecture patterns, team conventions, domain vocabulary, and how the codebase is organized. Prefer long-lived project truths over session-specific details.",
+    "reflect_mission": "You are the durable project memory for orto. When reflecting, prefer established architecture, ADRs, coding standards, and domain invariants. Cite provenance when recalling decisions. Do not invent conventions that are not in the bank.",
     "disposition_skepticism": 4,
     "disposition_literalism": 4,
     "disposition_empathy": 2,
@@ -56,7 +56,7 @@
     {
       "id": "project-context",
       "name": "Project Context",
-      "source_query": "Summarize nocciolo only from retained memories: purpose, that it is a TypeScript/Node CLI for Hindsight memory banks, main pipeline stages (scan, extract, seed, prune, integration), and local-first conventions. Do not invent languages, frameworks, or infrastructure (for example Python, Django, React, Kubernetes) unless a memory states them as the product stack. Prefer README and architecture docs over incidental mentions of archived scripts or dogfood notes.",
+      "source_query": "Summarize orto only from retained memories: purpose, that it is a TypeScript/Node CLI for Hindsight memory banks, main pipeline stages (scan, extract, seed, prune, integration), and local-first conventions. Do not invent languages, frameworks, or infrastructure (for example Python, Django, React, Kubernetes) unless a memory states them as the product stack. Prefer README and architecture docs over incidental mentions of archived scripts or dogfood notes.",
       "max_tokens": 2048,
       "tags": [
         "knowledge:overview",
@@ -71,7 +71,7 @@
     {
       "id": "architecture-decisions",
       "name": "Architecture Decisions",
-      "source_query": "What architectural decisions have been made for nocciolo, including trade-offs and rationale?",
+      "source_query": "What architectural decisions have been made for orto, including trade-offs and rationale?",
       "max_tokens": 2048,
       "tags": [
         "knowledge:architecture",
@@ -85,7 +85,7 @@
     {
       "id": "coding-standards",
       "name": "Coding Standards",
-      "source_query": "What coding standards, style rules, and engineering practices should agents follow in nocciolo?",
+      "source_query": "What coding standards, style rules, and engineering practices should agents follow in orto?",
       "max_tokens": 1536,
       "tags": [
         "knowledge:standard"

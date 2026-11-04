@@ -1,5 +1,5 @@
 import { configExists, saveConfig } from "../config/load.js";
-import { configPath, noccioloDir } from "../config/paths.js";
+import { configPath, ortoDir } from "../config/paths.js";
 import {
   createDefaultConfig,
   defaultVolumeName,
@@ -10,7 +10,7 @@ import {
   defaultProjectName,
   detectProjectRoot,
 } from "../project/detect-root.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { ensureDir } from "../utils/fs.js";
 import { isInteractive, promptLine } from "../utils/prompt.js";
 import {
@@ -44,14 +44,14 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
   const yes = options.yes ?? false;
 
   const projectRoot = await detectProjectRoot(cwd);
-  const dir = noccioloDir(projectRoot);
+  const dir = ortoDir(projectRoot);
   const path = configPath(projectRoot);
   const exists = await configExists(projectRoot);
 
   if (exists && !force) {
-    throw new NoccioloError(
-      `Nocciolo is already initialized at ${path}`,
-      "Use --force to overwrite, or run `nocciolo configure` next.",
+    throw new OrtoError(
+      `Orto is already initialized at ${path}`,
+      "Use --force to overwrite, or run `orto configure` next.",
     );
   }
 
@@ -117,7 +117,7 @@ export async function runInit(options: InitOptions = {}): Promise<InitResult> {
 
 export function printInitResult(result: InitResult): void {
   const prefix = result.dryRun ? "[dry-run] " : "";
-  console.log(`${prefix}Initialized Nocciolo in ${result.projectRoot}`);
+  console.log(`${prefix}Initialized Orto in ${result.projectRoot}`);
   console.log(`${prefix}Config: ${result.configPath}`);
   console.log(`${prefix}Bank id: ${result.bankId}`);
   console.log(
@@ -127,7 +127,7 @@ export function printInitResult(result: InitResult): void {
     console.log("No files were written.");
   } else {
     console.log(
-      "Next: run `nocciolo configure` to generate a Hindsight bank template.",
+      "Next: run `orto configure` to generate a Hindsight bank template.",
     );
   }
 }

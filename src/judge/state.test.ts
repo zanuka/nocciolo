@@ -49,7 +49,7 @@ describe("buildJevState", () => {
     });
     const connection = buildJevState({
       path: "docs/adr/0003-db.md",
-      sectionText: "postgres://app:secretpass@localhost/nocciolo",
+      sectionText: "postgres://app:secretpass@localhost/orto",
     });
 
     expect(pem.ok).toBe(false);
@@ -217,7 +217,7 @@ describe("jevDispatchLogs", () => {
     emitJevDispatchLogs(
       logs,
       (level, message) => debugLines.push(`${level}:${message}`),
-      { NOCCIOLO_LOG_LEVEL: "debug" },
+      { ORTO_LOG_LEVEL: "debug" },
     );
     expect(debugLines[0]).toContain("questions=keep,durable");
     expect(debugLines[1]).toContain("fields=path,heading,section");

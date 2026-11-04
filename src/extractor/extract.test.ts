@@ -34,7 +34,7 @@ Stronger typing for config schemas.
   });
 
   it("extracts high-signal README sections and skips install noise", () => {
-    const content = `# Nocciolo
+    const content = `# Orto
 
 Company brain config for AI agents.
 
@@ -46,7 +46,7 @@ Seed Hindsight memory banks from durable project docs and architecture decisions
 
 \`\`\`bash
 # From your project root
-npx @nocciolo-ai/cli init
+npx @orto-ai/cli init
 \`\`\`
 
 ## Installation
@@ -65,7 +65,7 @@ Please open an issue.
     const titles = result.facts.map((f) => f.title);
     expect(titles.some((t) => /goal/i.test(t))).toBe(true);
     expect(titles.some((t) => /principle/i.test(t))).toBe(true);
-    expect(titles.some((t) => /nocciolo/i.test(t))).toBe(true);
+    expect(titles.some((t) => /orto/i.test(t))).toBe(true);
     expect(titles.some((t) => /install/i.test(t))).toBe(false);
     expect(titles.some((t) => /quick start/i.test(t))).toBe(false);
     expect(titles.some((t) => /from your project root/i.test(t))).toBe(false);
@@ -91,16 +91,16 @@ This generated changelog is a badge wall and a table of contents. The notes are 
 `;
     const result = extractFromSource(source("README.md", "readme"), content);
     expect(result.facts.map((fact) => fact.id)).toContain(
-      "nocciolo:README.md#architecture",
+      "orto:README.md#architecture",
     );
     expect(result.facts.map((fact) => fact.id)).not.toContain(
-      "nocciolo:README.md#changelog",
+      "orto:README.md#changelog",
     );
     expect(result.heuristicSkips.map((fact) => fact.id)).toContain(
-      "nocciolo:README.md#changelog",
+      "orto:README.md#changelog",
     );
     const changelog = result.heuristicSkips.find(
-      (fact) => fact.id === "nocciolo:README.md#changelog",
+      (fact) => fact.id === "orto:README.md#changelog",
     );
     expect(changelog?.content).toMatch(/changelog/i);
     expect(changelog?.content).not.toMatch(/local-first/);

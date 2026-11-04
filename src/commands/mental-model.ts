@@ -22,7 +22,7 @@ import type {
   HindsightMentalModel,
   MentalModelTagsMatch,
 } from "../providers/hindsight/types.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { pathExists, readJsonFile, writeJsonFile } from "../utils/fs.js";
 
 export type MentalModelAction =
@@ -129,7 +129,7 @@ export async function runMentalModelCommand(
       await clearModel(client, bankId, prefix, options);
       return;
     default:
-      throw new NoccioloError(
+      throw new OrtoError(
         `Unknown mental-model action`,
         "Use list, get, create, update, refresh, clear, or tags.",
       );
@@ -149,7 +149,7 @@ async function listModels(
   if (page.items.length === 0) {
     console.log("No mental models found.");
     console.log(
-      "Declare models in the bank template, then `nocciolo bank apply`, seed, and refresh.",
+      "Declare models in the bank template, then `orto bank apply`, seed, and refresh.",
     );
     return;
   }
@@ -200,9 +200,9 @@ async function createModel(
   const name = options.name?.trim();
   const sourceQuery = options.sourceQuery?.trim();
   if (!name || !sourceQuery) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "create requires --name and --source-query",
-      "Example: nocciolo mental-model create --name 'FAQ' --source-query 'What are the FAQs?' --id faq",
+      "Example: orto mental-model create --name 'FAQ' --source-query 'What are the FAQs?' --id faq",
     );
   }
   const body = {
@@ -308,9 +308,9 @@ async function refreshModels(
   if (options.all) {
     const templatePath = bankTemplatePath(projectRoot);
     if (!(await pathExists(templatePath))) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `Bank template not found at ${templatePath}`,
-        "Run `nocciolo configure` or pass a specific model id.",
+        "Run `orto configure` or pass a specific model id.",
       );
     }
     const template = await readJsonFile<HindsightBankTemplate>(templatePath);
@@ -407,7 +407,7 @@ function buildTrigger(
 
 function requireId(id: string | undefined): string {
   if (!id || id.trim().length === 0) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "Mental model id is required",
       "Pass <id> or use --all for refresh of declared template models.",
     );
@@ -457,7 +457,7 @@ function recordToTemplateModel(
 ): HindsightMentalModel {
   const source = full.source_query ?? fallback.source_query;
   if (!source) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Mental model "${full.id}" has no source_query`,
       "Fetch with detail=content or set --source-query before --save-template.",
     );
@@ -493,9 +493,9 @@ async function upsertTemplateModel(
 ): Promise<void> {
   const templatePath = bankTemplatePath(projectRoot);
   if (!(await pathExists(templatePath))) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Bank template not found at ${templatePath}`,
-      "Run `nocciolo configure` before --save-template.",
+      "Run `orto configure` before --save-template.",
     );
   }
   const template = await readJsonFile<HindsightBankTemplate>(templatePath);

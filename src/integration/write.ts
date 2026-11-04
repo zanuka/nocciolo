@@ -1,5 +1,5 @@
 import { dirname, join } from "node:path";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import {
   ensureDir,
   pathExists,
@@ -56,7 +56,7 @@ export function mergeMcpServers(
 
   for (const [name, server] of Object.entries(incomingServers)) {
     if (name in merged && !force) {
-      throw new NoccioloError(
+      throw new OrtoError(
         `MCP server "${name}" already exists in the target config`,
         `Use --force to overwrite the "${name}" entry, or edit the file manually.`,
       );
@@ -126,9 +126,9 @@ export async function writeCursorBankRule(
   const exists = await pathExists(path);
 
   if (exists && !options.force && !options.dryRun) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Cursor rule already exists at ${path}`,
-      "Use --force to overwrite, or `nocciolo mcp --write-cursor-rules --dry-run` to preview.",
+      "Use --force to overwrite, or `orto mcp --write-cursor-rules --dry-run` to preview.",
     );
   }
 

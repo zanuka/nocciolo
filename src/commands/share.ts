@@ -15,7 +15,7 @@ import {
   MCP_AUTH_MODES,
 } from "../config/profiles.js";
 import { detectProjectRoot } from "../project/detect-root.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export interface ShareOptions {
   cwd?: string;
@@ -47,7 +47,7 @@ function parseMcpAuth(value: string | undefined): McpAuthMode | undefined {
   }
   const normalized = value.trim().toLowerCase();
   if (!(MCP_AUTH_MODES as readonly string[]).includes(normalized)) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Unknown mcp auth mode "${value}"`,
       `Use one of: ${MCP_AUTH_MODES.join(", ")}.`,
     );
@@ -69,9 +69,9 @@ export async function runShare(options: ShareOptions = {}): Promise<ShareResult>
 
   if (options.profile !== undefined || options.baseUrl !== undefined || options.mcpAuth !== undefined) {
     if (validateOnly) {
-      throw new NoccioloError(
+      throw new OrtoError(
         "--validate cannot be combined with generate flags",
-        "Run `nocciolo share --validate` alone, or omit --validate to write share.json.",
+        "Run `orto share --validate` alone, or omit --validate to write share.json.",
       );
     }
     const profile = parseDeploymentProfile(
@@ -122,7 +122,7 @@ export async function runShare(options: ShareOptions = {}): Promise<ShareResult>
   }
 
   if (!share) {
-    throw new NoccioloError(
+    throw new OrtoError(
       "No share profile resolved",
       "Pass --profile local|lan|vpn|public|hindsight-cloud.",
     );
@@ -184,10 +184,10 @@ export function printShareResult(result: ShareResult): void {
     console.log(
       "Cloud next steps: https://ui.hindsight.vectorize.io (org/bank/key) and https://learn.hindsight.vectorize.io/",
     );
-    console.log("Skip `nocciolo docker` under this profile.");
+    console.log("Skip `orto docker` under this profile.");
   }
   console.log("");
   console.log(
-    "Emit agent wiring with `nocciolo mcp --write --include-auth` (profile-aware URLs/server names).",
+    "Emit agent wiring with `orto mcp --write --include-auth` (profile-aware URLs/server names).",
   );
 }

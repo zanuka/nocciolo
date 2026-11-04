@@ -38,15 +38,15 @@ describe("resolveTypesafeApiKey", () => {
     expect(
       resolveTypesafeApiKey({
         cliKey: "cli-key",
-        env: { NOCCIOLO_TYPESAFE_API_KEY: "env-key" },
+        env: { ORTO_TYPESAFE_API_KEY: "env-key" },
       }),
     ).toBe("cli-key");
   });
 
-  it("reads NOCCIOLO_TYPESAFE_API_KEY", () => {
+  it("reads ORTO_TYPESAFE_API_KEY", () => {
     expect(
       resolveTypesafeApiKey({
-        env: { NOCCIOLO_TYPESAFE_API_KEY: "env-key" },
+        env: { ORTO_TYPESAFE_API_KEY: "env-key" },
       }),
     ).toBe("env-key");
   });
@@ -54,7 +54,7 @@ describe("resolveTypesafeApiKey", () => {
   it("ignores the Hindsight key", () => {
     expect(
       resolveTypesafeApiKey({
-        env: { NOCCIOLO_HINDSIGHT_API_KEY: "hindsight-key" },
+        env: { ORTO_HINDSIGHT_API_KEY: "hindsight-key" },
       }),
     ).toBeUndefined();
   });
@@ -76,7 +76,7 @@ describe("createJudge", () => {
         judge: "jev",
         env: {},
       }),
-    ).toThrow(/Missing NOCCIOLO_TYPESAFE_API_KEY/);
+    ).toThrow(/Missing ORTO_TYPESAFE_API_KEY/);
   });
 
   it("does not call fetch for the default heuristic path", async () => {

@@ -1,4 +1,4 @@
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export interface McpCheckResult {
   ok: boolean;
@@ -32,12 +32,12 @@ export async function checkMcpConnectivity(input: {
         params: {
           protocolVersion: "2024-11-05",
           capabilities: {},
-          clientInfo: { name: "nocciolo", version: "0.0.0" },
+          clientInfo: { name: "orto", version: "0.0.0" },
         },
       }),
     });
   } catch (error) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Failed to reach MCP at ${input.mcpUrl}`,
       `Check that Hindsight is running and the deployment profile base URL is correct. (${error instanceof Error ? error.message : String(error)})`,
     );
@@ -48,7 +48,7 @@ export async function checkMcpConnectivity(input: {
       ok: false,
       status: response.status,
       detail:
-        "Authentication failed. Set NOCCIOLO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY in the Cursor process environment (not only a terminal), or pass --api-key for this check.",
+        "Authentication failed. Set ORTO_HINDSIGHT_API_KEY / HINDSIGHT_API_KEY in the Cursor process environment (not only a terminal), or pass --api-key for this check.",
     };
   }
 

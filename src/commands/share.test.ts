@@ -14,11 +14,11 @@ describe("runShare", () => {
   });
 
   async function tempProject(): Promise<string> {
-    const root = await mkdtemp(join(tmpdir(), "nocciolo-share-"));
+    const root = await mkdtemp(join(tmpdir(), "orto-share-"));
     dirs.push(root);
-    await mkdir(join(root, ".nocciolo"), { recursive: true });
+    await mkdir(join(root, ".orto"), { recursive: true });
     await writeFile(
-      join(root, ".nocciolo", "config.json"),
+      join(root, ".orto", "config.json"),
       JSON.stringify({
         version: 1,
         name: "fixture",
@@ -45,13 +45,13 @@ describe("runShare", () => {
     expect(result.serverName).toBe("hindsight-fixture-bank");
 
     const share = JSON.parse(
-      await readFile(join(root, ".nocciolo", "share.json"), "utf8"),
+      await readFile(join(root, ".orto", "share.json"), "utf8"),
     ) as { profile: string; baseUrl: string };
     expect(share.profile).toBe("lan");
     expect(share.baseUrl).toBe("http://192.168.1.50:8888");
 
     const config = JSON.parse(
-      await readFile(join(root, ".nocciolo", "config.json"), "utf8"),
+      await readFile(join(root, ".orto", "config.json"), "utf8"),
     ) as { deploymentProfile?: string };
     expect(config.deploymentProfile).toBe("lan");
   });
@@ -64,7 +64,7 @@ describe("runShare", () => {
       dryRun: true,
     });
     await expect(
-      readFile(join(root, ".nocciolo", "share.json"), "utf8"),
+      readFile(join(root, ".orto", "share.json"), "utf8"),
     ).rejects.toThrow();
   });
 });

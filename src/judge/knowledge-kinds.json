@@ -69,7 +69,7 @@
         "what": "An engineering convention the repository requires contributors to follow.",
         "not_for": "A personal formatting taste (style_pref), or a product constraint that is true even without a contributor (invariant).",
         "examples": [
-          "Throw NoccioloError and name the next step.",
+          "Throw OrtoError and name the next step.",
           "Prefer small, focused changes."
         ]
       }
@@ -83,8 +83,8 @@
         "what": "A repeated operator procedure: the commands, the order, and what success looks like.",
         "not_for": "Why the system is shaped that way (architecture), or a one-time choice (adr).",
         "examples": [
-          "Start Hindsight, then run nocciolo seed.",
-          "Run nocciolo prune after a doc path is deleted."
+          "Start Hindsight, then run orto seed.",
+          "Run orto prune after a doc path is deleted."
         ]
       }
     },
@@ -97,7 +97,7 @@
         "what": "A data shape: field names, types, and allowed values for config or a payload.",
         "not_for": "What a command promises to do (public_api), or a narrative of module boundaries (architecture).",
         "examples": [
-          ".nocciolo/config.json requires bankId and provider.",
+          ".orto/config.json requires bankId and provider.",
           "Retain metadata includes source and knowledge_kind."
         ]
       }

@@ -1,7 +1,7 @@
 import { buildSingleBankMcpUrl } from "./mcp-url.js";
 
-export const AGENTS_BANK_BEGIN = "<!-- nocciolo:hindsight-bank -->";
-export const AGENTS_BANK_END = "<!-- /nocciolo:hindsight-bank -->";
+export const AGENTS_BANK_BEGIN = "<!-- orto:hindsight-bank -->";
+export const AGENTS_BANK_END = "<!-- /orto:hindsight-bank -->";
 
 export interface AgentRulesInput {
   projectName: string;

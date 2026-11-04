@@ -1,13 +1,13 @@
-# Nocciolo knowledge-base configs
+# Orto knowledge-base configs
 
-Nocciolo turns durable project docs into a [Hindsight](https://hindsight.vectorize.io) memory bank that coding agents can **recall** and **reflect** against over MCP.
+Orto turns durable project docs into a [Hindsight](https://hindsight.vectorize.io) memory bank that coding agents can **recall** and **reflect** against over MCP.
 
-The configs under `.nocciolo/` are the version-controlled (and machine-local) knobs for that bank. They are not a dump of the repo into a vector store. They name the bank, shape how it extracts and answers, track what was already seeded, and point agent harnesses at the right MCP endpoint.
+The configs under `.orto/` are the version-controlled (and machine-local) knobs for that bank. They are not a dump of the repo into a vector store. They name the bank, shape how it extracts and answers, track what was already seeded, and point agent harnesses at the right MCP endpoint.
 
 | Layer | Role |
 |-------|------|
 | **Docs in git** | Source of truth (README, ADRs, architecture notes, …); `AGENTS.md` is harness wiring |
-| **`.nocciolo/`** | Project identity, bank template, incremental seed state |
+| **`.orto/`** | Project identity, bank template, incremental seed state |
 | **Hindsight bank** | Structured memories agents query via MCP |
 | **Agent wiring** | MCP URL + rules / AGENTS snippets that steer agents to `recall` / `reflect` |
 
@@ -15,10 +15,10 @@ Docs stay authoritative. The bank is the agent-facing index of those docs: with 
 
 ---
 
-## What’s under `.nocciolo/`
+## What’s under `.orto/`
 
 ```text
-.nocciolo/
+.orto/
   config.json                 # project identity + bank id + optional deploymentProfile (commit)
   share.json                  # deployment profile + non-secret base URL strategy (commit)
   hindsight/
@@ -28,30 +28,30 @@ Docs stay authoritative. The bank is the agent-facing index of those docs: with 
     tombstones.json           # pruned document ids (gitignored; machine-local)
 ```
 
-Related agent wiring lives **outside** `.nocciolo/` and is emitted by `nocciolo mcp`:
+Related agent wiring lives **outside** `.orto/` and is emitted by `orto mcp`:
 
 | Path | Purpose |
 |------|---------|
 | `.cursor/mcp.json` | Cursor MCP entry for the project bank |
 | `.cursor/rules/hindsight-bank.mdc` | Always-on rule: prefer bank recall for durable questions |
-| `AGENTS.md` section between `<!-- nocciolo:hindsight-bank -->` markers | Same preference for non-Cursor agents |
+| `AGENTS.md` section between `<!-- orto:hindsight-bank -->` markers | Same preference for non-Cursor agents |
 
 **Commit:** `config.json`, `hindsight/bank-template.json`, and the MCP / AGENTS / Cursor rule wiring you want teammates to inherit.
 
-**Do not commit:** `.nocciolo/local/` (seed manifest, tombstones), API keys, or anything under secrets / credential paths. See [sensitive-data.md](./sensitive-data.md).
+**Do not commit:** `.orto/local/` (seed manifest, tombstones), API keys, or anything under secrets / credential paths. See [sensitive-data.md](./sensitive-data.md).
 
 ---
 
 ## `config.json`
 
-Written by `nocciolo init`. Portable project identity for this repo.
+Written by `orto init`. Portable project identity for this repo.
 
 ```json
 {
   "version": 1,
-  "name": "nocciolo",
+  "name": "orto",
   "provider": "hindsight",
-  "bankId": "nocciolo",
+  "bankId": "orto",
   "root": ".",
   "docker": {
     "containerName": "hindsight",
@@ -75,7 +75,7 @@ Written by `nocciolo init`. Portable project identity for this repo.
 
 ### `share.json`
 
-Written by `nocciolo share`. Commit this file. It names how teammates reach the bank without embedding secrets.
+Written by `orto share`. Commit this file. It names how teammates reach the bank without embedding secrets.
 
 ```json
 {
@@ -110,15 +110,15 @@ Example for a docs tree plus published MDX, with presentation workspaces and und
 
 `seed` bootstraps from whatever that policy selects. `store` uses the same discovered set, then `store.allowlist` gates ongoing retain of new files. Secrets and credential paths are still denied even if an include glob matches them.
 
-Bank id defaults to a slug of the project directory name; it is never hardcoded to `nocciolo` for other projects. One Docker container is a Hindsight **server** that can hold many banks.
+Bank id defaults to a slug of the project directory name; it is never hardcoded to `orto` for other projects. One Docker container is a Hindsight **server** that can hold many banks.
 
-Never store API keys here. Use `NOCCIOLO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` or `--api-key`.
+Never store API keys here. Use `ORTO_HINDSIGHT_API_KEY` / `HINDSIGHT_API_KEY` or `--api-key`.
 
 ---
 
 ## `hindsight/bank-template.json`
 
-Written by `nocciolo configure`. Importable Hindsight bank template (version `"1"`) that shapes how the bank thinks: separate from the memories themselves.
+Written by `orto configure`. Importable Hindsight bank template (version `"1"`) that shapes how the bank thinks: separate from the memories themselves.
 
 It typically includes:
 
@@ -133,8 +133,8 @@ Example (abbreviated from this repo’s template):
 {
   "version": "1",
   "bank": {
-    "retain_mission": "This bank holds durable knowledge for the nocciolo software project. Always extract: architectural decisions… Ignore: secrets/credentials…",
-    "reflect_mission": "You are the durable project memory for nocciolo. Prefer established architecture, ADRs, coding standards… Do not invent conventions…",
+    "retain_mission": "This bank holds durable knowledge for the orto software project. Always extract: architectural decisions… Ignore: secrets/credentials…",
+    "reflect_mission": "You are the durable project memory for orto. Prefer established architecture, ADRs, coding standards… Do not invent conventions…",
     "disposition_skepticism": 4,
     "disposition_literalism": 4
   },
@@ -142,7 +142,7 @@ Example (abbreviated from this repo’s template):
     {
       "id": "project-context",
       "name": "Project Context",
-      "source_query": "Summarize nocciolo only from retained memories: purpose, TypeScript/Node CLI for Hindsight banks, pipeline stages, local-first conventions…"
+      "source_query": "Summarize orto only from retained memories: purpose, TypeScript/Node CLI for Hindsight banks, pipeline stages, local-first conventions…"
     }
   ],
   "directives": [
@@ -156,7 +156,7 @@ Example (abbreviated from this repo’s template):
 }
 ```
 
-Commit this file. Apply it with `nocciolo bank apply` (or `nocciolo configure --apply`) so mission and directives match the project before or alongside seeding.
+Commit this file. Apply it with `orto bank apply` (or `orto configure --apply`) so mission and directives match the project before or alongside seeding.
 
 The template is the *personality and policy* of the bank. Retained facts are the *content*. Both matter for useful MCP recall.
 
@@ -164,13 +164,13 @@ The template is the *personality and policy* of the bank. Retained facts are the
 
 ## `local/seed-manifest.json`
 
-Written by live `nocciolo seed` and `nocciolo store`. Tracks **what was already retained** so re-seeds are incremental.
+Written by live `orto seed` and `orto store`. Tracks **what was already retained** so re-seeds are incremental.
 
 - Per source path: content hash, list of stable fact / `document_id`s, last seeded time
 - Unchanged files are skipped on the next `seed` unless you pass `--force`
-- Fact ids look like `nocciolo:README.md#the-vision`: Hindsight upserts by id instead of duplicating
+- Fact ids look like `orto:README.md#the-vision`: Hindsight upserts by id instead of duplicating
 
-This is **machine-local seed state**, not documentation. Prefer keeping it out of git (`.nocciolo/local/` is gitignored). The bank in Hindsight is the shared memory; the manifest only speeds up re-seed on this machine.
+This is **machine-local seed state**, not documentation. Prefer keeping it out of git (`.orto/local/` is gitignored). The bank in Hindsight is the shared memory; the manifest only speeds up re-seed on this machine.
 
 Illustrative shape (from a dogfood project):
 
@@ -183,14 +183,14 @@ Illustrative shape (from a dogfood project):
     "README.md": {
       "contentHash": "…",
       "factIds": [
-        "nocciolo:README.md#the-vision",
-        "nocciolo:README.md#core-principles"
+        "orto:README.md#the-vision",
+        "orto:README.md#core-principles"
       ],
       "seededAt": "2026-08-07T22:59:26.952Z"
     },
     "docs/overview.md": {
       "contentHash": "…",
-      "factIds": ["nocciolo:docs/overview.md#overview"],
+      "factIds": ["orto:docs/overview.md#overview"],
       "seededAt": "2026-08-07T23:13:46.596Z"
     }
   }
@@ -204,7 +204,7 @@ With `--judge jev` it may recall up to 5 observation summaries and preview extra
 
 ## `local/tombstones.json`
 
-Written by live `nocciolo prune` after a successful document delete.
+Written by live `orto prune` after a successful document delete.
 Tracks **which `document_id`s must not be re-retained** while the source content is unchanged.
 
 - Per document id: optional `sourcePath`, optional `contentHash`, and `prunedAt`
@@ -213,18 +213,18 @@ Tracks **which `document_id`s must not be re-retained** while the source content
 - After a successful re-retain of that id, the matching tombstone entry is cleared
 
 This is **machine-local prune state**, not documentation.
-Keep it out of git with the rest of `.nocciolo/local/`.
-Details: [CLI reference](./nocciolo-cli-commands.md#nocciolo-prune).
+Keep it out of git with the rest of `.orto/local/`.
+Details: [CLI reference](./orto-cli-commands.md#orto-prune).
 
 Illustrative shape:
 
 ```json
 {
   "version": 1,
-  "bankId": "nocciolo",
+  "bankId": "orto",
   "updatedAt": "2026-09-30T20:00:00.000Z",
   "entries": {
-    "nocciolo:docs/old.md#removed-heading": {
+    "orto:docs/old.md#removed-heading": {
       "sourcePath": "docs/old.md",
       "contentHash": "…",
       "prunedAt": "2026-09-30T20:00:00.000Z"
@@ -243,7 +243,7 @@ With a running Hindsight instance and MCP wired to the project bank:
 http://localhost:8888/mcp/<bankId>/
 ```
 
-Example for this repo: `http://localhost:8888/mcp/nocciolo/`.
+Example for this repo: `http://localhost:8888/mcp/orto/`.
 
 1. Agent asks a durable question (“What are our architecture boundaries?”, “How do we treat secrets?”)
 2. Cursor rule / AGENTS guidance steers it to Hindsight **`recall`** (or **`reflect`** for synthesis)
@@ -253,16 +253,16 @@ Example for this repo: `http://localhost:8888/mcp/nocciolo/`.
 Wire the harness after seed:
 
 ```bash
-nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+orto mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
-Auth (when the server requires a tenant key) uses the same secret as seed: set `NOCCIOLO_HINDSIGHT_API_KEY` in the environment the IDE inherits: never commit the key. Refresh MCP in Cursor Settings after writing `.cursor/mcp.json`.
+Auth (when the server requires a tenant key) uses the same secret as seed: set `ORTO_HINDSIGHT_API_KEY` in the environment the IDE inherits: never commit the key. Refresh MCP in Cursor Settings after writing `.cursor/mcp.json`.
 
 ---
 
-## Why put Nocciolo in a project
+## Why put Orto in a project
 
-Without a bank, every agent session rediscovers architecture, standards, and domain rules from scattered files. With Nocciolo:
+Without a bank, every agent session rediscovers architecture, standards, and domain rules from scattered files. With Orto:
 
 - **Shared context**: teammates and agents hit the same bank id and template policy
 - **Provenance**: recalled facts point back to README / ADR / docs sections
@@ -273,17 +273,17 @@ Without a bank, every agent session rediscovers architecture, standards, and dom
 Typical loop:
 
 ```bash
-nocciolo init --bank-id <your-bank> --yes
-nocciolo configure
-# import .nocciolo/hindsight/bank-template.json into Hindsight
+orto init --bank-id <your-bank> --yes
+orto configure
+# import .orto/hindsight/bank-template.json into Hindsight
 
-nocciolo seed --dry-run
-NOCCIOLO_HINDSIGHT_API_KEY='…' nocciolo seed
+orto seed --dry-run
+ORTO_HINDSIGHT_API_KEY='…' orto seed
 
-nocciolo store --dry-run
-nocciolo prune --dry-run
+orto store --dry-run
+orto prune --dry-run
 
-nocciolo mcp --write --write-agents --write-cursor-rules --include-auth
+orto mcp --write --write-agents --write-cursor-rules --include-auth
 ```
 
 Update docs when the project evolves; re-seed when you want the bank to catch up; prune after renames or heading drift.
@@ -294,7 +294,7 @@ Prefer missing a weak section over injecting noise.
 ## Related
 
 - [README](../README.md): quick start and MCP flags
-- [CLI commands](./nocciolo-cli-commands.md): full flag reference (incl. store / prune)
+- [CLI commands](./orto-cli-commands.md): full flag reference (incl. store / prune)
 - [Team sharing](./team-sharing.md): deployment profiles, share artifact, bank apply, multi-repo MCP
 - [Developer workflow](./dev-workflow.md): first seed, re-seed, retain-then-prune tips
 - [CLI architecture](./cli-architecture.md): config layout and seed / prune pipeline for contributors

@@ -23,7 +23,7 @@ describe("applyBankTemplate", () => {
               {
                 id: "project-context",
                 name: "Project Context",
-                tags: ["nocciolo"],
+                tags: ["orto"],
               },
             ],
             total: 1,

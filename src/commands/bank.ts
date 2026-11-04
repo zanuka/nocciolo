@@ -11,7 +11,7 @@ import {
 } from "../providers/hindsight/client.js";
 import { applyBankTemplate } from "../providers/hindsight/apply.js";
 import type { HindsightBankTemplate } from "../providers/hindsight/types.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 import { pathExists, readJsonFile } from "../utils/fs.js";
 
 export interface BankApplyOptions {
@@ -52,17 +52,17 @@ export async function runBankApply(
 
   const templatePath = bankTemplatePath(projectRoot);
   if (!(await pathExists(templatePath))) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Bank template not found at ${templatePath}`,
-      "Run `nocciolo configure` first to generate `.nocciolo/hindsight/bank-template.json`.",
+      "Run `orto configure` first to generate `.orto/hindsight/bank-template.json`.",
     );
   }
 
   const template = await readJsonFile<HindsightBankTemplate>(templatePath);
   if (template.version !== "1" || !template.bank) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Unsupported or invalid bank template at ${templatePath}`,
-      "Re-run `nocciolo configure --force` to regenerate a version \"1\" template.",
+      "Re-run `orto configure --force` to regenerate a version \"1\" template.",
     );
   }
 
@@ -111,13 +111,13 @@ export function printBankApplyResult(result: BankApplyResult): void {
     ).length;
     const hasModels = result.steps.some((s) => s.kind === "mental_model");
     console.log(
-      "Next: `nocciolo seed --dry-run` then `nocciolo seed` to retain durable docs.",
+      "Next: `orto seed --dry-run` then `orto seed` to retain durable docs.",
     );
     if (hasModels) {
       console.log(
         createdModels > 0
-          ? "Then refresh models after the bank has content: `nocciolo mental-model refresh --all` (or `seed --refresh-mental-models`)."
-          : "If model content is empty or stale: `nocciolo mental-model refresh --all`.",
+          ? "Then refresh models after the bank has content: `orto mental-model refresh --all` (or `seed --refresh-mental-models`)."
+          : "If model content is empty or stale: `orto mental-model refresh --all`.",
       );
     }
   }

@@ -6,13 +6,13 @@ import {
   type McpAuthMode,
   type ShareConfig,
 } from "./profiles.js";
-import type { NoccioloConfig } from "./schema.js";
+import type { OrtoConfig } from "./schema.js";
 import { resolveHindsightBaseUrl } from "../providers/hindsight/client.js";
 import {
   buildSingleBankMcpUrl,
   defaultMcpServerName,
 } from "../integration/mcp-url.js";
-import { NoccioloError } from "../utils/errors.js";
+import { OrtoError } from "../utils/errors.js";
 
 export interface ResolvedConnection {
   profile: DeploymentProfile;
@@ -25,14 +25,14 @@ export interface ResolvedConnection {
 }
 
 export function resolveDeploymentProfile(input: {
-  config: NoccioloConfig;
+  config: OrtoConfig;
   share?: ShareConfig | null;
 }): DeploymentProfile {
   return input.share?.profile ?? input.config.deploymentProfile ?? "local";
 }
 
 export function resolveProjectConnection(input: {
-  config: NoccioloConfig;
+  config: OrtoConfig;
   share?: ShareConfig | null;
   cliUrl?: string;
   serverName?: string;
@@ -48,7 +48,7 @@ export function resolveProjectConnection(input: {
   const hasExplicitSource = Boolean(
     input.cliUrl?.trim() ||
       input.config.hindsightBaseUrl?.trim() ||
-      input.env?.NOCCIOLO_HINDSIGHT_URL?.trim() ||
+      input.env?.ORTO_HINDSIGHT_URL?.trim() ||
       input.env?.HINDSIGHT_URL?.trim() ||
       share?.baseUrl?.trim() ||
       profileDefaultUrl,
@@ -58,9 +58,9 @@ export function resolveProjectConnection(input: {
     (profile === "lan" || profile === "vpn" || profile === "public") &&
     !hasExplicitSource
   ) {
-    throw new NoccioloError(
+    throw new OrtoError(
       `Deployment profile "${profile}" needs a base URL`,
-      `Set baseUrl in \`.nocciolo/share.json\`, pass --hindsight-url, or run \`nocciolo share --profile ${profile} --base-url <url>\`.`,
+      `Set baseUrl in \`.orto/share.json\`, pass --hindsight-url, or run \`orto share --profile ${profile} --base-url <url>\`.`,
     );
   }
 
@@ -106,9 +106,9 @@ export function assertApiKeyForConnection(input: {
   if (input.apiKey) {
     return;
   }
-  throw new NoccioloError(
+  throw new OrtoError(
     "Hindsight Cloud requires an API key",
-    "Create a key at https://ui.hindsight.vectorize.io → Connect, then set NOCCIOLO_HINDSIGHT_API_KEY or pass --api-key.",
+    "Create a key at https://ui.hindsight.vectorize.io → Connect, then set ORTO_HINDSIGHT_API_KEY or pass --api-key.",
   );
 }
 

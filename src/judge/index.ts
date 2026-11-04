@@ -65,6 +65,17 @@ export {
 } from "./adopt.js";
 export type { AdoptProposal, AdoptVerdict } from "./adopt.js";
 export {
+  HIGH_BEHAVIOR_DELTA_MIN,
+  formatWatcherGateLines,
+  interpretWatcherGate,
+  judgeWatcherGate,
+  watcherGateQuestions,
+} from "./watcher-gate.js";
+export type {
+  WatcherGateDecision,
+  WatcherGateVerdict,
+} from "./watcher-gate.js";
+export {
   assertRetainBudget,
   compositePriority,
   DEFAULT_PRIORITY_WEIGHTS,
